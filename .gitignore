@@ -1,0 +1,28 @@
+# Môi trường ảo (Virtual Environments)
+.venv/
+venv/
+env/
+.env
+
+# Cache và File tạm thời của Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# File dữ liệu, db và file tạm
+*.db
+draft_history.db
+*.sqlite3
+debug_context.txt
+
+# Các file tài liệu tải lên hoặc tải xuống (để tránh push file Word/PDF cá nhân)
+*.docx
+*.pdf
+
+# Streamlit cấu hình (tùy chọn ẩn, có thể bỏ comment nếu không muốn push)
+# .streamlit/
+
+# Hệ thống (Windows/Mac)
+.DS_Store
+Thumbs.db
