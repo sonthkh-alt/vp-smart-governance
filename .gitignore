@@ -1,28 +1,31 @@
-# Môi trường ảo (Virtual Environments)
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environment
+.env
 .venv/
 venv/
-env/
-.env
 
-# Cache và File tạm thời của Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# File dữ liệu, db và file tạm
-*.db
+# Database (sẽ được tạo lại trên server)
 draft_history.db
-*.sqlite3
-debug_context.txt
 
-# Các file tài liệu tải lên hoặc tải xuống (để tránh push file Word/PDF cá nhân)
-*.docx
-*.pdf
+# ChromaDB local data
+chroma_db/
 
-# Streamlit cấu hình (tùy chọn ẩn, có thể bỏ comment nếu không muốn push)
-# .streamlit/
+# IDE
+.vscode/
+.idea/
 
-# Hệ thống (Windows/Mac)
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Streamlit secrets (chỉ dùng trên Cloud)
+.streamlit/secrets.toml

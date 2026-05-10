@@ -1,11 +1,7 @@
 [theme]
-primaryColor = "#1D3557"
-backgroundColor = "#F1FAEE"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#1D3557"
+base = "dark"
+primaryColor = "#2563EB"
+backgroundColor = "#0F172A"
+secondaryBackgroundColor = "#1E293B"
+textColor = "#F8FAFC"
 font = "sans serif"
-
-[server]
-enableCORS = false
-enableXsrfProtection = false
-maxUploadSize = 200
