@@ -10,3 +10,5 @@ tiktoken
 plotly
 pandas
 google-genai
+Pillow
+lxml
