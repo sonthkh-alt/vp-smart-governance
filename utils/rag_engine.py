@@ -27,8 +27,9 @@ def _get_session_collection() -> str:
 @st.cache_resource
 def _get_embeddings():
     """Cache embeddings model across reruns to avoid re-initialization."""
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
+    try:
+        api_key = _get_api_key()
+    except ValueError:
         return None
     return GoogleGenerativeAIEmbeddings(
         model="models/gemini-embedding-001",
