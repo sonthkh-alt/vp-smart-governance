@@ -11,7 +11,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
 from dotenv import load_dotenv
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
-from utils.gemini_client import generate_text
+from utils.gemini_client import generate_text, _get_api_key
 
 load_dotenv()
 
@@ -28,8 +28,9 @@ def _get_session_collection() -> str:
 def _get_embeddings():
     """Cache embeddings model across reruns to avoid re-initialization."""
     try:
+        from utils.gemini_client import _get_api_key
         api_key = _get_api_key()
-    except ValueError:
+    except (ImportError, ValueError):
         return None
     return GoogleGenerativeAIEmbeddings(
         model="models/gemini-embedding-001",
