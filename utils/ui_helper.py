@@ -188,6 +188,8 @@ def set_premium_css():
         [data-testid="stSidebarNav"] li:first-child a span {
             visibility: hidden;
             position: relative;
+            display: inline-block;
+            width: 100%;
         }
         [data-testid="stSidebarNav"] > div:first-child > span::after,
         [data-testid="stSidebarNav"] li:first-child a span::after {
@@ -196,9 +198,10 @@ def set_premium_css():
             position: absolute;
             left: 0;
             top: 0;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--text-white);
+            white-space: nowrap;
         }
         </style>
     """, unsafe_allow_html=True)
