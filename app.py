@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.ui_helper import set_premium_css, draw_module_header
+from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 
 st.set_page_config(
     page_title="VP-Smart Governance Platform",
@@ -8,8 +8,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Áp dụng giao diện Premium
+# Áp dụng giao diện Premium & Sidebar
 set_premium_css()
+draw_sidebar()
 
 # Hiển thị Hero Header
 draw_module_header(

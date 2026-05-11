@@ -6,7 +6,7 @@ AI Impact Assessment: Đánh giá tính hợp pháp và tác động socio-econo
 import streamlit as st
 import os
 import io
-from utils.ui_helper import set_premium_css, draw_module_header
+from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx, create_nd30_document
 import database
@@ -15,6 +15,7 @@ st.set_page_config(page_title="Thẩm tra Chính sách", page_icon="⚖️", lay
 
 database.init_db()
 set_premium_css()
+draw_sidebar()
 
 draw_module_header(
     "Policy Review & Impact Assessment",

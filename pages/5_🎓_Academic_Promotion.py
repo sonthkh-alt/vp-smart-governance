@@ -6,13 +6,14 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import os
-from utils.ui_helper import set_premium_css, draw_module_header
-from utils.gemini_client import generate_text
+from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 import database
 
-st.set_page_config(page_title="Học thuật & Nâng hạng PGS", page_icon="🎓", layout="wide")
-database.init_db()
+st.set_page_config(page_title="Học thuật & Nâng hạng", page_icon="🎓", layout="wide")
+
+# Áp dụng giao diện Premium & Sidebar
 set_premium_css()
+draw_sidebar()
 
 draw_module_header("Academic Promotion Roadmap", "🎓",
     "Lộ trình cá nhân hóa đạt chức danh Phó Giáo sư — Theo QĐ 37/2018/QĐ-TTg")

@@ -210,3 +210,14 @@ def draw_glass_card(title, content, icon=None):
             <div>{content}</div>
         </div>
     """, unsafe_allow_html=True)
+
+def draw_sidebar():
+    """
+    Vẽ sidebar chung cho toàn bộ ứng dụng, bao gồm các link điều hướng ngoài.
+    """
+    with st.sidebar:
+        st.markdown("### 🌐 Kết nối Hệ thống")
+        st.page_link("https://hdnd.vercel.app", label="Cổng thông tin HĐND", icon="🌍")
+        st.markdown("---")
+        st.markdown("### 🛠️ Cài đặt & Hỗ trợ")
+        st.info("Phiên bản v2.0 - Gemini AI")

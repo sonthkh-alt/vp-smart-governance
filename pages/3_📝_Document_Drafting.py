@@ -2,12 +2,12 @@ import streamlit as st
 import os
 from utils.ai_helper import generate_document_content, check_legal_compliance
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx, create_nd30_document
-from utils.ui_helper import set_premium_css, draw_module_header
+from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from docx import Document
 import io
 import database
 
-# -- CẤU HÌNH TRANG CHÍNH (phải là lệnh st.* đầu tiên) --
+# -- CẤU HÍNH TRANG CHÍNH (phải là lệnh st.* đầu tiên) --
 st.set_page_config(
     page_title="Trợ lý ảo Tham mưu Văn bản",
     page_icon="📝",

@@ -7,7 +7,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
-from utils.ui_helper import set_premium_css, draw_module_header
+from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text
 import database
 
@@ -15,6 +15,7 @@ st.set_page_config(page_title="Kiến nghị Cử tri", page_icon="📊", layout
 
 database.init_db()
 set_premium_css()
+draw_sidebar()
 
 draw_module_header(
     "Constituency Petitions",

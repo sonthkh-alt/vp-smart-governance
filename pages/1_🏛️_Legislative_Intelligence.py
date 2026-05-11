@@ -1,12 +1,13 @@
 import streamlit as st
 import os
 from utils.rag_engine import process_documents, query_rag
-from utils.ui_helper import set_premium_css, draw_module_header
+from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 
 st.set_page_config(page_title="Trợ lý Kỳ họp", page_icon="🏛️", layout="wide")
 
-# Áp dụng giao diện Premium
+# Áp dụng giao diện Premium & Sidebar
 set_premium_css()
+draw_sidebar()
 
 # Hiển thị Header
 draw_module_header(
