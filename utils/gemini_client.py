@@ -8,9 +8,9 @@ from google.genai import types
 
 load_dotenv(override=True)
 
-# Upgraded for 2026: Using Gemini Flash Latest for best quota efficiency
-FLASH_MODELS = ["gemini-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"]
-PRO_MODELS   = ["gemini-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"]
+# Using Flash-Lite and 1.5-Flash for better free tier quota
+FLASH_MODELS = ["gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-flash-latest", "gemini-2.5-flash"]
+PRO_MODELS   = ["gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-flash-latest", "gemini-2.5-flash"]
 
 _RETRY_ERRORS = frozenset(["429", "resource_exhausted", "503", "unavailable", "overloaded", "deadline_exceeded"])
 _SKIP_ERRORS  = frozenset(["404", "not_found", "unimplemented", "permission_denied"])
