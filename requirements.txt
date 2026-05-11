@@ -1,4 +1,4 @@
-streamlit==1.32.0
+streamlit
 python-docx
 python-dotenv
 PyPDF2
@@ -11,3 +11,5 @@ pandas
 google-genai
 Pillow
 lxml
+langchain-text-splitters
+langchain-community
