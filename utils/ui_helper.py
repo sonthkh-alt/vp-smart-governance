@@ -183,6 +183,23 @@ def set_premium_css():
         .stAlert {
             border-radius: 12px;
         }
+        /* Custom Sidebar Branding: Rename 'app' to 'SonHa' */
+        [data-testid="stSidebarNav"] > div:first-child > span,
+        [data-testid="stSidebarNav"] li:first-child a span {
+            visibility: hidden;
+            position: relative;
+        }
+        [data-testid="stSidebarNav"] > div:first-child > span::after,
+        [data-testid="stSidebarNav"] li:first-child a span::after {
+            content: "SonHa";
+            visibility: visible;
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-white);
+        }
         </style>
     """, unsafe_allow_html=True)
 
