@@ -1,3 +1,6 @@
+import os
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 """
 gemini_client.py — Centralized AI Client cho Smart Governance Platform.
 Google Gen AI SDK (google-genai) + retry + model fallback.

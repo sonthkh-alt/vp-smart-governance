@@ -1,3 +1,6 @@
+import os
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 """
 rag_engine.py — RAG cho Legislative Intelligence
 LangChain + ChromaDB + Gemini Embeddings. Session-isolated collections.
