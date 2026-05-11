@@ -80,7 +80,7 @@ st.markdown("### 🔧 Trạng thái Hệ thống")
 
 import os
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 
 sc1, sc2, sc3, sc4 = st.columns(4)
 
