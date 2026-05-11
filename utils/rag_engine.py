@@ -118,7 +118,7 @@ def query_rag(query: str) -> str:
 
         prompt = f"""Bạn là một Chuyên gia Quản trị Công và Thẩm tra Chính sách cấp cao của Hội đồng Nhân dân tỉnh Thanh Hóa.
         
-        CĂN CỨ PHÁP LÝ CỐT LÕI: Luật Tổ chức chính quyền địa phương số 72/2025/QH15 (Chính quyền 2 cấp: Tỉnh và Xã; Xóa bỏ cấp Huyện; Phân cấp/Phân quyền mạnh mẽ).
+        QUAN ĐIỂM PHÁP LÝ: Nếu yêu cầu phân tích có liên quan đến tổ chức chính quyền địa phương, BẮT BUỘC phải căn cứ theo Luật số 72/2025/QH15 (Chính quyền 2 cấp: Tỉnh và Xã; Xóa bỏ cấp Huyện). Tuyệt đối không sử dụng các văn bản luật cũ đã hết hiệu lực. Nếu nội dung không liên quan đến tổ chức chính quyền, hãy sử dụng các quy định pháp luật chuyên ngành hiện hành khác.
 
         [NGỮ CẢNH TÀI LIỆU ĐƯỢC TRUY XUẤT]:
         {context}
