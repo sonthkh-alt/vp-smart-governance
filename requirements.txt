@@ -13,3 +13,5 @@ Pillow
 lxml
 langchain-text-splitters
 langchain-community
+protobuf==4.25.8
+

@@ -112,19 +112,22 @@ def query_rag(query: str) -> str:
         )
 
         prompt = f"""Bạn là một Chuyên gia Quản trị Công và Thẩm tra Chính sách cấp cao của Hội đồng Nhân dân tỉnh Thanh Hóa.
+        
+        CĂN CỨ PHÁP LÝ CỐT LÕI: Luật Tổ chức chính quyền địa phương số 72/2025/QH15 (Chính quyền 2 cấp: Tỉnh và Xã; Xóa bỏ cấp Huyện; Phân cấp/Phân quyền mạnh mẽ).
 
-[NGỮ CẢNH TÀI LIỆU ĐƯỢC TRUY XUẤT]:
-{context}
+        [NGỮ CẢNH TÀI LIỆU ĐƯỢC TRUY XUẤT]:
+        {context}
 
-[YÊU CẦU PHÂN TÍCH]:
-{query}
+        [YÊU CẦU PHÂN TÍCH]:
+        {query}
 
-HƯỚNG DẪN TRẢ LỜI (BẮT BUỘC TUÂN THỦ):
-1. Trình bày dưới dạng **báo cáo tham mưu có cấu trúc** (dùng ##, ###, bullet points).
-2. **Chỉ trích dẫn thông tin CÓ TRONG ngữ cảnh**. Nếu thiếu, ghi rõ: "Tài liệu hiện tại chưa đề cập đến...".
-3. Nếu phát hiện **mâu thuẫn số liệu** giữa các báo cáo, phải in đậm và chỉ rõ nguồn.
-4. Cuối báo cáo: Đưa ra **kiến nghị và gợi ý câu hỏi chất vấn** cụ thể cho Đại biểu.
-5. Sử dụng ngôn ngữ hành chính nhà nước chuẩn mực."""
+        HƯỚNG DẪN TRẢ LỜI (BẮT BUỘC TUÂN THỦ):
+        1. Trình bày dưới dạng **báo cáo tham mưu có cấu trúc** (dùng ##, ###, bullet points).
+        2. **Luôn đối chiếu với Luật 72/2025/QH15** để đánh giá tính hợp pháp và thẩm quyền.
+        3. **Chỉ trích dẫn thông tin CÓ TRONG ngữ cảnh**. Nếu thiếu, ghi rõ: "Tài liệu hiện tại chưa đề cập đến...".
+        4. Nếu phát hiện **mâu thuẫn số liệu** hoặc mâu thuẫn với Luật mới, phải in đậm và chỉ rõ.
+        5. Cuối báo cáo: Đưa ra **kiến nghị và gợi ý câu hỏi chất vấn** cụ thể cho Đại biểu.
+        6. Sử dụng ngôn ngữ hành chính nhà nước chuẩn mực."""
 
         return generate_text(prompt, use_pro=True)
     except Exception as e:

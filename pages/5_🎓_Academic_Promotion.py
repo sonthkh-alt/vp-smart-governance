@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import os
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
+from utils.gemini_client import generate_text
 import database
 
 st.set_page_config(page_title="Học thuật & Nâng hạng", page_icon="🎓", layout="wide")

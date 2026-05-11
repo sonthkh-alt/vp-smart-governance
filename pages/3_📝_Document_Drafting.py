@@ -20,6 +20,7 @@ database.init_db()
 
 # Áp dụng giao diện Premium
 set_premium_css()
+draw_sidebar()
 
 # Hiển thị Header
 draw_module_header(
