@@ -50,17 +50,23 @@ def _should_skip(err_str: str) -> bool:
     return any(x in err_str for x in _SKIP_ERRORS)
 
 
-def _call_with_fallback(model_list, config, max_retries=2, parse_json=False):
+def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use_search=False):
     """Core retry+fallback loop for both text and JSON generation."""
     client = _get_client()
     last_error = None
 
+    # Prepare tools if search is requested
+    tools = [types.Tool(google_search_retrieval=types.GoogleSearchRetrieval())] if use_search else None
+
     for model_id in model_list:
         for attempt in range(max_retries + 1):
             try:
+                # Add tools to config if search is enabled
+                current_params = config["params"].copy()
+                
                 resp = client.models.generate_content(
                     model=model_id, contents=config["prompt"],
-                    config=types.GenerateContentConfig(**config["params"]),
+                    config=types.GenerateContentConfig(tools=tools, **current_params),
                 )
                 raw = resp.text
                 if not parse_json:
@@ -91,20 +97,22 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False):
     return {"error": fallback_msg} if parse_json else f"⚠️ {fallback_msg}"
 
 
-def generate_text(prompt: str, use_pro: bool = False, max_retries: int = 2) -> str:
+def generate_text(prompt: str, use_pro: bool = False, max_retries: int = 2, use_search: bool = True) -> str:
     return _call_with_fallback(
         PRO_MODELS if use_pro else FLASH_MODELS,
-        {"prompt": prompt, "params": {"temperature": 0.2, "max_output_tokens": 8192}},
+        {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
         max_retries=max_retries,
+        use_search=use_search
     )
 
 
-def generate_json(prompt: str, use_pro: bool = False, max_retries: int = 2) -> dict:
+def generate_json(prompt: str, use_pro: bool = False, max_retries: int = 2, use_search: bool = True) -> dict:
     return _call_with_fallback(
         PRO_MODELS if use_pro else FLASH_MODELS,
-        {"prompt": prompt, "params": {"temperature": 0.3, "max_output_tokens": 8192,
+        {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192,
                                        "response_mime_type": "application/json"}},
         max_retries=max_retries, parse_json=True,
+        use_search=use_search
     )
 
 
