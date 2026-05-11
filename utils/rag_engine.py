@@ -1,5 +1,4 @@
 import os
-os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 """
 rag_engine.py — RAG cho Legislative Intelligence
@@ -10,13 +9,13 @@ import uuid
 import streamlit as st
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from dotenv import load_dotenv
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
 from utils.gemini_client import generate_text, _get_api_key
 
-load_dotenv()
+load_dotenv(override=True)
 
 PERSIST_DIRECTORY = "chroma_db"
 
@@ -36,7 +35,7 @@ def _get_embeddings():
     except (ImportError, ValueError):
         return None
     return GoogleGenerativeAIEmbeddings(
-        model="models/gemini-embedding-001",
+        model="models/gemini-embedding-2",
         google_api_key=api_key,
     )
 

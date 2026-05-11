@@ -1,6 +1,3 @@
-import os
-os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-
 import streamlit as st
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 
@@ -111,7 +108,7 @@ with sc3:
 
 # Phiên bản
 with sc4:
-    st.info("ℹ️ **Platform Version**\nv2.0 — Gemini-Powered")
+    st.info("ℹ️ **Platform Version**\nv2.1 — Python 3.14 Compatible")
 
 # Footer
 st.markdown("""

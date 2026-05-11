@@ -1,11 +1,4 @@
 import os
-os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-
-"""
-gemini_client.py — Centralized AI Client cho Smart Governance Platform.
-Google Gen AI SDK (google-genai) + retry + model fallback.
-"""
-import os
 import time
 import json
 import functools
@@ -13,14 +6,14 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-load_dotenv()
+load_dotenv(override=True)
 
-FLASH_MODELS = ["gemini-flash-latest", "gemini-flash-lite-latest"]
-PRO_MODELS   = ["gemini-pro-latest",   "gemini-flash-latest"]
+# Upgraded for 2026: Using Gemini Flash Latest for best quota efficiency
+FLASH_MODELS = ["gemini-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"]
+PRO_MODELS   = ["gemini-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"]
 
-_RETRY_ERRORS = frozenset(["429", "resource_exhausted", "503", "unavailable", "overloaded"])
-_SKIP_ERRORS  = frozenset(["404", "not found"])
-
+_RETRY_ERRORS = frozenset(["429", "resource_exhausted", "503", "unavailable", "overloaded", "deadline_exceeded"])
+_SKIP_ERRORS  = frozenset(["404", "not_found", "unimplemented", "permission_denied"])
 
 @functools.lru_cache(maxsize=1)
 def _get_api_key() -> str:
@@ -34,12 +27,15 @@ def _get_api_key() -> str:
         pass
     key = os.getenv("GEMINI_API_KEY")
     if not key:
-        raise ValueError("Thiếu GEMINI_API_KEY. Cấu hình trong .env hoặc Streamlit Secrets.")
+        return "" # Don't raise here, let the client call handle it with a better message
     return key
 
 
 def _get_client() -> genai.Client:
-    return genai.Client(api_key=_get_api_key())
+    key = _get_api_key()
+    if not key:
+        raise ValueError("Thiếu GEMINI_API_KEY. Vui lòng kiểm tra file .env hoặc Streamlit Secrets.")
+    return genai.Client(api_key=key)
 
 
 def _should_retry(err_str: str) -> bool:
@@ -52,7 +48,11 @@ def _should_skip(err_str: str) -> bool:
 
 def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use_search=False):
     """Core retry+fallback loop for both text and JSON generation."""
-    client = _get_client()
+    try:
+        client = _get_client()
+    except ValueError as e:
+        return {"error": str(e)} if parse_json else f"❌ {e}"
+
     last_error = None
 
     # Prepare tools if search is requested
@@ -68,15 +68,21 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use
                     model=model_id, contents=config["prompt"],
                     config=types.GenerateContentConfig(tools=tools, **current_params),
                 )
+                
+                if not resp or not resp.text:
+                    raise RuntimeError("API trả về kết quả rỗng (Empty response).")
+                
                 raw = resp.text
                 if not parse_json:
                     return raw
 
                 text = raw.strip()
                 if text.startswith("```"):
-                    text = text.split("```")[1]
-                    if text.startswith("json"):
-                        text = text[4:]
+                    parts = text.split("```")
+                    if len(parts) >= 3:
+                        text = parts[1]
+                        if text.startswith("json"):
+                            text = text[4:]
                 return json.loads(text)
 
             except json.JSONDecodeError:
@@ -84,16 +90,27 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use
             except Exception as e:
                 last_error = e
                 err_str = str(e).lower()
+                
+                # Log error to console for debugging
+                print(f"DEBUG: Gemini Error [{model_id}] (Attempt {attempt+1}): {e}")
+
                 if _should_retry(err_str) and attempt < max_retries:
                     time.sleep(5 * (attempt + 1))
                     continue
-                if _should_retry(err_str) or _should_skip(err_str):
+                
+                # If it's a 404 or other skippable error, try next model
+                if _should_skip(err_str) or _should_retry(err_str):
                     break
-                if parse_json:
-                    return {"error": f"Lỗi Gemini API [{model_id}]: {e}"}
-                raise RuntimeError(f"Lỗi Gemini API [{model_id}]: {e}")
+                
+                # If it's a fatal error (like 401 Unauthorized), don't bother retrying or falling back
+                if "401" in err_str or "unauthorized" in err_str or "invalid_api_key" in err_str:
+                    msg = "API Key không hợp lệ hoặc đã hết hạn."
+                    return {"error": msg} if parse_json else f"❌ {msg}"
 
-    fallback_msg = "Không thể kết nối đến Gemini API sau nhiều lần thử."
+                # Otherwise, continue to next model/retry
+                continue
+
+    fallback_msg = f"Không thể kết nối đến Gemini API. Lỗi cuối cùng: {last_error}"
     return {"error": fallback_msg} if parse_json else f"⚠️ {fallback_msg}"
 
 
@@ -122,3 +139,4 @@ def check_api_key() -> bool:
         return True
     except Exception:
         return False
+

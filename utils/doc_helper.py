@@ -1,11 +1,11 @@
 import io
 from docx import Document
-import PyPDF2
+import pypdf
 
 
 def extract_text_from_pdf(file_stream):
     try:
-        reader = PyPDF2.PdfReader(file_stream)
+        reader = pypdf.PdfReader(file_stream)
         return "\n".join(p.extract_text() or "" for p in reader.pages)
     except Exception as e:
         return f"Lỗi khi đọc PDF: {e}"
