@@ -183,6 +183,19 @@ def set_premium_css():
         .stAlert {
             border-radius: 12px;
         }
+        /* Custom Sidebar Header Rename: app -> SonHa */
+        [data-testid="stSidebarNav"] > div:first-child > span {
+            visibility: hidden;
+            font-size: 0px;
+        }
+        [data-testid="stSidebarNav"] > div:first-child > span::after {
+            content: "SonHa";
+            visibility: visible;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-white);
+            display: block;
+        }
         </style>
     """, unsafe_allow_html=True)
 

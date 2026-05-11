@@ -1,7 +1,7 @@
 """
 gemini_client.py
 ================
-Centralized AI Client cho VP-Smart Governance Platform.
+Centralized AI Client cho Smart Governance Platform.
 Sử dụng Google Gen AI SDK mới (google-genai).
 Cung cấp: retry logic, model fallback, structured output.
 """

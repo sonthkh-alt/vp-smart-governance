@@ -2,7 +2,7 @@ import streamlit as st
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 
 st.set_page_config(
-    page_title="VP-Smart Governance Platform",
+    page_title="Smart Governance Platform",
     page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -14,7 +14,7 @@ draw_sidebar()
 
 # Hiển thị Hero Header
 draw_module_header(
-    "VP-Smart Governance Platform",
+    "Smart Governance Platform",
     "🏛️",
     "Hệ sinh thái Quản trị dựa trên Dữ liệu và AI dành cho Cơ quan Dân cử"
 )
@@ -106,6 +106,6 @@ with sc4:
 # Footer
 st.markdown("""
     <div style="text-align: center; color: #457B9D; font-size: 0.8rem; padding: 2rem;">
-        © 2026 VP-Smart Governance Platform · Powered by Google Gemini AI
+        © 2026 Smart Governance Platform · Powered by Google Gemini AI
     </div>
 """, unsafe_allow_html=True)
