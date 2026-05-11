@@ -220,16 +220,17 @@ def draw_sidebar():
         st.page_link("https://hdnd.vercel.app", label="Cổng thông tin HĐND", icon="🌍")
         st.markdown("---")
         
-        # Thông tin tác giả
-        st.markdown("### 👨‍💻 Quản trị hệ thống")
-        st.markdown("""
-            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-weight: 700; color: #60A5FA; font-size: 1rem;">Hà Ngọc Sơn</div>
-                <div style="font-size: 0.8rem; color: #94A3B8; margin-bottom: 10px;">Phó Chánh Văn phòng Đoàn ĐBQH và HĐND tỉnh Thanh Hóa</div>
-            </div>
-        """, unsafe_allow_html=True)
-        st.page_link("https://sites.google.com/view/sonthkh/home", label="Hồ sơ tác giả", icon="🔗")
-        
-        st.markdown("---")
         st.markdown("### 🛠️ Cài đặt & Hỗ trợ")
         st.info("Phiên bản v2.0 - Gemini AI")
+        st.markdown("---")
+
+        # Thông tin tác giả - Đặt ở dưới cùng
+        st.markdown(f"""
+            <a href="https://sites.google.com/view/sonthkh/home" target="_blank" style="text-decoration: none;">
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                    <div style="font-size: 0.7rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Quản trị hệ thống</div>
+                    <div style="font-weight: 700; color: #60A5FA; font-size: 1rem;">Hà Ngọc Sơn</div>
+                    <div style="font-size: 0.8rem; color: #94A3B8; line-height: 1.2;">Phó Chánh Văn phòng Đoàn ĐBQH và HĐND tỉnh Thanh Hóa</div>
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
