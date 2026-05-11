@@ -47,7 +47,7 @@ with col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-col4, col5 = st.columns(2)
+col4, col5, col6 = st.columns(3)
 
 with col4:
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
@@ -57,6 +57,13 @@ with col4:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col5:
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.markdown("### 📋 Kiểm soát Văn bản")
+    st.markdown("Soát lỗi, tối ưu văn phong hành chính và kiểm tra logic quản lý nhà nước tự động.")
+    st.page_link("pages/6_📋_Document_Review.py", label="Truy cập Phân hệ", icon="🚀")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col6:
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.markdown("### 🎓 Học thuật & Nâng hạng")
     st.markdown("Lộ trình PGS cá nhân hóa, quản lý công trình khoa học và AI gợi ý đề tài nghiên cứu.")
