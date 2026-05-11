@@ -219,5 +219,17 @@ def draw_sidebar():
         st.markdown("### 🌐 Kết nối Hệ thống")
         st.page_link("https://hdnd.vercel.app", label="Cổng thông tin HĐND", icon="🌍")
         st.markdown("---")
+        
+        # Thông tin tác giả
+        st.markdown("### 👨‍💻 Quản trị hệ thống")
+        st.markdown("""
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-weight: 700; color: #60A5FA; font-size: 1rem;">Hà Ngọc Sơn</div>
+                <div style="font-size: 0.8rem; color: #94A3B8; margin-bottom: 10px;">Phó Chánh Văn phòng Đoàn ĐBQH và HĐND tỉnh Thanh Hóa</div>
+            </div>
+        """, unsafe_allow_html=True)
+        st.page_link("https://sites.google.com/view/sonthkh/home", label="Hồ sơ tác giả", icon="🔗")
+        
+        st.markdown("---")
         st.markdown("### 🛠️ Cài đặt & Hỗ trợ")
         st.info("Phiên bản v2.0 - Gemini AI")
