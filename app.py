@@ -9,18 +9,20 @@ except ImportError:
     pass
 
 import streamlit as st
-from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
-from utils.auth_helper import init_auth
 
-# QUAN TRỌNG: Xử lý đăng nhập ngay khi tải trang
-init_auth()
-
+# QUAN TRỌNG: Cấu hình trang phải là lệnh đầu tiên
 st.set_page_config(
     page_title="Smart Governance Platform",
     page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+from utils.auth_helper import init_auth
+from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
+
+# Xử lý đăng nhập Google ngay khi tải trang
+init_auth()
 
 # Áp dụng giao diện Premium & Sidebar
 set_premium_css()
