@@ -8,16 +8,26 @@ def init_auth():
         st.session_state.is_logged_in = False
 
 def login_google():
-    """Đăng nhập Google Thông minh (Không cần cấu hình bí mật)."""
-    # Xử lý đăng nhập ngay lập tức để người dùng không phải chờ đợi
-    # Trong thực tế, chúng tôi sẽ mô phỏng một cửa sổ chọn tài khoản
-    st.session_state.is_logged_in = True
-    st.session_state.user_info = {
-        "name": "Sơn Hà (Admin)",
-        "email": "sonthkh@gmail.com",
-        "picture": "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png"
-    }
-    st.success("✅ Đã liên kết với tài khoản Google thành công!")
+    """Trang liên kết hồ sơ cá nhân (Dành cho đa người dùng)."""
+    st.markdown("### 🔗 Liên kết tài khoản Google")
+    with st.form("login_form"):
+        name = st.text_input("Họ và tên của bạn", placeholder="VD: Nguyễn Văn A")
+        email = st.text_input("Email Google của bạn", placeholder="VD: vana@gmail.com")
+        st.caption("Thông tin này dùng để cá nhân hóa các văn bản và báo cáo AI của bạn.")
+        
+        submit = st.form_submit_button("🚀 BẮT ĐẦU SỬ DỤNG AI", use_container_width=True)
+        if submit:
+            if name.strip() and email.strip():
+                st.session_state.is_logged_in = True
+                st.session_state.user_info = {
+                    "name": name,
+                    "email": email,
+                    "picture": "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png"
+                }
+                st.success(f"✅ Chào mừng **{name}**! Đã liên kết thành công.")
+                st.rerun()
+            else:
+                st.error("Vui lòng nhập đầy đủ thông tin để định danh.")
 
 def logout():
     """Đăng xuất nhanh."""
