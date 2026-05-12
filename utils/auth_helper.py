@@ -71,8 +71,9 @@ def login_google():
         "&prompt=select_account"
     )
     
-    # Chuyển hướng bằng Markdown/HTML (Streamlit không có lệnh redirect trực tiếp)
-    st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{auth_url}\'">', unsafe_allow_html=True)
+    st.info("👋 Sẵn sàng kết nối với Google!")
+    st.link_button("🚀 NHẤN VÀO ĐÂY ĐỂ CHỌN TÀI KHOẢN GOOGLE", auth_url, use_container_width=True)
+    st.warning("⚠️ **Lưu ý**: Nếu gặp lỗi 403, hãy đảm bảo bạn đã thêm email của mình vào mục 'Test Users' trong Google Cloud Console.")
     st.stop()
 
 def logout():
