@@ -6,6 +6,9 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text
 from utils.auth_helper import require_auth

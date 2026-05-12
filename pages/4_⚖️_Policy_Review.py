@@ -5,6 +5,9 @@ AI Impact Assessment: Đánh giá tính hợp pháp và tác động socio-econo
 
 import streamlit as st
 import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import io
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text

@@ -3,6 +3,9 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 import streamlit as st
 import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from utils.rag_engine import process_documents, query_rag
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.auth_helper import require_auth

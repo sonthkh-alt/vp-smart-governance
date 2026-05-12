@@ -4,6 +4,10 @@ Quy trình 3 bước: Soát lỗi → Tối ưu nội dung → Logic quản lý.
 """
 
 import streamlit as st
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
