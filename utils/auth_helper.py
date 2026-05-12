@@ -1,4 +1,7 @@
+import streamlit as st
 import os
+import requests
+import urllib.parse
 
 # CHẨN ĐOÁN: Kiểm tra xem có biến nào bị kẹt trong hệ thống không
 for key in os.environ.keys():
