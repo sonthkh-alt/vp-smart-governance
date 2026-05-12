@@ -167,21 +167,40 @@ def check_api_status():
     """
     import time
     results = {}
-    test_models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
     
-    for model_id in test_models:
-        try:
-            start_time = time.time()
-            client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-            # Thử gọi một câu cực ngắn để test
-            response = client.models.generate_content(
-                model=model_id,
-                contents="ping",
-                config=genai.types.GenerateContentConfig(max_output_tokens=1)
-            )
-            latency = round((time.time() - start_time) * 1000, 0)
-            results[model_id] = {"status": "✅ Hoạt động", "latency": f"{latency}ms"}
-        except Exception as e:
-            results[model_id] = {"status": "❌ Lỗi/Không sẵn sàng", "detail": str(e)}
+    try:
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        # 1. Lấy danh sách model thực tế từ Google
+        available_models = []
+        for m in client.models.list():
+            if "generateContent" in m.supported_methods:
+                # Lọc lấy các model chính để test
+                name = m.name.replace("models/", "")
+                if "gemini" in name and not "-vision" in name:
+                    available_models.append(name)
+        
+        # 2. Chọn ra 3 model tiêu biểu để ping
+        test_candidates = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
+        to_test = [m for m in test_candidates if m in available_models]
+        if not to_test:
+            # Nếu không tìm thấy candidate, lấy đại 3 cái đầu tiên
+            to_test = available_models[:3]
+
+        for model_id in to_test:
+            try:
+                start_time = time.time()
+                # Thử gọi một câu cực ngắn để test
+                response = client.models.generate_content(
+                    model=model_id,
+                    contents="ping",
+                    config=genai.types.GenerateContentConfig(max_output_tokens=1)
+                )
+                latency = round((time.time() - start_time) * 1000, 0)
+                results[model_id] = {"status": "✅ Hoạt động", "latency": f"{latency}ms"}
+            except Exception as e:
+                results[model_id] = {"status": "❌ Lỗi", "detail": str(e)}
+                
+    except Exception as e:
+        results["System"] = {"status": "❌ Không thể kết nối", "detail": str(e)}
             
     return results
