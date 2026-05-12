@@ -88,6 +88,15 @@ def init_db():
     with _connect() as conn:
         for sql in _TABLES_SQL:
             conn.execute(sql)
+            
+        # Migration cho api_usage (Thêm các cột nếu chưa có)
+        try:
+            conn.execute('ALTER TABLE api_usage ADD COLUMN prompt_tokens INTEGER DEFAULT 0')
+            conn.execute('ALTER TABLE api_usage ADD COLUMN candidate_tokens INTEGER DEFAULT 0')
+            conn.execute('ALTER TABLE api_usage ADD COLUMN error_detail TEXT')
+        except sqlite3.OperationalError:
+            # Cột đã tồn tại hoặc lỗi khác
+            pass
 
 
 def _now():
@@ -297,10 +306,10 @@ def get_api_usage_stats():
                 FROM api_usage 
                 GROUP BY model_id
             ''').fetchall()
-        except sqlite3.OperationalError:
-            # Migration nếu bảng cũ chưa có cột mới
-            init_db()
-            return get_api_usage_stats()
+        except sqlite3.OperationalError as e:
+            # Nếu vẫn lỗi sau khi đã chạy init_db ở _ensure_db, trả về dữ liệu rỗng để tránh crash
+            print(f"Database Error in get_api_usage_stats: {e}")
+            return {"total": 0, "by_model": {}, "by_user": {}, "daily": [], "detailed": []}
     
     return {
         "total": total_calls,
