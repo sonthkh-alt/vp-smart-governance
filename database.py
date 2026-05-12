@@ -239,7 +239,7 @@ def create_user(email, full_name, is_admin=0):
     with _connect() as conn:
         conn.execute(
             'INSERT OR IGNORE INTO users (email, full_name, is_approved, credits, is_admin, created_at) VALUES (?,?,?,?,?,?)',
-            (email, full_name, 1 if is_admin else 0, 9999 if is_admin else 3, is_admin, _now())
+            (email, full_name, 1, 9999 if is_admin else 3, is_admin, _now())
         )
 
 def get_all_users():

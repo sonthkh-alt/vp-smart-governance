@@ -107,11 +107,6 @@ def require_auth(action_name="truy cập tính năng này"):
         st.error("Lỗi dữ liệu người dùng. Vui lòng đăng nhập lại.")
         return False
         
-    if not user["is_approved"] and not user["is_admin"]:
-        st.error(f"### ⏳ Tài khoản chưa được phê duyệt\nChào **{user['full_name']}**, tài khoản của bạn đang chờ quản trị viên phê duyệt để sử dụng các tính năng AI. Vui lòng liên hệ đồng chí **Hà Ngọc Sơn**, PCVP Đoàn ĐBQH và HĐND tỉnh để được hỗ trợ.")
-        st.stop()
-        return False
-        
     if not user["is_admin"] and user["credits"] <= 0:
         st.error(f"### ❌ Hết lượt truy vấn AI\nBạn đã sử dụng hết số lượt truy vấn AI được cấp. Vui lòng liên hệ đồng chí **Hà Ngọc Sơn**, PCVP Đoàn ĐBQH và HĐND tỉnh để được gia hạn thêm lượt sử dụng.")
         st.stop()
