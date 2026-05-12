@@ -114,8 +114,11 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use
                     # Log error to database
                     if "user_info" in st.session_state:
                         database.log_api_usage(st.session_state.user_info.get("email"), model_id, "error", error=err_str)
-                        
-                    if _should_retry(err_str) and attempt < max_retries:
+                # Log error to database
+                if "user_info" in st.session_state:
+                    database.log_api_usage(st.session_state.user_info.get("email"), model_id, "error", error=err_str)
+                    
+                if _should_retry(err_str) and attempt < max_retries:
                     time.sleep(5 * (attempt + 1))
                     continue
                 
@@ -160,3 +163,28 @@ def check_api_key() -> bool:
         return True
     except Exception:
         return False
+
+def check_api_status():
+    """
+    Kiểm tra tình trạng sống/chết của API và các Model khả dụng.
+    """
+    import time
+    results = {}
+    test_models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
+    
+    for model_id in test_models:
+        try:
+            start_time = time.time()
+            client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+            # Thử gọi một câu cực ngắn để test
+            response = client.models.generate_content(
+                model=model_id,
+                contents="ping",
+                config=genai.types.GenerateContentConfig(max_output_tokens=1)
+            )
+            latency = round((time.time() - start_time) * 1000, 0)
+            results[model_id] = {"status": "✅ Hoạt động", "latency": f"{latency}ms"}
+        except Exception as e:
+            results[model_id] = {"status": "❌ Lỗi/Không sẵn sàng", "detail": str(e)}
+            
+    return results

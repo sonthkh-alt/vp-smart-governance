@@ -125,5 +125,24 @@ with tab2:
     else:
         st.info("Chưa có dữ liệu sử dụng theo Người dùng.")
 
+# --- MỚI: TÌNH TRẠNG LIVE TỪ GOOGLE ---
+st.markdown("---")
+st.markdown("### 🌐 Tình trạng Kết nối Google (Live Check)")
+if st.button("🔄 Kiểm tra kết nối trực tiếp đến Google"):
+    from utils.gemini_client import check_api_status
+    with st.spinner("Đang ping hệ thống Google..."):
+        health_results = check_api_status()
+        
+        cols = st.columns(len(health_results))
+        for i, (model_name, info) in enumerate(health_results.items()):
+            with cols[i]:
+                st.markdown(f"**{model_name}**")
+                if "latency" in info:
+                    st.success(info["status"])
+                    st.caption(f"Độ trễ: {info['latency']}")
+                else:
+                    st.error(info["status"])
+                    st.caption(info.get("detail", "Lỗi không xác định"))
+
 st.markdown("---")
 st.caption("Giao diện Quản trị viên — Bảo mật 2 lớp. Mọi thay đổi đều được ghi lại nhật ký hệ thống.")
