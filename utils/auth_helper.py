@@ -8,9 +8,34 @@ def init_auth():
         st.session_state.is_logged_in = False
 
 def login_google():
-    """Bước 1 & 2: Kích hoạt quy trình Đăng nhập Google chuẩn."""
-    # Lệnh này sẽ mở cửa sổ Google, cho phép chọn tài khoản và nhập mật khẩu/2FA
-    st.login("google")
+    """Kích hoạt Google Login thật hoặc hướng dẫn cấu hình nếu thiếu 'chìa khóa'."""
+    try:
+        st.login("google")
+    except Exception as e:
+        # Nếu chưa cấu hình Secrets, hiện bảng hướng dẫn thay vì báo lỗi đỏ
+        st.error("### 🔐 Cấu hình Đăng nhập Google")
+        st.info(f"""
+            Để kích hoạt luồng đăng nhập chuẩn 3 bước, bạn cần dán "chìa khóa" vào mục **Secrets** của Streamlit Cloud.
+            
+            **Hướng dẫn nhanh:**
+            1. Truy cập [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+            2. Tạo OAuth Client ID (Web Application) với Redirect URI: 
+               `https://hdndthanhhoa.streamlit.app/oauth2callback`
+            3. Copy mã dán vào **Settings -> Secrets**:
+            ```toml
+            [auth]
+            redirect_uri = "https://hdndthanhhoa.streamlit.app/oauth2callback"
+            cookie_secret = "sondeptrai"
+
+            [auth.google]
+            client_id = "MÃ_CLIENT_ID_CỦA_BẠN"
+            client_secret = "MÃ_BÍ_MẬT_CỦA_BẠN"
+            ```
+        """)
+        if "Authlib" in str(e):
+            st.warning("⚠️ Hệ thống đang cài đặt thư viện hỗ trợ (Authlib). Vui lòng chờ 1 phút rồi nhấn thử lại.")
+        else:
+            st.caption(f"Chi tiết kỹ thuật: {str(e)}")
 
 def logout():
     """Bước 3: Đăng xuất và dọn dẹp phiên làm việc."""
