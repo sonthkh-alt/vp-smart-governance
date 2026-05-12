@@ -8,26 +8,14 @@ def init_auth():
         st.session_state.is_logged_in = False
 
 def login_google():
-    """Kích hoạt Google Login."""
-    # Sử dụng tính năng login bản địa của Streamlit
-    try:
-        st.login("google")
-    except:
-        # Fallback cho môi trường local hoặc nếu st.login chưa sẵn sàng
-        st.session_state.is_logged_in = True
-        st.session_state.user_info = {
-            "name": "Người dùng Google",
-            "email": "user@gmail.com",
-            "picture": "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png"
-        }
+    """Kích hoạt Google Login thật."""
+    # Ép buộc sử dụng tính năng login của Streamlit Cloud
+    # Tính năng này sẽ tự động chuyển hướng đến trang chọn tài khoản của Google
+    st.login("google")
 
 def logout():
-    """Đăng xuất."""
-    try:
-        st.logout()
-    except:
-        st.session_state.is_logged_in = False
-        st.session_state.user_info = None
+    """Đăng xuất thật."""
+    st.logout()
 
 def check_auth_status():
     """Kiểm tra trạng thái đăng nhập một cách an toàn."""
