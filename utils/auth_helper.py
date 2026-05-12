@@ -91,6 +91,7 @@ def login_google():
     st.markdown("---")
     st.info("👋 Hoặc kết nối chính thống qua Google:")
     st.link_button("🚀 ĐĂNG NHẬP VỚI GOOGLE", auth_url, use_container_width=True)
+    st.caption("Khách chưa có mã xác thực hoặc gặp lỗi đăng nhập Google vui lòng liên hệ **Hà Ngọc Sơn, PCVP Đoàn ĐBQH và HĐND tỉnh Thanh Hóa** để được hỗ trợ.")
     st.stop()
 
 def logout():
