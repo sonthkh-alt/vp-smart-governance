@@ -139,4 +139,3 @@ def check_api_key() -> bool:
         return True
     except Exception:
         return False
-
