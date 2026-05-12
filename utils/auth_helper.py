@@ -32,20 +32,32 @@ def logout():
         st.rerun()
 
 def check_auth_status():
-    """Kiểm tra trạng thái đăng nhập."""
-    # Ưu tiên kiểm tra st.user (Native) sau đó đến session_state (Simulated)
-    if hasattr(st, "user") and st.user.is_logged_in:
-        return True
+    """Kiểm tra trạng thái đăng nhập một cách an toàn."""
+    # Thử sử dụng Streamlit Native Auth nếu có
+    try:
+        if hasattr(st, "user"):
+            # Một số phiên bản dùng .is_logged_in, số khác dùng kiểm tra email
+            if getattr(st.user, "is_logged_in", False):
+                return True
+            if getattr(st.user, "email", None):
+                return True
+    except:
+        pass
+    
+    # Quay lại sử dụng session_state nếu Native Auth không khả dụng
     return st.session_state.get("is_logged_in", False)
 
 def get_user_info():
-    """Lấy thông tin người dùng."""
-    if hasattr(st, "user") and st.user.is_logged_in:
-        return {
-            "name": st.user.get("name", "Người dùng"),
-            "email": st.user.get("email", ""),
-            "picture": st.user.get("picture", "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png")
-        }
+    """Lấy thông tin người dùng một cách an toàn."""
+    try:
+        if hasattr(st, "user") and (getattr(st.user, "is_logged_in", False) or getattr(st.user, "email", None)):
+            return {
+                "name": getattr(st.user, "name", "Người dùng"),
+                "email": getattr(st.user, "email", ""),
+                "picture": getattr(st.user, "picture", "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png")
+            }
+    except:
+        pass
     return st.session_state.get("user_info", None)
 
 def require_auth(feature_name="tính năng này"):
