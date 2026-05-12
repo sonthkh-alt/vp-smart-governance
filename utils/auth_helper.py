@@ -74,3 +74,11 @@ def logout():
     st.session_state.is_logged_in = False
     st.session_state.user_info = None
     st.rerun()
+
+def check_auth_status():
+    """Kiểm tra trạng thái đăng nhập an toàn."""
+    return st.session_state.get("is_logged_in", False)
+
+def get_user_info():
+    """Lấy thông tin người dùng."""
+    return st.session_state.get("user_info", {})
