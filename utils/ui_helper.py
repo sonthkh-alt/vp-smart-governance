@@ -267,10 +267,7 @@ def draw_sidebar():
                 st.caption(user["email"])
             
             if db_user:
-                if db_user["is_admin"]:
-                    st.success("💎 **Quản trị viên Hệ thống**")
-                    st.page_link("pages/.7_⚙️_Administration.py", label="⚙️ Quản trị Hệ thống", icon=None)
-                else:
+                if not db_user["is_admin"]:
                     status = "✅ Đã duyệt" if db_user["is_approved"] else "⏳ Chờ duyệt"
                     color = "green" if db_user["credits"] > 0 else "red"
                     st.markdown(f"**Trạng thái:** {status}")
