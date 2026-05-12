@@ -23,9 +23,8 @@ def login_google():
                `https://hdndthanhhoa.streamlit.app/oauth2callback`
             3. Copy mã dán vào **Settings -> Secrets**:
             [auth]
-            # Lưu ý: cookie_secret nên là một chuỗi dài và ngẫu nhiên
-            cookie_secret = "nhập_một_chuỗi_dài_tại_đây"
-            redirect_uri = "https://hdndthanhhoa.streamlit.app/oauth2callback"
+            # cookie_secret PHẢI LÀ MỘT CHUỖI DÀI VÀ NGẪU NHIÊN (VD: sonthkh_thanhhoa_smart_2024_@#!123)
+            cookie_secret = "nhập_một_chuỗi_thật_dài_tại_đây"
 
             [auth.google]
             client_id = "MÃ_CLIENT_ID.apps.googleusercontent.com"
