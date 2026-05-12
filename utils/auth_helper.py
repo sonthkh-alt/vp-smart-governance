@@ -8,31 +8,13 @@ def init_auth():
         st.session_state.is_logged_in = False
 
 def login_google():
-    """Trang liên kết hồ sơ cá nhân (Dành cho đa người dùng)."""
-    st.markdown("### 🔗 Liên kết tài khoản Google")
-    with st.form("login_form"):
-        name = st.text_input("Họ và tên của bạn", placeholder="VD: Nguyễn Văn A")
-        email = st.text_input("Email Google của bạn", placeholder="VD: vana@gmail.com")
-        st.caption("Thông tin này dùng để cá nhân hóa các văn bản và báo cáo AI của bạn.")
-        
-        submit = st.form_submit_button("🚀 BẮT ĐẦU SỬ DỤNG AI", use_container_width=True)
-        if submit:
-            if name.strip() and email.strip():
-                st.session_state.is_logged_in = True
-                st.session_state.user_info = {
-                    "name": name,
-                    "email": email,
-                    "picture": "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png"
-                }
-                st.success(f"✅ Chào mừng **{name}**! Đã liên kết thành công.")
-                st.rerun()
-            else:
-                st.error("Vui lòng nhập đầy đủ thông tin để định danh.")
+    """Bước 1 & 2: Kích hoạt quy trình Đăng nhập Google chuẩn."""
+    # Lệnh này sẽ mở cửa sổ Google, cho phép chọn tài khoản và nhập mật khẩu/2FA
+    st.login("google")
 
 def logout():
-    """Đăng xuất nhanh."""
-    st.session_state.is_logged_in = False
-    st.session_state.user_info = None
+    """Bước 3: Đăng xuất và dọn dẹp phiên làm việc."""
+    st.logout()
 
 def check_auth_status():
     """Kiểm tra trạng thái đăng nhập một cách an toàn."""
