@@ -11,6 +11,8 @@ CLIENT_ID = raw_id.strip().replace("\n", "").replace("\r", "")
 CLIENT_SECRET = raw_secret.strip().replace("\n", "").replace("\r", "")
 url_phan_hoi = "https://hdndthanhhoa.streamlit.app/"
 
+ADMIN_EMAIL = "sonthkh@gmail.com"
+
 def init_auth():
     """Xử lý Callback từ Google để định danh User."""
     if "is_logged_in" not in st.session_state:
@@ -40,6 +42,12 @@ def init_auth():
                 # Biến khách thành User chính thức của hệ thống
                 st.session_state.is_logged_in = True
                 st.session_state.user_info = user_info
+                
+                # Cập nhật DB
+                import database
+                is_admin = 1 if user_info.get("email") == ADMIN_EMAIL else 0
+                database.create_user(user_info.get("email"), user_info.get("name"), is_admin)
+                
                 st.query_params.clear()
                 st.rerun()
         except Exception as e:
@@ -88,7 +96,25 @@ def require_auth(action_name="truy cập tính năng này"):
     Trả về True nếu đã đăng nhập.
     """
     if not st.session_state.get("is_logged_in", False):
-        st.warning(f"⚠️ Bạn cần đăng nhập để {action_name}. (Vui lòng liên hệ đồng chí Hà Ngọc Sơn, PCVP Đoàn ĐBQH và HĐND tỉnh để được hỗ trợ).")
+        st.warning(f"⚠️ Bạn cần đăng nhập để {action_name}.")
         login_google()
         return False
+    
+    import database
+    user = database.get_user(st.session_state.user_info.get("email"))
+    
+    if not user:
+        st.error("Lỗi dữ liệu người dùng. Vui lòng đăng nhập lại.")
+        return False
+        
+    if not user["is_approved"] and not user["is_admin"]:
+        st.error(f"### ⏳ Tài khoản chưa được phê duyệt\nChào **{user['full_name']}**, tài khoản của bạn đang chờ quản trị viên phê duyệt để sử dụng các tính năng AI. Vui lòng liên hệ đồng chí **Hà Ngọc Sơn**, PCVP Đoàn ĐBQH và HĐND tỉnh để được hỗ trợ.")
+        st.stop()
+        return False
+        
+    if not user["is_admin"] and user["credits"] <= 0:
+        st.error(f"### ❌ Hết lượt truy vấn AI\nBạn đã sử dụng hết số lượt truy vấn AI được cấp. Vui lòng liên hệ đồng chí **Hà Ngọc Sơn**, PCVP Đoàn ĐBQH và HĐND tỉnh để được gia hạn thêm lượt sử dụng.")
+        st.stop()
+        return False
+        
     return True

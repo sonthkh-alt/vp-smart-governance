@@ -5,6 +5,8 @@ import functools
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+import streamlit as st
+import database
 
 load_dotenv(override=True)
 
@@ -73,6 +75,10 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use
                 
                 if not resp or not resp.text:
                     raise RuntimeError("API trả về kết quả rỗng (Empty response).")
+                
+                # Trừ credit sau khi gọi thành công (nếu có user_info)
+                if "user_info" in st.session_state:
+                    database.use_credit(st.session_state.user_info.get("email"))
                 
                 raw = resp.text
                 if not parse_json:

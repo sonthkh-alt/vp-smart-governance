@@ -37,6 +37,14 @@ _TABLES_SQL = [
         is_first_author INTEGER DEFAULT 0, points REAL DEFAULT 0,
         doi TEXT, notes TEXT, created_at TEXT
     )''',
+    '''CREATE TABLE IF NOT EXISTS users (
+        email TEXT PRIMARY KEY,
+        full_name TEXT,
+        is_approved INTEGER DEFAULT 0,
+        credits INTEGER DEFAULT 3,
+        is_admin INTEGER DEFAULT 0,
+        created_at TEXT
+    )'''
 ]
 
 _PROFILE_FIELDS = [
@@ -212,3 +220,42 @@ def get_publications():
 def delete_publication(pub_id):
     with _connect() as conn:
         conn.execute('DELETE FROM publications WHERE id=?', (pub_id,))
+
+
+# ─── User Management ─────────────────────────────────────────────────────────
+
+def get_user(email):
+    _ensure_db()
+    with _connect() as conn:
+        row = conn.execute('SELECT * FROM users WHERE email=?', (email,)).fetchone()
+    if row:
+        return {
+            "email": r[0], "full_name": r[1], "is_approved": r[2],
+            "credits": r[3], "is_admin": r[4], "created_at": r[5]
+        } if False else dict(zip(["email", "full_name", "is_approved", "credits", "is_admin", "created_at"], row))
+    return None
+
+def create_user(email, full_name, is_admin=0):
+    with _connect() as conn:
+        conn.execute(
+            'INSERT OR IGNORE INTO users (email, full_name, is_approved, credits, is_admin, created_at) VALUES (?,?,?,?,?,?)',
+            (email, full_name, 1 if is_admin else 0, 9999 if is_admin else 3, is_admin, _now())
+        )
+
+def get_all_users():
+    _ensure_db()
+    with _connect() as conn:
+        rows = conn.execute('SELECT * FROM users ORDER BY created_at DESC').fetchall()
+    return [dict(zip(["email", "full_name", "is_approved", "credits", "is_admin", "created_at"], r)) for r in rows]
+
+def update_user_status(email, is_approved, credits):
+    with _connect() as conn:
+        conn.execute('UPDATE users SET is_approved=?, credits=? WHERE email=?', (is_approved, credits, email))
+
+def use_credit(email):
+    user = get_user(email)
+    if user and not user["is_admin"]:
+        with _connect() as conn:
+            conn.execute('UPDATE users SET credits = credits - 1 WHERE email=? AND credits > 0', (email,))
+        return True
+    return user and user["is_admin"]

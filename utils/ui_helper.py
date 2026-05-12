@@ -256,12 +256,25 @@ def draw_sidebar():
             st.button("🔑 Đăng nhập với Google", on_click=login_google, use_container_width=True)
             st.caption("Sử dụng bất kỳ tài khoản Google nào để truy cập AI.")
         else:
+            import database
+            db_user = database.get_user(user["email"])
+            
             col1, col2 = st.columns([1, 3])
             with col1:
                 st.image(user["picture"], width=45)
             with col2:
                 st.markdown(f"**{user['name']}**")
                 st.caption(user["email"])
+            
+            if db_user:
+                if db_user["is_admin"]:
+                    st.success("💎 **Quản trị viên Hệ thống**")
+                    st.page_link("pages/.7_⚙️_Administration.py", label="⚙️ Quản trị Hệ thống", icon=None)
+                else:
+                    status = "✅ Đã duyệt" if db_user["is_approved"] else "⏳ Chờ duyệt"
+                    color = "green" if db_user["credits"] > 0 else "red"
+                    st.markdown(f"**Trạng thái:** {status}")
+                    st.markdown(f"**Lượt AI:** :{color}[{db_user['credits']} lượt]")
             
             if st.button("🚪 Đăng xuất", use_container_width=True):
                 logout()
