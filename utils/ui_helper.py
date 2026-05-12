@@ -232,6 +232,10 @@ def draw_glass_card(title, content, icon=None):
         </div>
     """, unsafe_allow_html=True)
 
+def draw_sidebar():
+    """
+    Vẽ sidebar chung cho toàn bộ ứng dụng, bao gồm các link điều hướng ngoài.
+    """
     # Khởi tạo trạng thái Auth
     init_auth()
     is_logged_in = check_auth_status()
