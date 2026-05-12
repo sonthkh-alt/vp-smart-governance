@@ -8,6 +8,10 @@ try:
 except ImportError:
     pass
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+
 import streamlit as st
 
 # QUAN TRỌNG: Cấu hình trang phải là lệnh đầu tiên
