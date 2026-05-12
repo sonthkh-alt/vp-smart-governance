@@ -88,7 +88,7 @@ def require_auth(action_name="truy cập tính năng này"):
     Trả về True nếu đã đăng nhập.
     """
     if not st.session_state.get("is_logged_in", False):
-        st.warning(f"⚠️ Bạn cần đăng nhập để {action_name}.")
+        st.warning(f"⚠️ Bạn cần đăng nhập để {action_name}. (Vui lòng liên hệ đồng chí Hà Ngọc Sơn, PCVP Đoàn ĐBQH và HĐND tỉnh để được hỗ trợ).")
         login_google()
         return False
     return True
