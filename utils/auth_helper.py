@@ -8,10 +8,25 @@ def init_auth():
         st.session_state.is_logged_in = False
 
 def login_google():
-    """Kích hoạt Google Login thật."""
-    # Ép buộc sử dụng tính năng login của Streamlit Cloud
-    # Tính năng này sẽ tự động chuyển hướng đến trang chọn tài khoản của Google
-    st.login("google")
+    """Kích hoạt Google Login thật hoặc hướng dẫn cấu hình."""
+    try:
+        st.login("google")
+    except Exception as e:
+        st.error("### 🔐 Cấu hình Đăng nhập Google")
+        st.info("""
+            Để kích hoạt tính năng đăng nhập bằng tài khoản Google thật, bạn cần cấu hình **OIDC Provider** trong Streamlit Cloud:
+            
+            1. **Tạo Google OAuth Client ID** tại [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+            2. Thêm Redirect URI: `https://hdndthanhhoa.streamlit.app/oauth2callback`
+            3. Vào **Settings -> Secrets** trên Streamlit Cloud và thêm:
+            ```toml
+            [auth]
+            redirect_uri = "https://hdndthanhhoa.streamlit.app/oauth2callback"
+            cookie_key = "chuỗi_bí_mật_tùy_chọn"
+            ```
+            4. Sau đó nhấn nút Đăng nhập lại.
+        """)
+        st.warning(f"Lỗi hiện tại: {str(e)}")
 
 def logout():
     """Đăng xuất thật."""
