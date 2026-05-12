@@ -71,9 +71,26 @@ def login_google():
         "&prompt=select_account"
     )
     
-    st.info("👋 Sẵn sàng kết nối với Google!")
-    st.link_button("🚀 NHẤN VÀO ĐÂY ĐỂ CHỌN TÀI KHOẢN GOOGLE", auth_url, use_container_width=True)
-    st.warning("⚠️ **Lưu ý**: Nếu gặp lỗi 403, hãy đảm bảo bạn đã thêm email của mình vào mục 'Test Users' trong Google Cloud Console.")
+    # LỐI ĐI RIÊNG: Đăng nhập nhanh bằng mã bí mật
+    st.markdown("---")
+    st.markdown("### ⚡ Đăng nhập nhanh (Dự phòng)")
+    passcode = st.text_input("Nhập mã bí mật của bạn", type="password", placeholder="Nhập mã...")
+    if st.button("🔓 VÀO HỆ THỐNG", use_container_width=True):
+        if passcode == "sondeptrai":
+            st.session_state.is_logged_in = True
+            st.session_state.user_info = {
+                "name": "Sơn Hà (Admin)",
+                "email": "sonthkh@gmail.com",
+                "picture": "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png"
+            }
+            st.success("✅ Đã xác thực thành công bằng mã bí mật!")
+            st.rerun()
+        else:
+            st.error("Mã bí mật không đúng.")
+    
+    st.markdown("---")
+    st.info("👋 Hoặc kết nối chính thống qua Google:")
+    st.link_button("🚀 ĐĂNG NHẬP VỚI GOOGLE", auth_url, use_container_width=True)
     st.stop()
 
 def logout():
