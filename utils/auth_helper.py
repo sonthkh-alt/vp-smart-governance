@@ -20,7 +20,6 @@ def login_google():
             "email": "user@gmail.com",
             "picture": "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png"
         }
-        st.rerun()
 
 def logout():
     """Đăng xuất."""
@@ -29,7 +28,6 @@ def logout():
     except:
         st.session_state.is_logged_in = False
         st.session_state.user_info = None
-        st.rerun()
 
 def check_auth_status():
     """Kiểm tra trạng thái đăng nhập một cách an toàn."""

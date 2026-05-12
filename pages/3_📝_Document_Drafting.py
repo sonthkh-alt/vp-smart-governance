@@ -123,50 +123,50 @@ with col1:
     if st.button("🚀 TẠO DỰ THẢO VĂN BẢN", use_container_width=True, type="primary"):
         if require_auth("Tạo dự thảo văn bản"):
             if not prompt.strip():
-            st.warning("Vui lòng nhập yêu cầu trước khi tạo!")
-        else:
-            with st.spinner("Đang bóc tách dữ liệu từ file đính kèm..."):
-                # Đọc ngữ cảnh từ các file đính kèm
-                context_text = ""
-                if reference_files:
-                    for ref_file in reference_files:
-                        if ref_file.name.endswith(".pdf"):
-                            context_text += extract_text_from_pdf(ref_file) + "\n"
-                        elif ref_file.name.endswith(".docx"):
-                            context_text += extract_text_from_docx(ref_file) + "\n"
-                
-                # Đọc nội dung từ các file Căn cứ pháp lý
-                if legal_files:
-                    for l_file in legal_files:
-                        if l_file.name.endswith(".pdf"):
-                            notebook_lm_data += f"\n\n--- Căn cứ pháp lý từ {l_file.name} ---\n" + extract_text_from_pdf(l_file)
-                        elif l_file.name.endswith(".docx"):
-                            notebook_lm_data += f"\n\n--- Căn cứ pháp lý từ {l_file.name} ---\n" + extract_text_from_docx(l_file)
-                
-                # Lấy đề cương từ template tải lên
-                template_outline_text = ""
-                if uploaded_template:
-                    uploaded_template.seek(0)
-                    template_outline_text = extract_text_from_docx(uploaded_template)
-            
-            with st.spinner("AI đang tham mưu và kiểm tra chéo pháp lý..."):
-                # Gọi API Gemini
-                draft_result = generate_document_content(prompt, doc_type=doc_type, context=context_text, notebook_lm_data=notebook_lm_data, template_outline=template_outline_text)
-                
-                if isinstance(draft_result, dict) and "error" not in draft_result:
-                    st.session_state.generated_draft = draft_result.get("noi_dung_chinh", "")
-                    st.session_state.generated_agency_name = draft_result.get("ten_co_quan", "")
-                    st.session_state.generated_content_dict = draft_result
+                st.warning("Vui lòng nhập yêu cầu trước khi tạo!")
+            else:
+                with st.spinner("Đang bóc tách dữ liệu từ file đính kèm..."):
+                    # Đọc ngữ cảnh từ các file đính kèm
+                    context_text = ""
+                    if reference_files:
+                        for ref_file in reference_files:
+                            if ref_file.name.endswith(".pdf"):
+                                context_text += extract_text_from_pdf(ref_file) + "\n"
+                            elif ref_file.name.endswith(".docx"):
+                                context_text += extract_text_from_docx(ref_file) + "\n"
                     
-                    # Lưu vào Database
-                    database.save_draft(doc_type, prompt, draft_result)
+                    # Đọc nội dung từ các file Căn cứ pháp lý
+                    if legal_files:
+                        for l_file in legal_files:
+                            if l_file.name.endswith(".pdf"):
+                                notebook_lm_data += f"\n\n--- Căn cứ pháp lý từ {l_file.name} ---\n" + extract_text_from_pdf(l_file)
+                            elif l_file.name.endswith(".docx"):
+                                notebook_lm_data += f"\n\n--- Căn cứ pháp lý từ {l_file.name} ---\n" + extract_text_from_docx(l_file)
                     
-                elif isinstance(draft_result, dict) and "error" in draft_result:
-                    st.session_state.generated_draft = draft_result["error"]
-                else:
-                    st.session_state.generated_draft = str(draft_result)
+                    # Lấy đề cương từ template tải lên
+                    template_outline_text = ""
+                    if uploaded_template:
+                        uploaded_template.seek(0)
+                        template_outline_text = extract_text_from_docx(uploaded_template)
+                
+                with st.spinner("AI đang tham mưu và kiểm tra chéo pháp lý..."):
+                    # Gọi API Gemini
+                    draft_result = generate_document_content(prompt, doc_type=doc_type, context=context_text, notebook_lm_data=notebook_lm_data, template_outline=template_outline_text)
                     
-                st.session_state.legal_check_result = "" # Reset legal check result on new draft
+                    if isinstance(draft_result, dict) and "error" not in draft_result:
+                        st.session_state.generated_draft = draft_result.get("noi_dung_chinh", "")
+                        st.session_state.generated_agency_name = draft_result.get("ten_co_quan", "")
+                        st.session_state.generated_content_dict = draft_result
+                        
+                        # Lưu vào Database
+                        database.save_draft(doc_type, prompt, draft_result)
+                        
+                    elif isinstance(draft_result, dict) and "error" in draft_result:
+                        st.session_state.generated_draft = draft_result["error"]
+                    else:
+                        st.session_state.generated_draft = str(draft_result)
+                        
+                    st.session_state.legal_check_result = "" # Reset legal check result on new draft
                 
 # CỘT PHẢI: KẾT QUẢ & DOWNLOAD
 with col2:
@@ -185,11 +185,11 @@ with col2:
         if st.button("⚖️ Tóm tắt & Kiểm tra tính pháp lý", use_container_width=True):
             if require_auth("Kiểm tra tính pháp lý"):
                 if not notebook_lm_data.strip():
-                st.warning("Vui lòng nhập Dữ liệu từ NotebookLM ở cột bên trái để có căn cứ đối chiếu!")
-            else:
-                with st.spinner("Đang đối chiếu pháp lý..."):
-                    check_result = check_legal_compliance(st.session_state.generated_draft, notebook_lm_data)
-                    st.session_state.legal_check_result = check_result
+                    st.warning("Vui lòng nhập Dữ liệu từ NotebookLM ở cột bên trái để có căn cứ đối chiếu!")
+                else:
+                    with st.spinner("Đang đối chiếu pháp lý..."):
+                        check_result = check_legal_compliance(st.session_state.generated_draft, notebook_lm_data)
+                        st.session_state.legal_check_result = check_result
         
         if st.session_state.legal_check_result:
             st.markdown("#### Báo cáo Đối chiếu Pháp lý")

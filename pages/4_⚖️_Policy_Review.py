@@ -112,26 +112,26 @@ with col_left:
     if run_btn:
         if require_auth("Thẩm tra chính sách AI"):
             if not uploaded_file:
-            st.error("⚠️ Vui lòng tải lên file dự thảo!")
-        elif not policy_name.strip():
-            st.error("⚠️ Vui lòng nhập tên dự thảo!")
-        elif not focus:
-            st.warning("Vui lòng chọn ít nhất 1 trọng tâm phân tích.")
-        else:
-            with st.spinner("🧠 AI đang nghiên cứu tài liệu và soạn báo cáo thẩm tra..."):
-                # Trích xuất văn bản
-                if uploaded_file.name.endswith(".pdf"):
-                    text = extract_text_from_pdf(uploaded_file)
-                else:
-                    text = extract_text_from_docx(uploaded_file)
+                st.error("⚠️ Vui lòng tải lên file dự thảo!")
+            elif not policy_name.strip():
+                st.error("⚠️ Vui lòng nhập tên dự thảo!")
+            elif not focus:
+                st.warning("Vui lòng chọn ít nhất 1 trọng tâm phân tích.")
+            else:
+                with st.spinner("🧠 AI đang nghiên cứu tài liệu và soạn báo cáo thẩm tra..."):
+                    # Trích xuất văn bản
+                    if uploaded_file.name.endswith(".pdf"):
+                        text = extract_text_from_pdf(uploaded_file)
+                    else:
+                        text = extract_text_from_docx(uploaded_file)
 
-                result = analyze_policy(text, policy_name, focus)
-                st.session_state.policy_result = result
-                st.session_state.policy_name   = policy_name
+                    result = analyze_policy(text, policy_name, focus)
+                    st.session_state.policy_result = result
+                    st.session_state.policy_name   = policy_name
 
-                # Lưu vào DB
-                database.save_policy_review(policy_name, result)
-                st.success("✅ Phân tích hoàn tất!")
+                    # Lưu vào DB
+                    database.save_policy_review(policy_name, result)
+                    st.success("✅ Phân tích hoàn tất!")
 
 with col_right:
     st.markdown("### 📋 Báo cáo Thẩm tra AI")

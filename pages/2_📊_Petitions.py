@@ -155,8 +155,8 @@ st.caption("AI sẽ phân tích toàn bộ dữ liệu kiến nghị để xác 
 if st.button("🔍 CHẠY PHÂN TÍCH AI CHUYÊN SÂU", type="primary"):
     if require_auth("Phân tích AI chuyên sâu"):
         with st.spinner("🧠 AI đang tổng hợp dữ liệu và đánh giá rủi ro xã hội..."):
-        data_summary = df[['district', 'category', 'status', 'content']].to_string(index=False)
-        prompt = f"""
+            data_summary = df[['district', 'category', 'status', 'content']].to_string(index=False)
+            prompt = f"""
 Bạn là chuyên gia phân tích xã hội học và chính sách công của tỉnh Thanh Hóa.
 Dưới đây là danh sách kiến nghị của cử tri:
 
@@ -178,8 +178,8 @@ Những kiến nghị nào nếu không giải quyết kịp thời sẽ có ngu
 
 Trả lời sắc bén, chuyên nghiệp, bằng ngôn ngữ hành chính nhà nước.
 """
-        result = generate_text(prompt, use_pro=True)
-        st.session_state.petition_ai_result = result
+            result = generate_text(prompt, use_pro=True)
+            st.session_state.petition_ai_result = result
 
 if "petition_ai_result" in st.session_state:
     st.markdown(st.session_state.petition_ai_result)

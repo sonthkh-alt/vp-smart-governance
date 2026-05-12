@@ -163,7 +163,7 @@ st.markdown("### 🗺️ Lộ trình 6 Năm Chiến lược")
 if st.button("🧠 AI TẠO LỘ TRÌNH CÁ NHÂN HÓA", type="primary"):
     if require_auth("Tạo lộ trình cá nhân hóa"):
         with st.spinner("AI đang phân tích hồ sơ và thiết kế lộ trình chiến lược..."):
-        profile_summary = f"""
+            profile_summary = f"""
 Họ tên: {profile.get('full_name', 'Chưa cập nhật')}
 Học vị: {profile.get('current_title', 'Tiến sĩ')}
 Ngành: {profile.get('field', '')} — Chuyên ngành: {profile.get('sub_field', '')}
@@ -178,7 +178,7 @@ Hướng dẫn ThS: {masters}/{PGS_REQUIREMENTS['min_supervised_masters']}
 Đề tài NCKH: {projects}/{PGS_REQUIREMENTS['min_research_projects']}
 Ngoại ngữ: {profile.get('foreign_language', 'Chưa cập nhật')}
 """
-        prompt = f"""
+            prompt = f"""
 Bạn là chuyên gia tư vấn học thuật cấp cao, am hiểu sâu sắc quy trình xét PGS tại Việt Nam (QĐ 37/2018/QĐ-TTg).
 
 HỒ SƠ ỨNG VIÊN:
@@ -205,8 +205,8 @@ Cuối cùng: Đưa ra **3 RỦI RO LỚN NHẤT** và cách phòng tránh.
 
 Trình bày chuyên nghiệp, chi tiết, thực tế.
 """
-        result = generate_text(prompt, use_pro=True)
-        st.session_state.roadmap_result = result
+            result = generate_text(prompt, use_pro=True)
+            st.session_state.roadmap_result = result
 
 if "roadmap_result" in st.session_state:
     st.markdown(st.session_state.roadmap_result)
@@ -246,10 +246,10 @@ topic_prompt = st.text_input("Nhập lĩnh vực quan tâm (hoặc để trống
 if st.button("🔍 GỢI Ý ĐỀ TÀI NGHIÊN CỨU", type="primary"):
     if require_auth("Gợi ý đề tài nghiên cứu"):
         with st.spinner("AI đang phân tích xu hướng nghiên cứu..."):
-        field_info = profile.get("field", "Luật học") if profile else "Khoa học xã hội"
-        sub_info = profile.get("sub_field", "") if profile else ""
-        user_topic = topic_prompt if topic_prompt.strip() else f"{field_info} - {sub_info}"
-        prompt = f"""
+            field_info = profile.get("field", "Luật học") if profile else "Khoa học xã hội"
+            sub_info = profile.get("sub_field", "") if profile else ""
+            user_topic = topic_prompt if topic_prompt.strip() else f"{field_info} - {sub_info}"
+            prompt = f"""
 Bạn là cố vấn học thuật cấp cao. Ứng viên PGS ngành {field_info}, chuyên ngành {sub_info}.
 
 Hãy đề xuất 5 ĐỀ TÀI NGHIÊN CỨU tiềm năng trong lĩnh vực: {user_topic}
@@ -263,8 +263,8 @@ Với mỗi đề tài:
 
 Ưu tiên đề tài có tính liên ngành, có thể gắn với thực tiễn quản trị nhà nước tại Việt Nam.
 """
-        result = generate_text(prompt, use_pro=True)
-        st.session_state.topic_suggestions = result
+            result = generate_text(prompt, use_pro=True)
+            st.session_state.topic_suggestions = result
 
 if "topic_suggestions" in st.session_state:
     st.markdown(st.session_state.topic_suggestions)

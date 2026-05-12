@@ -149,27 +149,27 @@ with col_left:
     if run_btn:
         if require_auth("Kiểm tra chất lượng văn bản"):
             text = st.session_state.doc_review_text.strip()
-        if not text:
-            st.error("⚠️ Vui lòng nhập hoặc tải lên văn bản cần kiểm tra!")
-        elif len(text) < 50:
-            st.warning("⚠️ Nội dung quá ngắn. Vui lòng nhập đầy đủ văn bản.")
-        else:
-            with st.spinner("🧠 AI đang thực hiện quy trình 3 bước: Soát lỗi → Tối ưu → Logic..."):
-                focus_str = ", ".join(review_focus) if review_focus else "Toàn diện"
+            if not text:
+                st.error("⚠️ Vui lòng nhập hoặc tải lên văn bản cần kiểm tra!")
+            elif len(text) < 50:
+                st.warning("⚠️ Nội dung quá ngắn. Vui lòng nhập đầy đủ văn bản.")
+            else:
+                with st.spinner("🧠 AI đang thực hiện quy trình 3 bước: Soát lỗi → Tối ưu → Logic..."):
+                    focus_str = ", ".join(review_focus) if review_focus else "Toàn diện"
 
-                user_prompt = f"""VĂN BẢN CẦN KIỂM TRA:
+                    user_prompt = f"""VĂN BẢN CẦN KIỂM TRA:
 {text[:12000]}
 
 TRỌNG TÂM: {focus_str}
 {"XUẤT TOÀN VĂN ĐÃ SỬA Ở PHẦN IV." if output_full_text else "KHÔNG cần xuất toàn văn ở phần IV, chỉ tóm tắt thay đổi."}
 {f"GHI CHÚ BỔ SUNG: {extra_instructions}" if extra_instructions.strip() else ""}"""
 
-                result = generate_text(
-                    f"{_SYSTEM_PROMPT}\n\n{user_prompt}",
-                    use_pro=True,
-                )
-                st.session_state.doc_review_result = result
-                st.success("✅ Kiểm tra hoàn tất!")
+                    result = generate_text(
+                        f"{_SYSTEM_PROMPT}\n\n{user_prompt}",
+                        use_pro=True,
+                    )
+                    st.session_state.doc_review_result = result
+                    st.success("✅ Kiểm tra hoàn tất!")
 
 with col_right:
     st.markdown("### 📋 Báo cáo Kiểm soát Chất lượng")
@@ -211,8 +211,8 @@ with col_right:
         if st.button("🔍 PHÂN TÍCH BỔ SUNG", use_container_width=True):
             if require_auth("Phân tích AI bổ sung"):
                 if followup.strip():
-                with st.spinner("🧠 AI đang phân tích bổ sung..."):
-                    followup_prompt = f"""Dựa trên báo cáo kiểm tra trước đó:
+                    with st.spinner("🧠 AI đang phân tích bổ sung..."):
+                        followup_prompt = f"""Dựa trên báo cáo kiểm tra trước đó:
 {st.session_state.doc_review_result[:4000]}
 
 VĂN BẢN GỐC (tóm tắt):
@@ -222,11 +222,11 @@ YÊU CẦU BỔ SUNG:
 {followup}
 
 Trả lời ngắn gọn, tập trung vào yêu cầu. Dùng Markdown Table nếu cần so sánh."""
-                    extra_result = generate_text(followup_prompt, use_pro=True)
-                    st.session_state.doc_review_result += f"\n\n---\n## 📌 PHÂN TÍCH BỔ SUNG\n{extra_result}"
-                    st.rerun()
-            else:
-                st.warning("Vui lòng nhập yêu cầu bổ sung.")
+                        extra_result = generate_text(followup_prompt, use_pro=True)
+                        st.session_state.doc_review_result += f"\n\n---\n## 📌 PHÂN TÍCH BỔ SUNG\n{extra_result}"
+                        st.rerun()
+                else:
+                    st.warning("Vui lòng nhập yêu cầu bổ sung.")
     else:
         st.info("💡 Kết quả kiểm tra sẽ hiển thị ở đây sau khi bạn tải lên văn bản và nhấn 'Bắt đầu Kiểm tra'.")
 

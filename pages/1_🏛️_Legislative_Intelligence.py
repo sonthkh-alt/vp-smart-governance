@@ -32,14 +32,14 @@ with col1:
     if st.button("🔄 Vector hóa & Xây dựng CSDL Tri thức", use_container_width=True):
         if require_auth("Vector hóa tài liệu"):
             if not uploaded_files:
-            st.warning("⚠️ Vui lòng tải lên ít nhất 1 tài liệu!")
-        else:
-            with st.spinner("Đang trích xuất văn bản, phân mảnh (chunking) và Vector hóa... Quá trình này có thể mất vài phút."):
-                status, msg = process_documents(uploaded_files)
-                if status:
-                    st.success("✅ Đã xây dựng xong cơ sở dữ liệu tri thức! Các tài liệu đã sẵn sàng để đối chiếu.")
-                else:
-                    st.error(f"❌ Có lỗi: {msg}")
+                st.warning("⚠️ Vui lòng tải lên ít nhất 1 tài liệu!")
+            else:
+                with st.spinner("Đang trích xuất văn bản, phân mảnh (chunking) và Vector hóa... Quá trình này có thể mất vài phút."):
+                    status, msg = process_documents(uploaded_files)
+                    if status:
+                        st.success("✅ Đã xây dựng xong cơ sở dữ liệu tri thức! Các tài liệu đã sẵn sàng để đối chiếu.")
+                    else:
+                        st.error(f"❌ Có lỗi: {msg}")
 
 with col2:
     st.markdown("### 🤖 2. Trợ lý Phân tích & Gợi ý Chất vấn")
@@ -62,12 +62,12 @@ with col2:
     if st.button("🚀 THỰC HIỆN PHÂN TÍCH", type="primary", use_container_width=True):
         if require_auth("Phân tích AI chuyên sâu"):
             query = custom_query if custom_query.strip() else analysis_type
-        
-        with st.spinner("🧠 Trợ lý AI đang truy xuất dữ liệu đối chiếu và lập luận logic..."):
-            response = query_rag(query)
             
-            if response and not response.startswith("Lỗi") and not "chưa được xây dựng" in response:
-                st.markdown("#### 📊 Báo cáo Phản biện:")
-                st.info(response)
-            else:
-                st.error(response)
+            with st.spinner("🧠 Trợ lý AI đang truy xuất dữ liệu đối chiếu và lập luận logic..."):
+                response = query_rag(query)
+                
+                if response and not response.startswith("Lỗi") and not "chưa được xây dựng" in response:
+                    st.markdown("#### 📊 Báo cáo Phản biện:")
+                    st.info(response)
+                else:
+                    st.error(response)
