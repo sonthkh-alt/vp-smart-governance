@@ -10,9 +10,22 @@ import database
 
 load_dotenv(override=True)
 
-# Using Flash-Lite and 1.5-Flash for better free tier quota
-FLASH_MODELS = ["gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-flash-latest", "gemini-2.5-flash"]
-PRO_MODELS   = ["gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-flash-latest", "gemini-2.5-flash"]
+# Danh sách Model Ưu tiên (Sẽ thử lần lượt nếu lỗi)
+FLASH_MODELS = [
+    "gemini-3.1-pro",
+    "gemini-3-pro",
+    "gemini-3-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash-exp",
+    "gemini-1.5-flash",
+]
+
+PRO_MODELS = [
+    "gemini-3.1-pro",
+    "gemini-3-pro",
+    "gemini-2.5-pro",
+    "gemini-1.5-pro",
+]
 
 _RETRY_ERRORS = frozenset(["429", "resource_exhausted", "503", "unavailable", "overloaded", "deadline_exceeded"])
 _SKIP_ERRORS  = frozenset(["404", "not_found", "unimplemented", "permission_denied"])
@@ -171,7 +184,7 @@ def check_api_status():
     try:
         client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         # Danh sách các model muốn kiểm tra
-        to_test = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
+        to_test = ["gemini-3.1-pro", "gemini-3-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
         
         for model_id in to_test:
             try:
