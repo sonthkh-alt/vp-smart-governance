@@ -55,8 +55,10 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use
 
     last_error = None
 
-    # Prepare tools if search is requested
-    tools = [types.Tool(google_search=types.GoogleSearch())] if use_search else None
+    # Prepare tools if search is requested (but disable if JSON output is requested as it's unsupported)
+    tools = None
+    if use_search and not parse_json:
+        tools = [types.Tool(google_search=types.GoogleSearch())]
 
     for model_id in model_list:
         for attempt in range(max_retries + 1):
