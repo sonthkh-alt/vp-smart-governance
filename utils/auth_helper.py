@@ -3,10 +3,14 @@ import os
 import requests
 import urllib.parse
 
-# CHẨN ĐOÁN: Kiểm tra xem có biến nào bị kẹt trong hệ thống không
-for key in os.environ.keys():
-    if "REDIRECT" in key.upper() or "AUTH" in key.upper():
-        print(f"Hệ thống phát hiện biến kẹt: {key}")
+# CHẨN ĐOÁN 2: Liệt kê các phím trong Secrets
+print("--- DANH SÁCH BIẾN TRONG SECRETS ---")
+try:
+    for k in st.secrets.keys():
+        print(f"Phát hiện khóa: {k}")
+except Exception as e:
+    print(f"Không thể đọc Secrets: {str(e)}")
+print("-------------------------------------")
 
 # Cấu hình Google OAuth
 raw_id = st.secrets.get("my_google_app", {}).get("id", "")
