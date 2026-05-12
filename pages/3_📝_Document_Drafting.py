@@ -11,20 +11,11 @@ from docx import Document
 import io
 import database
 
-# -- CẤU HÍNH TRANG CHÍNH (phải là lệnh st.* đầu tiên) --
-st.set_page_config(
-    page_title="Trợ lý ảo Tham mưu Văn bản",
-    page_icon="📝",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
 # Khởi tạo DB
 database.init_db()
 
 # Áp dụng giao diện Premium
 set_premium_css()
-draw_sidebar()
 
 # Hiển thị Header
 draw_module_header(

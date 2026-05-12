@@ -14,11 +14,8 @@ from utils.gemini_client import generate_text
 from utils.auth_helper import require_auth
 import database
 
-st.set_page_config(page_title="Học thuật & Nâng hạng", page_icon="🎓", layout="wide")
-
-# Áp dụng giao diện Premium & Sidebar
+# Áp dụng giao diện Premium
 set_premium_css()
-draw_sidebar()
 
 draw_module_header("Academic Promotion Roadmap", "🎓",
     "Lộ trình cá nhân hóa đạt chức danh Phó Giáo sư — Theo QĐ 37/2018/QĐ-TTg")

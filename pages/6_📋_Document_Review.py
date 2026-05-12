@@ -8,15 +8,13 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
+from utils.ui_helper import set_premium_css, draw_module_header
 from utils.gemini_client import generate_text
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
 from utils.auth_helper import require_auth
 
-st.set_page_config(page_title="Kiểm soát Văn bản", page_icon="📋", layout="wide")
-
+# Áp dụng giao diện Premium
 set_premium_css()
-draw_sidebar()
 
 draw_module_header(
     "Document Quality Control",

@@ -8,11 +8,8 @@ from utils.auth_helper import require_auth, ADMIN_EMAIL
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 
 # ─── CẤU HÌNH TRANG ──────────────────────────────────────────────────────────
-st.set_page_config(page_title="Quản trị Hệ thống", page_icon="⚙️", layout="wide")
-
-# Áp dụng giao diện & Sidebar
+# Áp dụng giao diện Premium
 set_premium_css()
-draw_sidebar()
 
 # Kiểm tra quyền Admin
 if "user_info" not in st.session_state or st.session_state.user_info.get("email") != ADMIN_EMAIL:

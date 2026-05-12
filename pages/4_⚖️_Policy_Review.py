@@ -15,11 +15,9 @@ from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx, crea
 from utils.auth_helper import require_auth
 import database
 
-st.set_page_config(page_title="Thẩm tra Chính sách", page_icon="⚖️", layout="wide")
-
+# Áp dụng giao diện Premium
 database.init_db()
 set_premium_css()
-draw_sidebar()
 
 draw_module_header(
     "Policy Review & Impact Assessment",

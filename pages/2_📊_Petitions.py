@@ -15,11 +15,9 @@ from utils.gemini_client import generate_text
 from utils.auth_helper import require_auth
 import database
 
-st.set_page_config(page_title="Kiến nghị Cử tri", page_icon="📊", layout="wide")
-
+# Áp dụng giao diện Premium
 database.init_db()
 set_premium_css()
-draw_sidebar()
 
 draw_module_header(
     "Constituency Petitions",
