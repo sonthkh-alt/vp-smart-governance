@@ -22,7 +22,7 @@ def login_google():
             ```toml
             [auth]
             redirect_uri = "https://hdndthanhhoa.streamlit.app/oauth2callback"
-            cookie_key = "chuỗi_bí_mật_tùy_chọn"
+            cookie_secret = "chuỗi_bí_mật_tùy_chọn"
             ```
             4. Sau đó nhấn nút Đăng nhập lại.
         """)
