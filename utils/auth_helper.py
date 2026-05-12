@@ -22,14 +22,14 @@ def login_google():
             2. Tạo OAuth Client ID (Web Application) với Redirect URI: 
                `https://hdndthanhhoa.streamlit.app/oauth2callback`
             3. Copy mã dán vào **Settings -> Secrets**:
-            ```toml
             [auth]
+            # Lưu ý: cookie_secret nên là một chuỗi dài và ngẫu nhiên
+            cookie_secret = "nhập_một_chuỗi_dài_tại_đây"
             redirect_uri = "https://hdndthanhhoa.streamlit.app/oauth2callback"
-            cookie_secret = "sondeptrai"
 
             [auth.google]
-            client_id = "MÃ_CLIENT_ID_CỦA_BẠN"
-            client_secret = "MÃ_BÍ_MẬT_CỦA_BẠN"
+            client_id = "MÃ_CLIENT_ID.apps.googleusercontent.com"
+            client_secret = "MÃ_BÍ_MẬT_CLIENT_SECRET"
             server_metadata_url = "https://accounts.google.com/.well-known/openid-configuration"
             ```
         """)
