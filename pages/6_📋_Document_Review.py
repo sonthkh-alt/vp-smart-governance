@@ -7,6 +7,7 @@ import streamlit as st
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
+from utils.auth_helper import require_auth
 
 st.set_page_config(page_title="Kiểm soát Văn bản", page_icon="📋", layout="wide")
 
@@ -146,7 +147,8 @@ with col_left:
     )
 
     if run_btn:
-        text = st.session_state.doc_review_text.strip()
+        if require_auth("Kiểm tra chất lượng văn bản"):
+            text = st.session_state.doc_review_text.strip()
         if not text:
             st.error("⚠️ Vui lòng nhập hoặc tải lên văn bản cần kiểm tra!")
         elif len(text) < 50:
@@ -207,7 +209,8 @@ with col_right:
             key="followup_input",
         )
         if st.button("🔍 PHÂN TÍCH BỔ SUNG", use_container_width=True):
-            if followup.strip():
+            if require_auth("Phân tích AI bổ sung"):
+                if followup.strip():
                 with st.spinner("🧠 AI đang phân tích bổ sung..."):
                     followup_prompt = f"""Dựa trên báo cáo kiểm tra trước đó:
 {st.session_state.doc_review_result[:4000]}

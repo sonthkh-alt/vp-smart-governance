@@ -3,6 +3,7 @@ import os
 from utils.ai_helper import generate_document_content, check_legal_compliance
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx, create_nd30_document
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
+from utils.auth_helper import require_auth
 from docx import Document
 import io
 import database
@@ -120,7 +121,8 @@ with col1:
     reference_files = st.file_uploader("Chọn file", type=["pdf", "docx"], accept_multiple_files=True)
     
     if st.button("🚀 TẠO DỰ THẢO VĂN BẢN", use_container_width=True, type="primary"):
-        if not prompt.strip():
+        if require_auth("Tạo dự thảo văn bản"):
+            if not prompt.strip():
             st.warning("Vui lòng nhập yêu cầu trước khi tạo!")
         else:
             with st.spinner("Đang bóc tách dữ liệu từ file đính kèm..."):
@@ -181,7 +183,8 @@ with col2:
         
         # Thêm nút Kiểm tra tính pháp lý
         if st.button("⚖️ Tóm tắt & Kiểm tra tính pháp lý", use_container_width=True):
-            if not notebook_lm_data.strip():
+            if require_auth("Kiểm tra tính pháp lý"):
+                if not notebook_lm_data.strip():
                 st.warning("Vui lòng nhập Dữ liệu từ NotebookLM ở cột bên trái để có căn cứ đối chiếu!")
             else:
                 with st.spinner("Đang đối chiếu pháp lý..."):

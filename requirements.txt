@@ -16,3 +16,6 @@ langchain-community>=0.4.1
 protobuf==3.20.3
 langchain-chroma>=1.1.0
 pysqlite3-binary
+google-auth-oauthlib
+google-auth
+requests

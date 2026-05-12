@@ -9,6 +9,7 @@ import plotly.express as px
 import os
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text
+from utils.auth_helper import require_auth
 import database
 
 st.set_page_config(page_title="Kiến nghị Cử tri", page_icon="📊", layout="wide")
@@ -152,7 +153,8 @@ st.markdown("### 🧠 Trợ lý AI — Phân tích Xu hướng & Tham mưu Chín
 st.caption("AI sẽ phân tích toàn bộ dữ liệu kiến nghị để xác định điểm nóng, đánh giá rủi ro và đề xuất giải pháp vĩ mô.")
 
 if st.button("🔍 CHẠY PHÂN TÍCH AI CHUYÊN SÂU", type="primary"):
-    with st.spinner("🧠 AI đang tổng hợp dữ liệu và đánh giá rủi ro xã hội..."):
+    if require_auth("Phân tích AI chuyên sâu"):
+        with st.spinner("🧠 AI đang tổng hợp dữ liệu và đánh giá rủi ro xã hội..."):
         data_summary = df[['district', 'category', 'status', 'content']].to_string(index=False)
         prompt = f"""
 Bạn là chuyên gia phân tích xã hội học và chính sách công của tỉnh Thanh Hóa.

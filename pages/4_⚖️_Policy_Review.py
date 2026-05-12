@@ -9,6 +9,7 @@ import io
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx, create_nd30_document
+from utils.auth_helper import require_auth
 import database
 
 st.set_page_config(page_title="Thẩm tra Chính sách", page_icon="⚖️", layout="wide")
@@ -109,7 +110,8 @@ with col_left:
     run_btn = st.button("🚀 BẮT ĐẦU THẨM TRA AI", type="primary", use_container_width=True)
 
     if run_btn:
-        if not uploaded_file:
+        if require_auth("Thẩm tra chính sách AI"):
+            if not uploaded_file:
             st.error("⚠️ Vui lòng tải lên file dự thảo!")
         elif not policy_name.strip():
             st.error("⚠️ Vui lòng nhập tên dự thảo!")

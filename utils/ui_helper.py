@@ -1,4 +1,5 @@
 import streamlit as st
+from utils.auth_helper import init_auth, check_auth_status, get_user_info, login_google, logout
 
 def set_premium_css():
     """
@@ -231,10 +232,11 @@ def draw_glass_card(title, content, icon=None):
         </div>
     """, unsafe_allow_html=True)
 
-def draw_sidebar():
-    """
-    Vẽ sidebar chung cho toàn bộ ứng dụng, bao gồm các link điều hướng ngoài.
-    """
+    # Khởi tạo trạng thái Auth
+    init_auth()
+    is_logged_in = check_auth_status()
+    user = get_user_info()
+
     with st.sidebar:
         st.markdown("### 🌐 Kết nối Hệ thống")
         st.page_link("https://hdnd.vercel.app/", label="Cổng thông tin HĐND", icon="🌍")
@@ -242,6 +244,24 @@ def draw_sidebar():
         
         st.markdown("### 🛠️ Cài đặt & Hỗ trợ")
         st.info("Phiên bản v2.1 - Python 3.14 Compatible")
+        st.markdown("---")
+
+        # ─── PHẦN ĐĂNG NHẬP (BOTTOM) ──────────────────────────────────────────
+        if not is_logged_in:
+            st.markdown("### 🔐 Tài khoản")
+            st.button("🔑 Đăng nhập với Google", on_click=login_google, use_container_width=True)
+            st.caption("Sử dụng bất kỳ tài khoản Google nào để truy cập AI.")
+        else:
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.image(user["picture"], width=45)
+            with col2:
+                st.markdown(f"**{user['name']}**")
+                st.caption(user["email"])
+            
+            if st.button("🚪 Đăng xuất", use_container_width=True):
+                logout()
+        
         st.markdown("---")
 
         # Thông tin tác giả - Đặt ở dưới cùng

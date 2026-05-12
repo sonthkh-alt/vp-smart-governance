@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import os
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text
+from utils.auth_helper import require_auth
 import database
 
 st.set_page_config(page_title="Học thuật & Nâng hạng", page_icon="🎓", layout="wide")
@@ -160,7 +161,8 @@ st.markdown("---")
 st.markdown("### 🗺️ Lộ trình 6 Năm Chiến lược")
 
 if st.button("🧠 AI TẠO LỘ TRÌNH CÁ NHÂN HÓA", type="primary"):
-    with st.spinner("AI đang phân tích hồ sơ và thiết kế lộ trình chiến lược..."):
+    if require_auth("Tạo lộ trình cá nhân hóa"):
+        with st.spinner("AI đang phân tích hồ sơ và thiết kế lộ trình chiến lược..."):
         profile_summary = f"""
 Họ tên: {profile.get('full_name', 'Chưa cập nhật')}
 Học vị: {profile.get('current_title', 'Tiến sĩ')}
@@ -242,7 +244,8 @@ topic_prompt = st.text_input("Nhập lĩnh vực quan tâm (hoặc để trống
     placeholder="VD: Quản trị công, Pháp luật về quyền con người, Kinh tế biển...")
 
 if st.button("🔍 GỢI Ý ĐỀ TÀI NGHIÊN CỨU", type="primary"):
-    with st.spinner("AI đang phân tích xu hướng nghiên cứu..."):
+    if require_auth("Gợi ý đề tài nghiên cứu"):
+        with st.spinner("AI đang phân tích xu hướng nghiên cứu..."):
         field_info = profile.get("field", "Luật học") if profile else "Khoa học xã hội"
         sub_info = profile.get("sub_field", "") if profile else ""
         user_topic = topic_prompt if topic_prompt.strip() else f"{field_info} - {sub_info}"

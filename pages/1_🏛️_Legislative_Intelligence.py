@@ -5,6 +5,7 @@ import streamlit as st
 import os
 from utils.rag_engine import process_documents, query_rag
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
+from utils.auth_helper import require_auth
 
 st.set_page_config(page_title="Trợ lý Kỳ họp", page_icon="🏛️", layout="wide")
 
@@ -29,7 +30,8 @@ with col1:
     uploaded_files = st.file_uploader("Chọn tài liệu (PDF, DOCX)", type=["pdf", "docx"], accept_multiple_files=True)
     
     if st.button("🔄 Vector hóa & Xây dựng CSDL Tri thức", use_container_width=True):
-        if not uploaded_files:
+        if require_auth("Vector hóa tài liệu"):
+            if not uploaded_files:
             st.warning("⚠️ Vui lòng tải lên ít nhất 1 tài liệu!")
         else:
             with st.spinner("Đang trích xuất văn bản, phân mảnh (chunking) và Vector hóa... Quá trình này có thể mất vài phút."):
@@ -58,7 +60,8 @@ with col2:
         custom_query = st.text_area("Nhập yêu cầu phân tích cụ thể:", placeholder="Ví dụ: Chỉ ra các rủi ro trong việc phân bổ vốn đầu tư công dựa trên các báo cáo vừa tải lên...")
     
     if st.button("🚀 THỰC HIỆN PHÂN TÍCH", type="primary", use_container_width=True):
-        query = custom_query if custom_query.strip() else analysis_type
+        if require_auth("Phân tích AI chuyên sâu"):
+            query = custom_query if custom_query.strip() else analysis_type
         
         with st.spinner("🧠 Trợ lý AI đang truy xuất dữ liệu đối chiếu và lập luận logic..."):
             response = query_rag(query)
