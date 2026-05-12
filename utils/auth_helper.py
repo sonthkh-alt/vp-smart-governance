@@ -1,28 +1,24 @@
 import streamlit as st
-import os
 import requests
-import json
 
 # Cấu hình Google OAuth
 CLIENT_ID = st.secrets.get("auth", {}).get("google", {}).get("client_id")
 CLIENT_SECRET = st.secrets.get("auth", {}).get("google", {}).get("client_secret")
-REDIRECT_URI = "https://hdndthanhhoa.streamlit.app" # Trang chủ xử lý callback
+REDIRECT_URI = "https://hdndthanhhoa.streamlit.app/oauth2callback"
 
 def init_auth():
-    """Xử lý Callback từ Google và duy trì trạng thái đăng nhập."""
+    """Xử lý Callback từ Google để định danh User."""
     if "is_logged_in" not in st.session_state:
         st.session_state.is_logged_in = False
         st.session_state.user_info = None
 
-    # Kiểm tra nếu có mã callback từ Google trong URL
+    # Tự động nhận diện khi Google gửi phản hồi về
     params = st.query_params
     if "code" in params and not st.session_state.is_logged_in:
-        code = params["code"]
         try:
-            # Trao đổi mã (code) lấy Token
             token_url = "https://oauth2.googleapis.com/token"
             data = {
-                "code": code,
+                "code": params["code"],
                 "client_id": CLIENT_ID,
                 "client_secret": CLIENT_SECRET,
                 "redirect_uri": REDIRECT_URI,
@@ -32,35 +28,26 @@ def init_auth():
             tokens = response.json()
             
             if "access_token" in tokens:
-                # Lấy thông tin người dùng từ Access Token
                 userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
                 headers = {"Authorization": f"Bearer {tokens['access_token']}"}
                 user_info = requests.get(userinfo_url, headers=headers).json()
                 
+                # Biến khách thành User chính thức của hệ thống
                 st.session_state.is_logged_in = True
                 st.session_state.user_info = user_info
-                
-                # Xóa code khỏi URL để sạch sẽ
                 st.query_params.clear()
                 st.rerun()
         except Exception as e:
-            st.error(f"Lỗi xác thực: {str(e)}")
+            st.error(f"Lỗi hệ thống khi kết nối Google: {str(e)}")
 
 def login_google():
-    """Chuyển hướng người dùng đến trang đăng nhập Google."""
+    """Kích hoạt luồng Đăng nhập Google duy nhất."""
     if not CLIENT_ID or not CLIENT_SECRET:
-        st.error("### 🔐 Thiếu cấu hình Google OAuth")
-        st.info(f"""
-            Vui lòng dán mã vào mục **Secrets** của Streamlit Cloud:
-            ```toml
-            [auth.google]
-            client_id = "MÃ_CỦA_BẠN"
-            client_secret = "MÃ_BÍ_MẬT_CỦA_BẠN"
-            ```
-        """)
+        st.error("### 🔐 Thiếu thông tin kết nối Google")
+        st.info("Vui lòng đảm bảo bạn đã cấu hình Client ID và Secret trong mục Secrets.")
         return
 
-    # Tạo URL đăng nhập Google
+    # URL chuẩn để yêu cầu Google định danh User
     auth_url = (
         "https://accounts.google.com/o/oauth2/v2/auth"
         f"?client_id={CLIENT_ID}"
@@ -71,27 +58,10 @@ def login_google():
         "&prompt=select_account"
     )
     
-    # LỐI ĐI RIÊNG: Đăng nhập nhanh bằng mã bí mật
-    st.markdown("---")
-    st.markdown("### ⚡ Đăng nhập nhanh (Dự phòng)")
-    passcode = st.text_input("Nhập mã bí mật của bạn", type="password", placeholder="Nhập mã...")
-    if st.button("🔓 VÀO HỆ THỐNG", use_container_width=True):
-        if passcode == "sondeptrai":
-            st.session_state.is_logged_in = True
-            st.session_state.user_info = {
-                "name": "Sơn Hà (Admin)",
-                "email": "sonthkh@gmail.com",
-                "picture": "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png"
-            }
-            st.success("✅ Đã xác thực thành công bằng mã bí mật!")
-            st.rerun()
-        else:
-            st.error("Mã bí mật không đúng.")
-    
-    st.markdown("---")
-    st.info("👋 Hoặc kết nối chính thống qua Google:")
-    st.link_button("🚀 ĐĂNG NHẬP VỚI GOOGLE", auth_url, use_container_width=True)
-    st.caption("Khách chưa có mã xác thực hoặc gặp lỗi đăng nhập Google vui lòng liên hệ **Hà Ngọc Sơn, PCVP Đoàn ĐBQH và HĐND tỉnh Thanh Hóa** để được hỗ trợ.")
+    st.markdown("### 🏛️ Đăng nhập Hệ thống")
+    st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
+    st.link_button("🔑 ĐĂNG NHẬP VỚI GOOGLE", auth_url, use_container_width=True, type="primary")
+    st.caption("Nếu gặp lỗi 403, vui lòng liên hệ Hà Ngọc Sơn để được hỗ trợ.")
     st.stop()
 
 def logout():
@@ -108,21 +78,10 @@ def get_user_info():
     """Lấy thông tin người dùng."""
     return st.session_state.get("user_info", {})
 
-def require_auth(feature_name="tính năng này"):
-    """
-    Hàm kiểm tra quyền truy cập. 
-    Nếu chưa đăng nhập, hiển thị thông báo và trả về False.
-    """
+def require_auth(feature_name="Tính năng này"):
+    """Bảo vệ các tính năng AI."""
     if not check_auth_status():
-        st.warning(f"⚠️ Vui lòng đăng nhập để sử dụng **{feature_name}**.")
-        st.markdown(f"""
-            <div style="background: rgba(230, 57, 70, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(230, 57, 70, 0.3); margin-bottom: 20px;">
-                <p style="color: #E63946; margin-bottom: 5px; font-weight: 600;">Quyền truy cập bị hạn chế</p>
-                <p style="font-size: 0.9rem; color: #F8FAFC;">
-                    Bạn cần đăng nhập bằng tài khoản Google được cấp phép hoặc liên hệ với 
-                    <b>Hà Ngọc Sơn</b>, PCVP Đoàn ĐBQH và HĐND tỉnh Thanh Hóa để được hỗ trợ.
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.warning(f"🔒 {feature_name} yêu cầu đăng nhập.")
+        login_google()
         return False
     return True
