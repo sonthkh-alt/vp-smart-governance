@@ -71,8 +71,7 @@ def _connect():
 
 
 def _ensure_db():
-    if not os.path.exists(DB_PATH):
-        init_db()
+    init_db()
 
 
 def init_db():
