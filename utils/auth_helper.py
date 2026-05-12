@@ -30,6 +30,7 @@ def login_google():
             [auth.google]
             client_id = "MÃ_CLIENT_ID_CỦA_BẠN"
             client_secret = "MÃ_BÍ_MẬT_CỦA_BẠN"
+            server_metadata_url = "https://accounts.google.com/.well-known/openid-configuration"
             ```
         """)
         if "Authlib" in str(e):
