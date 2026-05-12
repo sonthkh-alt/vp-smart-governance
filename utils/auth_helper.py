@@ -9,7 +9,7 @@ raw_secret = st.secrets.get("my_google_app", {}).get("secret", "")
 # Làm sạch dữ liệu: xóa khoảng trắng và dấu xuống dòng
 CLIENT_ID = raw_id.strip().replace("\n", "").replace("\r", "")
 CLIENT_SECRET = raw_secret.strip().replace("\n", "").replace("\r", "")
-url_phan_hoi = "https://hdndthanhhoa.streamlit.app/oauth2callback"
+url_phan_hoi = "https://hdndthanhhoa.streamlit.app/"
 
 def init_auth():
     """Xử lý Callback từ Google để định danh User."""
