@@ -23,6 +23,10 @@ def login_google():
             [auth]
             redirect_uri = "https://hdndthanhhoa.streamlit.app/oauth2callback"
             cookie_secret = "chuỗi_bí_mật_tùy_chọn"
+
+            [auth.google]
+            client_id = "MÃ_CLIENT_ID.apps.googleusercontent.com"
+            client_secret = "MÃ_BÍ_MẬT_CLIENT_SECRET"
             ```
             4. Sau đó nhấn nút Đăng nhập lại.
         """)
