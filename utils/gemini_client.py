@@ -170,22 +170,9 @@ def check_api_status():
     
     try:
         client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-        # 1. Lấy danh sách model thực tế từ Google
-        available_models = []
-        for m in client.models.list():
-            if "generateContent" in m.supported_methods:
-                # Lọc lấy các model chính để test
-                name = m.name.replace("models/", "")
-                if "gemini" in name and not "-vision" in name:
-                    available_models.append(name)
+        # Danh sách các model muốn kiểm tra
+        to_test = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
         
-        # 2. Chọn ra 3 model tiêu biểu để ping
-        test_candidates = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
-        to_test = [m for m in test_candidates if m in available_models]
-        if not to_test:
-            # Nếu không tìm thấy candidate, lấy đại 3 cái đầu tiên
-            to_test = available_models[:3]
-
         for model_id in to_test:
             try:
                 start_time = time.time()
@@ -198,9 +185,15 @@ def check_api_status():
                 latency = round((time.time() - start_time) * 1000, 0)
                 results[model_id] = {"status": "✅ Hoạt động", "latency": f"{latency}ms"}
             except Exception as e:
-                results[model_id] = {"status": "❌ Lỗi", "detail": str(e)}
+                err_msg = str(e)
+                if "404" in err_msg:
+                    results[model_id] = {"status": "➖ Không khả dụng", "detail": "Model này không được hỗ trợ cho tài khoản của bạn."}
+                elif "429" in err_msg:
+                    results[model_id] = {"status": "⚠️ Quá tải", "detail": "Bị giới hạn tần suất (Rate Limit)."}
+                else:
+                    results[model_id] = {"status": "❌ Lỗi", "detail": err_msg}
                 
     except Exception as e:
-        results["System"] = {"status": "❌ Không thể kết nối", "detail": str(e)}
+        results["Hệ thống"] = {"status": "❌ Lỗi kết nối", "detail": str(e)}
             
     return results
