@@ -13,6 +13,6 @@ Pillow>=12.2.0
 lxml>=6.1.0
 langchain-text-splitters>=1.1.2
 langchain-community>=0.4.1
-protobuf>=5.26.1
+protobuf==3.20.3
 langchain-chroma>=1.1.0
 pysqlite3-binary
