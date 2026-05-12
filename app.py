@@ -13,6 +13,15 @@ import os
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 import streamlit as st
+
+# THIẾT LẬP GIAO DIỆN FULL MÀN HÌNH
+st.set_page_config(
+    page_title="Smart Governance Platform",
+    page_icon="🏛️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 from utils.auth_helper import init_auth, ADMIN_EMAIL
 from utils.ui_helper import set_premium_css
 
