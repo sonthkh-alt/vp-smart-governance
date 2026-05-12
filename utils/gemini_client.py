@@ -111,9 +111,6 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use
                 # Log error to console for debugging
                 print(f"DEBUG: Gemini Error [{model_id}] (Attempt {attempt+1}): {e}")
 
-                    # Log error to database
-                    if "user_info" in st.session_state:
-                        database.log_api_usage(st.session_state.user_info.get("email"), model_id, "error", error=err_str)
                 # Log error to database
                 if "user_info" in st.session_state:
                     database.log_api_usage(st.session_state.user_info.get("email"), model_id, "error", error=err_str)
