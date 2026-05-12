@@ -1,74 +1,93 @@
 import streamlit as st
 import os
+import requests
+import json
+
+# Cấu hình Google OAuth
+CLIENT_ID = st.secrets.get("auth", {}).get("google", {}).get("client_id")
+CLIENT_SECRET = st.secrets.get("auth", {}).get("google", {}).get("client_secret")
+REDIRECT_URI = "https://hdndthanhhoa.streamlit.app" # Trang chủ xử lý callback
 
 def init_auth():
-    """Khởi tạo trạng thái đăng nhập dựa trên Streamlit Native Auth."""
-    # Streamlit Cloud cung cấp st.user tự động
+    """Xử lý Callback từ Google và duy trì trạng thái đăng nhập."""
     if "is_logged_in" not in st.session_state:
         st.session_state.is_logged_in = False
+        st.session_state.user_info = None
+
+    # Kiểm tra nếu có mã callback từ Google trong URL
+    params = st.query_params
+    if "code" in params and not st.session_state.is_logged_in:
+        code = params["code"]
+        try:
+            # Trao đổi mã (code) lấy Token
+            token_url = "https://oauth2.googleapis.com/token"
+            data = {
+                "code": code,
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET,
+                "redirect_uri": REDIRECT_URI,
+                "grant_type": "authorization_code",
+            }
+            response = requests.post(token_url, data=data)
+            tokens = response.json()
+            
+            if "access_token" in tokens:
+                # Lấy thông tin người dùng từ Access Token
+                userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+                headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+                user_info = requests.get(userinfo_url, headers=headers).json()
+                
+                st.session_state.is_logged_in = True
+                st.session_state.user_info = user_info
+                
+                # Xóa code khỏi URL để sạch sẽ
+                st.query_params.clear()
+                st.rerun()
+        except Exception as e:
+            st.error(f"Lỗi xác thực: {str(e)}")
 
 def login_google():
-    """Kích hoạt Google Login thật hoặc hướng dẫn cấu hình nếu thiếu 'chìa khóa'."""
-    try:
-        st.login("google")
-    except Exception as e:
-        # Nếu chưa cấu hình Secrets, hiện bảng hướng dẫn thay vì báo lỗi đỏ
-        st.error("### 🔐 Cấu hình Đăng nhập Google")
+    """Chuyển hướng người dùng đến trang đăng nhập Google."""
+    if not CLIENT_ID or not CLIENT_SECRET:
+        st.error("### 🔐 Thiếu cấu hình Google OAuth")
         st.info(f"""
-            Để kích hoạt luồng đăng nhập chuẩn 3 bước, bạn cần dán "chìa khóa" vào mục **Secrets** của Streamlit Cloud.
-            
-            **Hướng dẫn nhanh:**
-            1. Truy cập [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
-            2. Tạo OAuth Client ID (Web Application) với Redirect URI: 
-               `https://hdndthanhhoa.streamlit.app/oauth2callback`
-            3. Copy mã dán vào **Settings -> Secrets**:
-            [auth]
-            cookie_secret = "nhập_một_chuỗi_thật_dài_tại_đây"
-            redirect_uri = "https://hdndthanhhoa.streamlit.app/oauth2callback"
-
+            Vui lòng dán mã vào mục **Secrets** của Streamlit Cloud:
+            ```toml
             [auth.google]
-            client_id = "MÃ_CLIENT_ID.apps.googleusercontent.com"
-            client_secret = "MÃ_BÍ_MẬT_CLIENT_SECRET"
-            server_metadata_url = "https://accounts.google.com/.well-known/openid-configuration"
+            client_id = "MÃ_CỦA_BẠN"
+            client_secret = "MÃ_BÍ_MẬT_CỦA_BẠN"
             ```
         """)
-        if "Authlib" in str(e):
-            st.warning("⚠️ Hệ thống đang cài đặt thư viện hỗ trợ (Authlib). Vui lòng chờ 1 phút rồi nhấn thử lại.")
-        else:
-            st.caption(f"Chi tiết kỹ thuật: {str(e)}")
+        return
+
+    # Tạo URL đăng nhập Google
+    auth_url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        f"?client_id={CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}"
+        "&response_type=code"
+        "&scope=openid%20email%20profile"
+        "&access_type=offline"
+        "&prompt=select_account"
+    )
+    
+    # Chuyển hướng bằng Markdown/HTML (Streamlit không có lệnh redirect trực tiếp)
+    st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{auth_url}\'">', unsafe_allow_html=True)
+    st.stop()
 
 def logout():
-    """Bước 3: Đăng xuất và dọn dẹp phiên làm việc."""
-    st.logout()
+    """Đăng xuất."""
+    st.session_state.is_logged_in = False
+    st.session_state.user_info = None
+    st.rerun()
 
 def check_auth_status():
-    """Kiểm tra trạng thái đăng nhập một cách an toàn."""
-    # Thử sử dụng Streamlit Native Auth nếu có
-    try:
-        if hasattr(st, "user"):
-            # Một số phiên bản dùng .is_logged_in, số khác dùng kiểm tra email
-            if getattr(st.user, "is_logged_in", False):
-                return True
-            if getattr(st.user, "email", None):
-                return True
-    except:
-        pass
-    
-    # Quay lại sử dụng session_state nếu Native Auth không khả dụng
+    """Kiểm tra trạng thái đăng nhập an toàn."""
     return st.session_state.get("is_logged_in", False)
 
 def get_user_info():
-    """Lấy thông tin người dùng một cách an toàn."""
-    try:
-        if hasattr(st, "user") and (getattr(st.user, "is_logged_in", False) or getattr(st.user, "email", None)):
-            return {
-                "name": getattr(st.user, "name", "Người dùng"),
-                "email": getattr(st.user, "email", ""),
-                "picture": getattr(st.user, "picture", "https://www.gstatic.com/images/branding/product/2x/avatar_anonymous_128dp.png")
-            }
-    except:
-        pass
-    return st.session_state.get("user_info", None)
+    """Lấy thông tin người dùng."""
+    return st.session_state.get("user_info", {})
 
 def require_auth(feature_name="tính năng này"):
     """

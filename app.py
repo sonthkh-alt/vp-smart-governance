@@ -10,6 +10,10 @@ except ImportError:
 
 import streamlit as st
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
+from utils.auth_helper import init_auth
+
+# QUAN TRỌNG: Xử lý đăng nhập ngay khi tải trang
+init_auth()
 
 st.set_page_config(
     page_title="Smart Governance Platform",
