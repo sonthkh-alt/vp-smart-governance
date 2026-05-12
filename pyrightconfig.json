@@ -10,8 +10,7 @@
     "pythonVersion": "3.14",
     "analysis": {
         "extraPaths": [
-            "./",
-            "./utils"
+            "./"
         ],
         "typeCheckingMode": "basic"
     }
