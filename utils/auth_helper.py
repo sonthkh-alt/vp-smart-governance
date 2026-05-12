@@ -64,7 +64,7 @@ def login_google():
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
     st.markdown("### 🏛️ Đăng nhập Hệ thống")
-    st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI. (Mọi hỗ trợ vui lòng liên hệ đồng chí Hà Ngọc Sơn, PCVP Đoàn ĐBQH và HĐND tỉnh)")
+    st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
     st.link_button("🔑 ĐĂNG NHẬP VỚI GOOGLE", auth_url, use_container_width=True, type="primary")
     st.stop()
 
@@ -88,7 +88,7 @@ def require_auth(action_name="truy cập tính năng này"):
     Trả về True nếu đã đăng nhập.
     """
     if not st.session_state.get("is_logged_in", False):
-        st.warning(f"⚠️ Bạn cần đăng nhập để {action_name}. (Vui lòng liên hệ đồng chí Hà Ngọc Sơn, PCVP Đoàn ĐBQH và HĐND tỉnh để được hỗ trợ).")
+        st.warning(f"⚠️ Bạn cần đăng nhập để {action_name}.")
         login_google()
         return False
     return True
