@@ -1,8 +1,11 @@
-import streamlit as st
-import requests
-import urllib.parse
+import os
 
-# Cấu hình Google OAuth (Phòng thủ lỗi xuống dòng trong Secrets)
+# CHẨN ĐOÁN: Kiểm tra xem có biến nào bị kẹt trong hệ thống không
+for key in os.environ.keys():
+    if "REDIRECT" in key.upper() or "AUTH" in key.upper():
+        print(f"Hệ thống phát hiện biến kẹt: {key}")
+
+# Cấu hình Google OAuth
 raw_id = st.secrets.get("my_google_app", {}).get("id", "")
 raw_secret = st.secrets.get("my_google_app", {}).get("secret", "")
 
