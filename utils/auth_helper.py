@@ -1,18 +1,8 @@
 import streamlit as st
-import os
 import requests
 import urllib.parse
 
-# CHẨN ĐOÁN 2: Liệt kê các phím trong Secrets
-print("--- DANH SÁCH BIẾN TRONG SECRETS ---")
-try:
-    for k in st.secrets.keys():
-        print(f"Phát hiện khóa: {k}")
-except Exception as e:
-    print(f"Không thể đọc Secrets: {str(e)}")
-print("-------------------------------------")
-
-# Cấu hình Google OAuth
+# Cấu hình Google OAuth (Phòng thủ lỗi xuống dòng trong Secrets)
 raw_id = st.secrets.get("my_google_app", {}).get("id", "")
 raw_secret = st.secrets.get("my_google_app", {}).get("secret", "")
 
@@ -59,9 +49,10 @@ def login_google():
     """Kích hoạt luồng Đăng nhập Google duy nhất."""
     if not CLIENT_ID or not CLIENT_SECRET:
         st.error("### 🔐 Thiếu thông tin kết nối Google")
+        st.info("Vui lòng đảm bảo bạn đã dán mã ID và Secret vào Secrets với tên mục [my_google_app].")
         return
 
-    # Xây dựng URL chuẩn bằng thư viện chuyên dụng để tránh lỗi ký tự
+    # Xây dựng URL chuẩn
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
@@ -83,19 +74,3 @@ def logout():
     st.session_state.is_logged_in = False
     st.session_state.user_info = None
     st.rerun()
-
-def check_auth_status():
-    """Kiểm tra trạng thái đăng nhập an toàn."""
-    return st.session_state.get("is_logged_in", False)
-
-def get_user_info():
-    """Lấy thông tin người dùng."""
-    return st.session_state.get("user_info", {})
-
-def require_auth(feature_name="Tính năng này"):
-    """Bảo vệ các tính năng AI."""
-    if not check_auth_status():
-        st.warning(f"🔒 {feature_name} yêu cầu đăng nhập.")
-        login_google()
-        return False
-    return True
