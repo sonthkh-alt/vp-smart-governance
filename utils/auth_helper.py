@@ -9,7 +9,7 @@ raw_secret = st.secrets.get("my_google_app", {}).get("secret", "")
 # Làm sạch dữ liệu: xóa khoảng trắng và dấu xuống dòng
 CLIENT_ID = raw_id.strip().replace("\n", "").replace("\r", "")
 CLIENT_SECRET = raw_secret.strip().replace("\n", "").replace("\r", "")
-REDIRECT_URI = "https://hdndthanhhoa.streamlit.app/oauth2callback"
+url_phan_hoi = "https://hdndthanhhoa.streamlit.app/oauth2callback"
 
 def init_auth():
     """Xử lý Callback từ Google để định danh User."""
@@ -26,7 +26,7 @@ def init_auth():
                 "code": params["code"],
                 "client_id": CLIENT_ID,
                 "client_secret": CLIENT_SECRET,
-                "redirect_uri": REDIRECT_URI,
+                "redirect_uri": url_phan_hoi,
                 "grant_type": "authorization_code",
             }
             response = requests.post(token_url, data=data)
@@ -54,7 +54,7 @@ def login_google():
     # Xây dựng URL chuẩn bằng thư viện chuyên dụng để tránh lỗi ký tự
     params = {
         "client_id": CLIENT_ID,
-        "redirect_uri": REDIRECT_URI,
+        "redirect_uri": url_phan_hoi,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
