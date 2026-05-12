@@ -1,18 +1,18 @@
 {
-    "venvPath": ".",
-    "venv": ".venv",
     "include": [
         "."
     ],
     "exclude": [
+        "**/__pycache__",
         "**/.venv",
-        "**/__pycache__"
+        "**/venv314"
     ],
     "pythonVersion": "3.14",
     "analysis": {
         "extraPaths": [
             "./",
             "./utils"
-        ]
+        ],
+        "typeCheckingMode": "basic"
     }
 }

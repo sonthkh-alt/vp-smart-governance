@@ -82,3 +82,14 @@ def check_auth_status():
 def get_user_info():
     """Lấy thông tin người dùng."""
     return st.session_state.get("user_info", {})
+
+def require_auth(action_name="truy cập tính năng này"):
+    """
+    Kiểm tra quyền truy cập. Nếu chưa đăng nhập, hiển thị nút đăng nhập và dừng script.
+    Trả về True nếu đã đăng nhập.
+    """
+    if not st.session_state.get("is_logged_in", False):
+        st.warning(f"⚠️ Bạn cần đăng nhập để {action_name}.")
+        login_google()
+        return False
+    return True
