@@ -44,6 +44,13 @@ _TABLES_SQL = [
         credits INTEGER DEFAULT 3,
         is_admin INTEGER DEFAULT 0,
         created_at TEXT
+    )''',
+    '''CREATE TABLE IF NOT EXISTS api_usage (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT NOT NULL,
+        email TEXT,
+        model_id TEXT,
+        status TEXT
     )'''
 ]
 
@@ -258,3 +265,25 @@ def use_credit(email):
             conn.execute('UPDATE users SET credits = credits - 1 WHERE email=? AND credits > 0', (email,))
         return True
     return user and user["is_admin"]
+
+def log_api_usage(email, model_id, status="success"):
+    with _connect() as conn:
+        conn.execute(
+            'INSERT INTO api_usage (timestamp, email, model_id, status) VALUES (?,?,?,?)',
+            (_now(), email, model_id, status)
+        )
+
+def get_api_usage_stats():
+    _ensure_db()
+    with _connect() as conn:
+        total_calls = conn.execute('SELECT COUNT(*) FROM api_usage').fetchone()[0]
+        calls_by_model = conn.execute('SELECT model_id, COUNT(*) FROM api_usage GROUP BY model_id').fetchall()
+        calls_by_user = conn.execute('SELECT email, COUNT(*) FROM api_usage GROUP BY email ORDER BY COUNT(*) DESC').fetchall()
+        daily_usage = conn.execute("SELECT date(timestamp), COUNT(*) FROM api_usage GROUP BY date(timestamp) ORDER BY date(timestamp) DESC LIMIT 7").fetchall()
+    
+    return {
+        "total": total_calls,
+        "by_model": dict(calls_by_model),
+        "by_user": dict(calls_by_user),
+        "daily": daily_usage
+    }

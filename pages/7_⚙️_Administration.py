@@ -81,4 +81,40 @@ for u in filtered_users:
                 st.button("⚙️ Cài đặt hệ thống", disabled=True, use_container_width=True)
 
 st.markdown("---")
+st.markdown("### 📈 Theo dõi API Gemini Usage")
+
+stats = database.get_api_usage_stats()
+
+c_api1, c_api2, c_api3 = st.columns(3)
+with c_api1:
+    st.metric("🚀 Tổng số yêu cầu AI", stats["total"])
+with c_api2:
+    if stats["daily"]:
+        st.metric("📅 Lượt dùng hôm nay", stats["daily"][0][1])
+    else:
+        st.metric("📅 Lượt dùng hôm nay", 0)
+with c_api3:
+    st.metric("🤖 Số Model đã dùng", len(stats["by_model"]))
+
+# Phân bổ theo Model và User
+tab1, tab2 = st.tabs(["📊 Theo Model", "👤 Theo Người dùng"])
+
+with tab1:
+    if stats["by_model"]:
+        import pandas as pd
+        df_model = pd.DataFrame(list(stats["by_model"].items()), columns=["Model", "Số lượt"])
+        st.bar_chart(df_model.set_index("Model"))
+        st.table(df_model)
+    else:
+        st.info("Chưa có dữ liệu sử dụng theo Model.")
+
+with tab2:
+    if stats["by_user"]:
+        import pandas as pd
+        df_user = pd.DataFrame(list(stats["by_user"].items()), columns=["Email", "Số lượt"])
+        st.table(df_user)
+    else:
+        st.info("Chưa có dữ liệu sử dụng theo Người dùng.")
+
+st.markdown("---")
 st.caption("Giao diện Quản trị viên — Bảo mật 2 lớp. Mọi thay đổi đều được ghi lại nhật ký hệ thống.")

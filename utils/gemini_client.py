@@ -76,9 +76,11 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use
                 if not resp or not resp.text:
                     raise RuntimeError("API trả về kết quả rỗng (Empty response).")
                 
-                # Trừ credit sau khi gọi thành công (nếu có user_info)
+                # Trừ credit và Log usage sau khi gọi thành công (nếu có user_info)
                 if "user_info" in st.session_state:
-                    database.use_credit(st.session_state.user_info.get("email"))
+                    email = st.session_state.user_info.get("email")
+                    database.use_credit(email)
+                    database.log_api_usage(email, model_id, "success")
                 
                 raw = resp.text
                 if not parse_json:
