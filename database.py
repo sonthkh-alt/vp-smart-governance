@@ -50,7 +50,10 @@ _TABLES_SQL = [
         timestamp TEXT NOT NULL,
         email TEXT,
         model_id TEXT,
-        status TEXT
+        status TEXT,
+        prompt_tokens INTEGER DEFAULT 0,
+        candidate_tokens INTEGER DEFAULT 0,
+        error_detail TEXT
     )'''
 ]
 
@@ -266,24 +269,43 @@ def use_credit(email):
         return True
     return user and user["is_admin"]
 
-def log_api_usage(email, model_id, status="success"):
+def log_api_usage(email, model_id, status="success", p_tokens=0, c_tokens=0, error=""):
     with _connect() as conn:
         conn.execute(
-            'INSERT INTO api_usage (timestamp, email, model_id, status) VALUES (?,?,?,?)',
-            (_now(), email, model_id, status)
+            'INSERT INTO api_usage (timestamp, email, model_id, status, prompt_tokens, candidate_tokens, error_detail) VALUES (?,?,?,?,?,?,?)',
+            (_now(), email, model_id, status, p_tokens, c_tokens, error)
         )
 
 def get_api_usage_stats():
     _ensure_db()
     with _connect() as conn:
-        total_calls = conn.execute('SELECT COUNT(*) FROM api_usage').fetchone()[0]
-        calls_by_model = conn.execute('SELECT model_id, COUNT(*) FROM api_usage GROUP BY model_id').fetchall()
-        calls_by_user = conn.execute('SELECT email, COUNT(*) FROM api_usage GROUP BY email ORDER BY COUNT(*) DESC').fetchall()
-        daily_usage = conn.execute("SELECT date(timestamp), COUNT(*) FROM api_usage GROUP BY date(timestamp) ORDER BY date(timestamp) DESC LIMIT 7").fetchall()
+        try:
+            total_calls = conn.execute('SELECT COUNT(*) FROM api_usage').fetchone()[0]
+            calls_by_model = conn.execute('SELECT model_id, COUNT(*) FROM api_usage GROUP BY model_id').fetchall()
+            calls_by_user = conn.execute('SELECT email, COUNT(*) FROM api_usage GROUP BY email ORDER BY COUNT(*) DESC').fetchall()
+            daily_usage = conn.execute("SELECT date(timestamp), COUNT(*) FROM api_usage GROUP BY date(timestamp) ORDER BY date(timestamp) DESC LIMIT 7").fetchall()
+            
+            # Chi tiết như hình Google AI Studio
+            detailed_stats = conn.execute('''
+                SELECT 
+                    model_id, 
+                    COUNT(*) as requests,
+                    SUM(CASE WHEN status='success' THEN 1 ELSE 0 END) as success,
+                    SUM(CASE WHEN status='error' THEN 1 ELSE 0 END) as errors,
+                    SUM(prompt_tokens) as input_tokens,
+                    SUM(candidate_tokens) as output_tokens
+                FROM api_usage 
+                GROUP BY model_id
+            ''').fetchall()
+        except sqlite3.OperationalError:
+            # Migration nếu bảng cũ chưa có cột mới
+            init_db()
+            return get_api_usage_stats()
     
     return {
         "total": total_calls,
         "by_model": dict(calls_by_model),
         "by_user": dict(calls_by_user),
-        "daily": daily_usage
+        "daily": daily_usage,
+        "detailed": detailed_stats
     }

@@ -100,13 +100,22 @@ with c_api3:
 tab1, tab2 = st.tabs(["📊 Theo Model", "👤 Theo Người dùng"])
 
 with tab1:
-    if stats["by_model"]:
+    if stats["detailed"]:
         import pandas as pd
-        df_model = pd.DataFrame(list(stats["by_model"].items()), columns=["Model", "Số lượt"])
-        st.bar_chart(df_model.set_index("Model"))
-        st.table(df_model)
+        df_detailed = pd.DataFrame(stats["detailed"], columns=[
+            "Model ID", "Tổng số Request", "Thành công", "Lỗi", "Input Tokens", "Output Tokens"
+        ])
+        
+        # Thêm tỷ lệ thành công
+        df_detailed["Tỷ lệ %"] = (df_detailed["Thành công"] / df_detailed["Tổng số Request"] * 100).round(1).astype(str) + "%"
+        
+        st.markdown("#### 📊 Chi tiết Hiệu năng & Dung lượng (Chuẩn Google AI Studio)")
+        st.dataframe(df_detailed, use_container_width=True, hide_index=True)
+        
+        # Biểu đồ tóm tắt
+        st.bar_chart(df_detailed.set_index("Model ID")[["Input Tokens", "Output Tokens"]])
     else:
-        st.info("Chưa có dữ liệu sử dụng theo Model.")
+        st.info("Chưa có dữ liệu chi tiết sử dụng theo Model.")
 
 with tab2:
     if stats["by_user"]:

@@ -76,11 +76,18 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use
                 if not resp or not resp.text:
                     raise RuntimeError("API trả về kết quả rỗng (Empty response).")
                 
-                # Trừ credit và Log usage sau khi gọi thành công (nếu có user_info)
+                # Trích xuất metadata (tokens)
+                p_tokens = 0
+                c_tokens = 0
+                if hasattr(resp, 'usage_metadata') and resp.usage_metadata:
+                    p_tokens = resp.usage_metadata.prompt_token_count or 0
+                    c_tokens = resp.usage_metadata.candidates_token_count or 0
+
+                # Trừ credit và Log usage sau khi gọi thành công
                 if "user_info" in st.session_state:
                     email = st.session_state.user_info.get("email")
                     database.use_credit(email)
-                    database.log_api_usage(email, model_id, "success")
+                    database.log_api_usage(email, model_id, "success", p_tokens, c_tokens)
                 
                 raw = resp.text
                 if not parse_json:
@@ -104,7 +111,11 @@ def _call_with_fallback(model_list, config, max_retries=2, parse_json=False, use
                 # Log error to console for debugging
                 print(f"DEBUG: Gemini Error [{model_id}] (Attempt {attempt+1}): {e}")
 
-                if _should_retry(err_str) and attempt < max_retries:
+                    # Log error to database
+                    if "user_info" in st.session_state:
+                        database.log_api_usage(st.session_state.user_info.get("email"), model_id, "error", error=err_str)
+                        
+                    if _should_retry(err_str) and attempt < max_retries:
                     time.sleep(5 * (attempt + 1))
                     continue
                 
