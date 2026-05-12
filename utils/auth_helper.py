@@ -2,9 +2,13 @@ import streamlit as st
 import requests
 import urllib.parse
 
-# Cấu hình Google OAuth (Sử dụng tên biến riêng biệt để tránh xung đột hệ thống)
-CLIENT_ID = st.secrets.get("my_google_app", {}).get("id")
-CLIENT_SECRET = st.secrets.get("my_google_app", {}).get("secret")
+# Cấu hình Google OAuth (Phòng thủ lỗi xuống dòng trong Secrets)
+raw_id = st.secrets.get("my_google_app", {}).get("id", "")
+raw_secret = st.secrets.get("my_google_app", {}).get("secret", "")
+
+# Làm sạch dữ liệu: xóa khoảng trắng và dấu xuống dòng
+CLIENT_ID = raw_id.strip().replace("\n", "").replace("\r", "")
+CLIENT_SECRET = raw_secret.strip().replace("\n", "").replace("\r", "")
 REDIRECT_URI = "https://hdndthanhhoa.streamlit.app/oauth2callback"
 
 def init_auth():
