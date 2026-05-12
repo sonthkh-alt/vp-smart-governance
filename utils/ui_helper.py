@@ -223,17 +223,6 @@ def draw_sidebar():
     user = get_user_info()
 
     with st.sidebar:
-        st.markdown("""
-            <div style="text-align: center; padding: 1rem 0; margin-bottom: 1rem;">
-                <h2 style="margin: 0; color: #F8FAFC; letter-spacing: 2px; font-weight: 800; font-size: 1.8rem;">SON HA</h2>
-                <div style="width: 40px; height: 3px; background: #60A5FA; margin: 10px auto; border-radius: 2px;"></div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("### 🌐 Kết nối Hệ thống")
-        st.page_link("https://hdnd.vercel.app/", label="Cổng thông tin HĐND", icon="🌍")
-        st.markdown("---")
-        
         st.markdown("### 🛠️ Cài đặt & Hỗ trợ")
         st.info("Phiên bản v2.1 - Python 3.14 Compatible")
         st.markdown("---")

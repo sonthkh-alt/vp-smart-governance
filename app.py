@@ -38,6 +38,7 @@ pages = [
     st.Page("pages/4_⚖️_Policy_Review.py", title="Thẩm tra Chính sách", icon="⚖️"),
     st.Page("pages/5_🎓_Academic_Promotion.py", title="Học thuật & Nâng hạng", icon="🎓"),
     st.Page("pages/6_📋_Document_Review.py", title="Kiểm soát Văn bản", icon="📋"),
+    st.Page("pages/8_🌍_Portal.py", title="Cổng thông tin HĐND", icon="🌍"),
 ]
 
 # 3. Chỉ thêm trang Quản trị nếu là Admin
