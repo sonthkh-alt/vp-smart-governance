@@ -237,7 +237,7 @@ def draw_sidebar():
     """
     with st.sidebar:
         st.markdown("### 🌐 Kết nối Hệ thống")
-        st.page_link("https://hdndthanhhoa.streamlit.app/", label="Cổng thông tin HĐND", icon="🌍")
+        st.page_link("https://hdnd.vercel.app/", label="Cổng thông tin HĐND", icon="🌍")
         st.markdown("---")
         
         st.markdown("### 🛠️ Cài đặt & Hỗ trợ")
