@@ -184,26 +184,7 @@ def set_premium_css():
         .stAlert {
             border-radius: 12px;
         }
-        /* Custom Sidebar Branding: Rename 'app' to 'SonHa' */
-        [data-testid="stSidebarNav"] > div:first-child > span,
-        [data-testid="stSidebarNav"] li:first-child a span {
-            visibility: hidden;
-            position: relative;
-            display: inline-block;
-            width: 100%;
-        }
-        [data-testid="stSidebarNav"] > div:first-child > span::after,
-        [data-testid="stSidebarNav"] li:first-child a span::after {
-            content: "SonHa";
-            visibility: visible;
-            position: absolute;
-            left: 0;
-            top: 0;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text-white);
-            white-space: nowrap;
-        }
+        /* Custom Sidebar Branding cleanup */
         </style>
     """, unsafe_allow_html=True)
 
@@ -242,6 +223,13 @@ def draw_sidebar():
     user = get_user_info()
 
     with st.sidebar:
+        st.markdown("""
+            <div style="text-align: center; padding: 1rem 0; margin-bottom: 1rem;">
+                <h2 style="margin: 0; color: #F8FAFC; letter-spacing: 2px; font-weight: 800; font-size: 1.8rem;">SON HA</h2>
+                <div style="width: 40px; height: 3px; background: #60A5FA; margin: 10px auto; border-radius: 2px;"></div>
+            </div>
+        """, unsafe_allow_html=True)
+        
         st.markdown("### 🌐 Kết nối Hệ thống")
         st.page_link("https://hdnd.vercel.app/", label="Cổng thông tin HĐND", icon="🌍")
         st.markdown("---")
