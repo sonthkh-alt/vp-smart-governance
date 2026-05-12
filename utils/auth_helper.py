@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import urllib.parse
 
 # Cấu hình Google OAuth
 CLIENT_ID = st.secrets.get("auth", {}).get("google", {}).get("client_id")
@@ -44,24 +45,23 @@ def login_google():
     """Kích hoạt luồng Đăng nhập Google duy nhất."""
     if not CLIENT_ID or not CLIENT_SECRET:
         st.error("### 🔐 Thiếu thông tin kết nối Google")
-        st.info("Vui lòng đảm bảo bạn đã cấu hình Client ID và Secret trong mục Secrets.")
         return
 
-    # URL chuẩn để yêu cầu Google định danh User
-    auth_url = (
-        "https://accounts.google.com/o/oauth2/v2/auth"
-        f"?client_id={CLIENT_ID}"
-        f"&redirect_uri={REDIRECT_URI}"
-        "&response_type=code"
-        "&scope=openid%20email%20profile"
-        "&access_type=offline"
-        "&prompt=select_account"
-    )
+    # Xây dựng URL chuẩn bằng thư viện chuyên dụng để tránh lỗi ký tự
+    params = {
+        "client_id": CLIENT_ID,
+        "redirect_uri": REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account"
+    }
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
     st.markdown("### 🏛️ Đăng nhập Hệ thống")
     st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
     st.link_button("🔑 ĐĂNG NHẬP VỚI GOOGLE", auth_url, use_container_width=True, type="primary")
-    st.caption("Nếu gặp lỗi 403, vui lòng liên hệ Hà Ngọc Sơn để được hỗ trợ.")
+    st.caption("Nếu gặp lỗi 403, hãy kiểm tra 'Authorized JavaScript origins' trong Google Console.")
     st.stop()
 
 def logout():
