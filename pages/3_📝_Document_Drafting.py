@@ -55,6 +55,10 @@ with st.sidebar:
     
     if st.button("🗑️ Xóa toàn bộ lịch sử", use_container_width=True):
         database.clear_drafts()
+        # Ghi log thao tác
+        user_email = st.session_state.user_info.get("email") if st.session_state.get("is_logged_in") else "Khách"
+        database.log_action(user_email, "Xóa lịch sử dự thảo", "Soạn thảo văn bản")
+        
         st.success("Đã xóa toàn bộ lịch sử!")
         st.rerun()
             
@@ -65,6 +69,11 @@ with st.sidebar:
                 st.session_state.generated_draft = d['ai_content'].get('noi_dung_chinh', '')
                 st.session_state.generated_agency_name = d['ai_content'].get('ten_co_quan', '')
                 st.session_state.generated_content_dict = d['ai_content'] # Lưu lại toàn bộ meta
+                
+                # Ghi log thao tác
+                user_email = st.session_state.user_info.get("email") if st.session_state.get("is_logged_in") else "Khách"
+                database.log_action(user_email, "Tải lại dự thảo cũ", "Soạn thảo văn bản", f"ID: {d['id']}, Loại: {d['doc_type']}")
+                
                 st.success("Đã tải lại dự thảo cũ!")
     else:
         st.caption("Chưa có lịch sử dự thảo.")
@@ -155,6 +164,10 @@ with col1:
                         # Lưu vào Database
                         database.save_draft(doc_type, prompt, draft_result)
                         
+                        # Ghi log thao tác
+                        user_email = st.session_state.user_info.get("email") if st.session_state.get("is_logged_in") else "Khách"
+                        database.log_action(user_email, "Tạo dự thảo văn bản", "Soạn thảo văn bản", f"Loại: {doc_type}")
+                        
                     elif isinstance(draft_result, dict) and "error" in draft_result:
                         st.session_state.generated_draft = draft_result["error"]
                     else:
@@ -205,6 +218,11 @@ with col2:
                 
                 if output_stream:
                     st.session_state.final_docx_bytes = output_stream.getvalue()
+                    
+                    # Ghi log thao tác
+                    user_email = st.session_state.user_info.get("email") if st.session_state.get("is_logged_in") else "Khách"
+                    database.log_action(user_email, "Xuất file Word chuẩn NĐ 30", "Soạn thảo văn bản")
+                    
                     st.success("Đã kết xuất thành công!")
                 else:
                     st.error("Có lỗi xảy ra khi tạo file Word.")

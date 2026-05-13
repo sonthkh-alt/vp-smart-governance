@@ -43,10 +43,15 @@ def init_auth():
                 st.session_state.is_logged_in = True
                 st.session_state.user_info = user_info
                 
-                # Cập nhật DB
+                # Cập nhật DB và ghi log
                 import database
                 is_admin = 1 if user_info.get("email") == ADMIN_EMAIL else 0
                 database.create_user(user_info.get("email"), user_info.get("name"), is_admin)
+                
+                # Ghi log đăng nhập
+                ip = st.context.headers.get("x-forwarded-for", "-")
+                ua = st.context.headers.get("user-agent", "-")
+                database.log_login(user_info.get("email"), ip, ua)
                 
                 st.query_params.clear()
                 st.rerun()

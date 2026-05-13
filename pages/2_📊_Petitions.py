@@ -47,6 +47,10 @@ with st.sidebar:
         if submitted:
             if content.strip():
                 database.save_petition(voter, district, content, category)
+                # Ghi log thao tác
+                user_email = st.session_state.user_info.get("email") if st.session_state.get("is_logged_in") else "Khách"
+                database.log_action(user_email, "Thêm kiến nghị mới", "Kiến nghị Cử tri", f"Cử tri: {voter}, Địa phương: {district}")
+                
                 st.success("✅ Đã lưu kiến nghị thành công!")
                 st.rerun()
             else:
@@ -62,6 +66,10 @@ with st.sidebar:
         resolution = st.text_input("Kết quả giải quyết (nếu có)")
         if st.button("✅ Cập nhật", use_container_width=True):
             database.update_petition_status(petition_ids[selected_label], new_status, resolution)
+            # Ghi log thao tác
+            user_email = st.session_state.user_info.get("email") if st.session_state.get("is_logged_in") else "Khách"
+            database.log_action(user_email, "Cập nhật trạng thái kiến nghị", "Kiến nghị Cử tri", f"ID: {petition_ids[selected_label]}, Trạng thái mới: {new_status}")
+            
             st.success("Đã cập nhật!")
             st.rerun()
 
@@ -181,6 +189,10 @@ Trả lời sắc bén, chuyên nghiệp, bằng ngôn ngữ hành chính nhà n
 """
             result = generate_text(prompt, use_pro=True)
             st.session_state.petition_ai_result = result
+            
+            # Ghi log thao tác
+            user_email = st.session_state.user_info.get("email") if st.session_state.get("is_logged_in") else "Khách"
+            database.log_action(user_email, "Chạy phân tích AI chuyên sâu", "Kiến nghị Cử tri", f"Tổng số {len(df)} kiến nghị")
 
 if "petition_ai_result" in st.session_state:
     st.markdown(st.session_state.petition_ai_result)

@@ -132,6 +132,11 @@ with col_left:
 
                     # Lưu vào DB
                     database.save_policy_review(policy_name, result)
+                    
+                    # Ghi log thao tác
+                    user_email = st.session_state.user_info.get("email") if st.session_state.get("is_logged_in") else "Khách"
+                    database.log_action(user_email, "Thẩm tra chính sách AI", "Thẩm tra Chính sách", f"Tên dự thảo: {policy_name}")
+                    
                     st.success("✅ Phân tích hoàn tất!")
 
 with col_right:
@@ -167,6 +172,10 @@ with col_right:
                     }
                     output = create_nd30_document(content_dict)
                     if output:
+                        # Ghi log thao tác
+                        user_email = st.session_state.user_info.get("email") if st.session_state.get("is_logged_in") else "Khách"
+                        database.log_action(user_email, "Xuất báo cáo thẩm tra Word", "Thẩm tra Chính sách", f"Tên dự thảo: {st.session_state.policy_name}")
+                        
                         st.download_button(
                             label="⬇️ Tải xuống Báo cáo Thẩm tra (.docx)",
                             data=output.getvalue(),

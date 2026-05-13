@@ -97,7 +97,7 @@ with c_api3:
     st.metric("🤖 Số Model đã dùng", len(stats["by_model"]))
 
 # Phân bổ theo Model và User
-tab1, tab2 = st.tabs(["📊 Theo Model", "👤 Theo Người dùng"])
+tab1, tab2, tab3 = st.tabs(["📊 Theo Model", "👤 Theo Người dùng", "📜 Nhật ký hệ thống"])
 
 with tab1:
     if stats["detailed"]:
@@ -124,6 +124,28 @@ with tab2:
         st.table(df_user)
     else:
         st.info("Chưa có dữ liệu sử dụng theo Người dùng.")
+
+with tab3:
+    import pandas as pd
+    col_log1, col_log2 = st.columns(2)
+    
+    with col_log1:
+        st.markdown("#### 🔑 Lịch sử Đăng nhập (Gần nhất)")
+        login_data = database.get_login_logs(50)
+        if login_data:
+            df_login = pd.DataFrame(login_data)
+            st.dataframe(df_login[["timestamp", "email", "ip_address", "user_agent"]], use_container_width=True, hide_index=True)
+        else:
+            st.info("Chưa có nhật ký đăng nhập.")
+            
+    with col_log2:
+        st.markdown("#### 🛠️ Nhật ký Thao tác")
+        action_data = database.get_action_logs(100)
+        if action_data:
+            df_action = pd.DataFrame(action_data)
+            st.dataframe(df_action[["timestamp", "email", "action", "module", "detail"]], use_container_width=True, hide_index=True)
+        else:
+            st.info("Chưa có nhật ký thao tác.")
 
 # --- MỚI: TÌNH TRẠNG LIVE TỪ GOOGLE ---
 st.markdown("---")
