@@ -13,7 +13,7 @@ def _get_client():
     key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
     if not key:
         raise ValueError("Thiếu GEMINI_API_KEY trong cấu hình.")
-    return genai.Client(api_key=key, http_options={'api_version': 'v1'})
+    return genai.Client(api_key=key, http_options={'api_version': 'v1beta'})
 
 def vectorize_document(doc_id, storage_path, file_name):
     """
