@@ -54,7 +54,7 @@ def init_auth():
             st.error(f"Lỗi kết nối Google: {str(e)}")
 
 def render_login_button(sidebar=False):
-    """Vẽ nút đăng nhập Google mở Tab mới (Luồng ổn định nhất)."""
+    """Vẽ nút đăng nhập Google mở Tab mới hoàn toàn (Tránh lỗi 403 Iframe)."""
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
@@ -66,11 +66,29 @@ def render_login_button(sidebar=False):
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
     if sidebar:
-        st.link_button("🔑 Đăng nhập Google", auth_url, use_container_width=True, type="primary")
+        # Nút Sidebar dùng HTML link target="_blank"
+        st.markdown(f"""
+            <a href="{auth_url}" target="_blank" style="text-decoration: none;">
+                <div style="background: #ff4b4b; color: white; padding: 10px; 
+                            border-radius: 8px; text-align: center; font-weight: 600;
+                            font-size: 14px; box-shadow: 0 2px 8px rgba(255, 75, 75, 0.2);">
+                    🔑 ĐĂNG NHẬP GOOGLE
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
     else:
-        st.markdown("### 🏛️ Đăng nhập Hệ thống")
-        st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
-        st.link_button("🚀 ĐĂNG NHẬP NGAY VỚI GOOGLE", auth_url, use_container_width=True, type="primary")
+        # Nút Trang chủ dùng HTML link target="_blank"
+        st.markdown(f"""
+            <a href="{auth_url}" target="_blank" style="text-decoration: none;">
+                <div style="background: linear-gradient(135deg, #ff4b4b 0%, #ff1f1f 100%);
+                            color: white; padding: 14px; border-radius: 10px;
+                            text-align: center; font-weight: 700; font-size: 18px;
+                            box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
+                            margin-bottom: 20px; display: block; width: 100%;">
+                    🚀 ĐĂNG NHẬP NGAY VỚI GOOGLE
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
 
 def login_google():
     if not CLIENT_ID or not CLIENT_SECRET:
