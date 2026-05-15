@@ -25,6 +25,7 @@ draw_module_header(
     "📝",
     "Hệ sinh thái AI hỗ trợ soạn thảo văn bản hành chính, bài phát biểu và soát xét lỗi chuyên nghiệp."
 )
+st.caption("🚀 Phiên bản: 2.5.1 (Cập nhật tính năng Upload file)")
 
 tab1, tab2, tab3 = st.tabs(["📝 Soạn thảo Văn bản", "🎤 Soạn thảo Phát biểu", "📋 Soát xét & Kiểm lỗi"])
 
