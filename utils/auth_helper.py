@@ -54,7 +54,7 @@ def init_auth():
             st.error(f"Lỗi kết nối Google: {str(e)}")
 
 def render_login_button(sidebar=False):
-    """Vẽ nút đăng nhập Google luồng chuẩn."""
+    """Vẽ nút đăng nhập Google mở Tab mới (Luồng ổn định nhất)."""
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
@@ -66,31 +66,17 @@ def render_login_button(sidebar=False):
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
     if sidebar:
-        # Trong Sidebar dùng nút chuẩn Streamlit kết hợp JS Redirect
-        if st.button("🔑 ĐĂNG NHẬP GOOGLE", use_container_width=True, type="primary"):
-            st.markdown(f'<meta http-equiv="refresh" content="0; url={auth_url}">', unsafe_allow_html=True)
-            st.write(f'<script>window.top.location.href="{auth_url}"</script>', unsafe_allow_html=True)
+        st.link_button("🔑 Đăng nhập Google", auth_url, use_container_width=True, type="primary")
     else:
-        # Ngoài trang chủ dùng HTML Anchor với target="_top" cực kỳ ổn định
-        st.markdown(f"""
-            <a href="{auth_url}" target="_top" style="text-decoration: none;">
-                <div style="background: linear-gradient(135deg, #ff4b4b 0%, #ff1f1f 100%);
-                            color: white; padding: 14px; border-radius: 10px;
-                            text-align: center; font-weight: 700; font-size: 16px;
-                            box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
-                            margin-bottom: 10px;">
-                    🚀 ĐĂNG NHẬP NGAY VỚI GOOGLE
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
+        st.markdown("### 🏛️ Đăng nhập Hệ thống")
+        st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
+        st.link_button("🚀 ĐĂNG NHẬP NGAY VỚI GOOGLE", auth_url, use_container_width=True, type="primary")
 
 def login_google():
     if not CLIENT_ID or not CLIENT_SECRET:
         st.error("### 🔐 Thiếu thông tin kết nối Google")
         return
 
-    st.markdown("### 🏛️ Đăng nhập Hệ thống")
-    st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
     render_login_button(sidebar=False)
     st.stop()
 
