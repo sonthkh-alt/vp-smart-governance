@@ -56,9 +56,9 @@ def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, u
 def _call_claude(prompt: str, use_pro: bool = True) -> str:
     client_res = _get_claude_client()
     if client_res == "MISSING_LIB":
-        return "❌ Lỗi: Thư viện 'anthropic' chưa được cài đặt trên máy chủ. Vui lòng đợi hệ thống cập nhật requirements.txt (có thể mất 1-2 phút)."
+        return "❌ Lỗi: Thư viện 'anthropic' chưa được cài đặt."
     if client_res == "MISSING_KEY":
-        return "❌ Lỗi: Chưa tìm thấy ANTHROPIC_API_KEY trong cấu hình (.env hoặc Secrets)."
+        return "❌ Lỗi: Chưa tìm thấy ANTHROPIC_API_KEY. Hãy kiểm tra mục Secrets trên Streamlit Cloud."
     
     client = client_res
     try:
@@ -68,51 +68,53 @@ def _call_claude(prompt: str, use_pro: bool = True) -> str:
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}]
         )
-        # Log usage
         if "user_info" in st.session_state:
             database.log_api_usage(st.session_state.user_info.get("email"), model, "success")
         return resp.content[0].text
     except Exception as e:
-        return f"❌ Lỗi Claude API: {e}"
+        err_msg = str(e)
+        print(f"CLAUDE ERROR: {err_msg}")
+        return f"❌ Lỗi Claude API: {err_msg}"
 
-def _call_gemini_with_fallback(model_list, config, max_retries=2, parse_json=False, use_search=False):
+def _call_gemini_with_fallback(model_list, config, max_retries=1, parse_json=False, use_search=False):
     try:
         client = _get_gemini_client()
-    except ValueError as e: return str(e)
+    except Exception as e: 
+        return f"❌ Lỗi cấu hình Gemini: {e}"
 
     last_error = None
     tools = [types.Tool(google_search=types.GoogleSearch())] if use_search and not parse_json else None
 
     for model_id in model_list:
-        for attempt in range(max_retries + 1):
-            try:
-                resp = client.models.generate_content(
-                    model=model_id, contents=config["prompt"],
-                    config=types.GenerateContentConfig(tools=tools, **config["params"]),
-                )
-                if not resp or not resp.text: raise RuntimeError("Rỗng.")
-                
-                # Log usage
-                if "user_info" in st.session_state:
-                    email = st.session_state.user_info.get("email")
-                    database.use_credit(email)
-                    database.log_api_usage(email, model_id, "success")
-                
-                raw = resp.text
-                if not parse_json: return raw
-                
-                text = raw.strip()
-                if text.startswith("```"):
-                    parts = text.split("```")
-                    if len(parts) >= 3:
-                        text = parts[1]
-                        if text.startswith("json"): text = text[4:]
-                return json.loads(text)
-            except Exception as e:
-                last_error = e
-                time.sleep(1)
-                continue
-    return f"⚠️ Lỗi kết nối Gemini: {last_error}"
+        try:
+            resp = client.models.generate_content(
+                model=model_id, contents=config["prompt"],
+                config=types.GenerateContentConfig(tools=tools, **config["params"]),
+            )
+            if not resp or not resp.text: raise RuntimeError("API trả về rỗng.")
+            
+            if "user_info" in st.session_state:
+                email = st.session_state.user_info.get("email")
+                database.use_credit(email)
+                database.log_api_usage(email, model_id, "success")
+            
+            raw = resp.text
+            if not parse_json: return raw
+            
+            # Xử lý JSON
+            text = raw.strip()
+            if text.startswith("```"):
+                parts = text.split("```")
+                if len(parts) >= 3:
+                    text = parts[1]
+                    if text.startswith("json"): text = text[4:]
+            return json.loads(text)
+        except Exception as e:
+            last_error = e
+            print(f"GEMINI ERROR [{model_id}]: {e}")
+            continue # Thử model tiếp theo
+            
+    return f"⚠️ Lỗi kết nối Gemini (đã thử toàn bộ model): {last_error}"
 
 def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -> dict:
     if provider == "claude":
