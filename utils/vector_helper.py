@@ -32,7 +32,19 @@ def vectorize_document(doc_id, storage_path, file_name):
             st.error(f"Không thể liệt kê mô hình: {e_list}")
 
         # Thử một danh sách tên mô hình đa dạng nhất có thể
-        to_try = ["models/gemini-embedding-2", "text-embedding-004", "embedding-001"]
+        to_try = [
+            "models/text-embedding-004", 
+            "models/embedding-001",
+            "text-embedding-004", 
+            "embedding-001",
+            "models/gemini-embedding-2"
+        ]
+        
+        # Tự động bổ sung các mô hình có từ khóa 'embed' từ danh sách thực tế của User
+        for m_name in models:
+            if "embed" in m_name.lower() and m_name not in to_try:
+                to_try.append(m_name)
+                
         # Lọc trùng
         to_try = list(dict.fromkeys(to_try))
 
