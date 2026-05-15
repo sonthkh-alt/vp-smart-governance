@@ -97,14 +97,33 @@ with tab3:
     st.markdown("### 📋 Kiểm soát Chất lượng & Văn phong")
     cl, cr = st.columns([1, 1.3], gap="large")
     with cl:
-        rev_input = st.text_area("Dán văn bản cần kiểm tra:", height=300, key="rev_input")
+        st.markdown("#### 📥 Nhập Văn bản")
+        rev_file = st.file_uploader("Tải lên văn bản (PDF/DOCX):", type=["pdf", "docx"], key="rev_file")
+        
+        # Xử lý text từ file upload
+        if rev_file and ("last_rev_file" not in st.session_state or st.session_state.last_rev_file != rev_file.name):
+            with st.spinner("Đang trích xuất văn bản..."):
+                if rev_file.name.endswith(".pdf"):
+                    st.session_state.rev_text_content = extract_text_from_pdf(rev_file)
+                else:
+                    st.session_state.rev_text_content = extract_text_from_docx(rev_file)
+                st.session_state.last_rev_file = rev_file.name
+
+        # Hiển thị text area (lấy từ session state nếu có)
+        current_text = st.session_state.get("rev_text_content", "")
+        rev_input = st.text_area("Nội dung văn bản cần kiểm tra:", value=current_text, height=300, key="rev_input_area")
+        st.session_state.rev_text_content = rev_input # Cập nhật lại nếu người dùng sửa trực tiếp
+        
         rev_focus = st.multiselect("Trọng tâm kiểm tra:", ["Chính tả & Ngữ pháp", "Thể thức NĐ 30", "Văn phong hành chính", "Logic quản lý"], default=["Chính tả & Ngữ pháp", "Văn phong hành chính"], key="rev_focus")
         if st.button("🚀 BẮT ĐẦU KIỂM TRA", type="primary", use_container_width=True, key="rev_run"):
             if require_auth("Kiểm tra văn bản"):
-                with st.spinner("AI đang soát lỗi..."):
-                    p = f"Hãy soát lỗi và tối ưu văn bản sau. Trọng tâm: {', '.join(rev_focus)}\n\nNội dung:\n{rev_input}"
-                    res = generate_text(p, use_pro=True)
-                    st.session_state.rev_res = res
+                if not st.session_state.rev_text_content.strip():
+                    st.error("⚠️ Vui lòng tải file hoặc nhập nội dung văn bản!")
+                else:
+                    with st.spinner("AI đang soát lỗi..."):
+                        p = f"Hãy soát lỗi và tối ưu văn bản sau. Trọng tâm: {', '.join(rev_focus)}\n\nNội dung:\n{st.session_state.rev_text_content}"
+                        res = generate_text(p, use_pro=True)
+                        st.session_state.rev_res = res
     with cr:
         if "rev_res" in st.session_state:
             st.markdown(st.session_state.rev_res)
