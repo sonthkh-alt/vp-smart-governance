@@ -71,12 +71,22 @@ def vectorize_document(doc_id, storage_path, file_name):
 
         # 5. Tiến hành Vectorize toàn bộ bằng mô hình đã tìm thấy
         for i, chunk_text in enumerate(chunks):
+            # Thử ép về 768 chiều nếu model là bản mới (v004), nếu không thì để mặc định
+            embed_config = {"task_type": "RETRIEVAL_DOCUMENT"}
+            if "004" in working_model:
+                embed_config["output_dimensionality"] = 768
+                
             resp = client.models.embed_content(
                 model=working_model,
                 contents=chunk_text,
-                config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+                config=types.EmbedContentConfig(**embed_config)
             )
             vector = resp.embeddings[0].values
+            
+            # Đảm bảo vector lưu vào luôn là 768 (Cắt bớt nếu model trả về 3072 mà không hỗ trợ tham số ép chiều)
+            if len(vector) > 768:
+                vector = vector[:768]
+
             supabase.table("document_chunks").insert({
                 "document_id": doc_id, "content": chunk_text, "embedding": vector, "metadata": {"source": file_name}
             }).execute()
