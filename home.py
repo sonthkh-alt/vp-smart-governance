@@ -93,11 +93,20 @@ with col8:
     st.page_link("pages/10_📚_Knowledge_Base.py", label="Truy cập Phân hệ", icon="🚀")
     st.markdown('</div>', unsafe_allow_html=True)
 with col9:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### ⚙️ Quản trị Hệ thống")
-    st.markdown("Quản lý người dùng, phân quyền, cấu hình AI và giám sát nhật ký hoạt động.")
-    st.page_link("pages/7_⚙️_Administration.py", label="Truy cập Phân hệ", icon="🚀")
-    st.markdown('</div>', unsafe_allow_html=True)
+    from utils.auth_helper import ADMIN_EMAIL
+    is_admin = st.session_state.get("is_logged_in") and st.session_state.user_info.get("email") == ADMIN_EMAIL
+    if is_admin:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.markdown("### ⚙️ Quản trị Hệ thống")
+        st.markdown("Quản lý người dùng, phân quyền, cấu hình AI và giám sát nhật ký hoạt động.")
+        st.page_link("pages/7_⚙️_Administration.py", label="Truy cập Phân hệ", icon="🚀")
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="glass-card" style="opacity: 0.5; cursor: not-allowed;">', unsafe_allow_html=True)
+        st.markdown("### 🔒 Khu vực Quản trị")
+        st.markdown("Chỉ dành cho quản trị viên hệ thống để cấu hình và giám sát.")
+        st.button("Hạn chế truy cập", disabled=True, key="admin_locked", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
