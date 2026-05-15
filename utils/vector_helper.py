@@ -22,30 +22,34 @@ def vectorize_document(doc_id, storage_path, file_name):
     try:
         client = _get_client()
         
-        # BƯỚC THANH TRA: Hiện danh sách mô hình lên màn hình
-        models = []
+        # BƯỚC THANH TRA: Hiện danh sách mô hình và tìm mô hình hỗ trợ Embedding
+        all_models = []
+        detected_embed_models = []
         try:
             for m in client.models.list():
-                models.append(m.name)
-            st.success(f"🔍 DANH SÁCH MÔ HÌNH CỦA BẠN: {', '.join(models)}")
+                all_models.append(m.name)
+                # Kiểm tra xem mô hình có hỗ trợ 'embedContent' không
+                if hasattr(m, "supported_generation_methods"):
+                    if "embedContent" in m.supported_generation_methods:
+                        detected_embed_models.append(m.name)
+                elif "embed" in m.name.lower(): # Fallback nếu không có thuộc tính trên
+                    detected_embed_models.append(m.name)
+            
+            st.success(f"🔍 TỔNG SỐ MÔ HÌNH: {len(all_models)}. ĐÃ TÌM THẤY {len(detected_embed_models)} MÔ HÌNH EMBEDDING.")
+            if detected_embed_models:
+                st.info(f"💡 Mô hình tiềm năng: {', '.join(detected_embed_models)}")
         except Exception as e_list:
             st.error(f"Không thể liệt kê mô hình: {e_list}")
 
-        # Thử một danh sách tên mô hình đa dạng nhất có thể
-        to_try = [
+        # Danh sách thử nghiệm
+        to_try = detected_embed_models + [
             "models/text-embedding-004", 
             "models/embedding-001",
             "text-embedding-004", 
-            "embedding-001",
-            "models/gemini-embedding-2"
+            "embedding-001"
         ]
         
-        # Tự động bổ sung các mô hình có từ khóa 'embed' từ danh sách thực tế của User
-        for m_name in models:
-            if "embed" in m_name.lower() and m_name not in to_try:
-                to_try.append(m_name)
-                
-        # Lọc trùng
+        # Lọc trùng và giữ nguyên thứ tự ưu tiên (mô hình detected được ưu tiên trước)
         to_try = list(dict.fromkeys(to_try))
 
         # 1. Tải file
