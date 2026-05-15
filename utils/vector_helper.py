@@ -14,28 +14,28 @@ def _get_client():
         raise ValueError("Thiếu GEMINI_API_KEY trong cấu hình.")
     return genai.Client(api_key=key)
 
-def _find_embedding_model(client):
-    """
-    Tự động tìm kiếm mô hình embedding khả dụng trong tài khoản.
-    """
-    try:
-        models = client.models.list()
-        for m in models:
-            # Tìm mô hình có hỗ trợ tính năng embedContent hoặc có tên chứa 'embedding'
-            if "embedContent" in m.supported_methods and "embedding" in m.name:
-                return m.name
-        return "models/embedding-001" # Fallback mặc định
-    except:
-        return "models/embedding-001"
-
 def vectorize_document(doc_id, storage_path, file_name):
     """
-    Quy trình Vectorize với tính năng tự động dò tìm mô hình tương thích.
+    Quy trình Vectorize với hệ thống Chẩn đoán mô hình trực tiếp.
     """
     try:
         client = _get_client()
-        model_name = _find_embedding_model(client)
-        st.caption(f"Sử dụng mô hình AI: {model_name}")
+        
+        # CHẨN ĐOÁN: Liệt kê các mô hình có sẵn
+        try:
+            available_models = []
+            for m in client.models.list():
+                if "embedContent" in m.supported_methods:
+                    available_models.append(m.name)
+            
+            if not available_models:
+                return False, "Tài khoản của bạn hiện chưa có quyền truy cập vào bất kỳ mô hình Embedding nào của Google. Vui lòng kiểm tra lại API Key."
+            
+            # Chọn mô hình đầu tiên tìm thấy
+            model_name = available_models[0]
+            st.info(f"🔍 Chẩn đoán: Tìm thấy các mô hình hỗ trợ: {', '.join(available_models)}. Đang sử dụng: {model_name}")
+        except Exception as diag_e:
+            return False, f"Lỗi khi liệt kê mô hình (Chẩn đoán): {diag_e}"
         
         # 1. Tải file từ Supabase Storage
         res = supabase.storage.from_("reference-docs").download(storage_path)
@@ -57,7 +57,7 @@ def vectorize_document(doc_id, storage_path, file_name):
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         chunks = text_splitter.split_text(text)
         
-        st.info(f"Đã chia tài liệu thành {len(chunks)} đoạn tri thức. Đang tạo Vector...")
+        st.info(f"Đã chia tài liệu thành {len(chunks)} đoạn. Đang tạo Vector...")
 
         # 4. Tạo Vector
         for i, chunk_text in enumerate(chunks):
