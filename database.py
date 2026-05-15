@@ -89,6 +89,13 @@ _TABLES_SQL = [
         uploader_email TEXT,
         module TEXT,
         is_vectorized INTEGER DEFAULT 0
+    )''',
+    '''CREATE TABLE IF NOT EXISTS document_chunks (
+        id SERIAL_OR_AUTO,
+        document_id INTEGER,
+        content TEXT NOT NULL,
+        embedding TEXT,
+        metadata TEXT
     )'''
 ]
 
