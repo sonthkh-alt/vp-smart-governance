@@ -30,27 +30,27 @@ draw_module_header(
     "Hệ sinh thái Quản trị dựa trên Dữ liệu và AI dành cho Cơ quan Dân cử"
 )
 
-st.markdown("### 🌟 Phân hệ Lõi & Nghiệp vụ")
+st.markdown("### 🌟 Các Trung tâm Nghiệp vụ Thông minh")
 
 # Dashboard Grid Row 1
 col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### 🏛️ Trợ lý Kỳ họp")
-    st.markdown("Đối soát văn bản, phân tích số liệu và gợi ý chất vấn bằng công nghệ RAG chuyên sâu.")
-    st.page_link("pages/1_🏛️_Legislative_Intelligence.py", label="Truy cập Phân hệ", icon="🚀")
+    st.markdown("### 🏛️ Nghiệp vụ Dân cử")
+    st.markdown("Trợ lý Kỳ họp, Thẩm tra Chính sách và Thư viện Pháp luật tập trung.")
+    st.page_link("pages/1_🏛️_Legislative_Center.py", label="Truy cập Trung tâm", icon="🚀")
     st.markdown('</div>', unsafe_allow_html=True)
 with col2:
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### 📊 Kiến nghị Cử tri")
-    st.markdown("Phân tích xu hướng, bản đồ hóa và theo dõi tiến độ giải quyết kiến nghị của cử tri.")
-    st.page_link("pages/2_📊_Petitions.py", label="Truy cập Phân hệ", icon="🚀")
+    st.markdown("### 📝 Trung tâm Soạn thảo")
+    st.markdown("Soạn thảo văn bản chuẩn NĐ 30, bài phát biểu Lãnh đạo và Soát xét lỗi AI.")
+    st.page_link("pages/2_📝_Drafting_Hub.py", label="Truy cập Trung tâm", icon="🚀")
     st.markdown('</div>', unsafe_allow_html=True)
 with col3:
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### ⚖️ Thẩm tra Chính sách")
-    st.markdown("Đánh giá tác động và tính hợp hiến của chính sách với kinh tế xanh, kinh tế biển.")
-    st.page_link("pages/4_⚖️_Policy_Review.py", label="Truy cập Phân hệ", icon="🚀")
+    st.markdown("### 📊 Cử tri & Kết nối")
+    st.markdown("Quản lý kiến nghị cử tri, phân tích điểm nóng và Cổng thông tin công cộng.")
+    st.page_link("pages/3_📊_Voter_Engagement.py", label="Truy cập Trung tâm", icon="🚀")
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -59,66 +59,38 @@ st.markdown("<br>", unsafe_allow_html=True)
 col4, col5, col6 = st.columns(3)
 with col4:
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### 📝 Quản trị Điều hành")
-    st.markdown("Số hóa hồ sơ chuyên viên và quy trình soạn thảo văn bản chuyên nghiệp chuẩn NĐ 30.")
-    st.page_link("pages/3_📝_Document_Drafting.py", label="Truy cập Phân hệ", icon="🚀")
+    st.markdown("### 🎓 Học thuật & Chuyên gia")
+    st.markdown("Lộ trình PGS cá nhân hóa và quản lý công trình nghiên cứu khoa học.")
+    st.page_link("pages/4_🎓_Academic_Promotion.py", label="Truy cập Trung tâm", icon="🚀")
     st.markdown('</div>', unsafe_allow_html=True)
 with col5:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### 📋 Kiểm soát Văn bản")
-    st.markdown("Soát lỗi, tối ưu văn phong hành chính và kiểm tra logic quản lý nhà nước tự động.")
-    st.page_link("pages/6_📋_Document_Review.py", label="Truy cập Phân hệ", icon="🚀")
-    st.markdown('</div>', unsafe_allow_html=True)
-with col6:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### 🎓 Học thuật & Nâng hạng")
-    st.markdown("Lộ trình PGS cá nhân hóa, quản lý công trình khoa học và AI gợi ý đề tài nghiên cứu.")
-    st.page_link("pages/5_🎓_Academic_Promotion.py", label="Truy cập Phân hệ", icon="🚀")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# Dashboard Grid Row 3
-col7, col8, col9 = st.columns(3)
-with col7:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### 🎤 Soạn thảo Phát biểu")
-    st.markdown("Hỗ trợ soạn thảo bài diễn văn, bài phát biểu cho lãnh đạo chuẩn mực và ấn tượng.")
-    st.page_link("pages/9_🎤_Speech_Drafting.py", label="Truy cập Phân hệ", icon="🚀")
-    st.markdown('</div>', unsafe_allow_html=True)
-with col8:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### 📚 Thư viện Số")
-    st.markdown("Kho tri thức pháp luật, văn bản quy phạm và tư liệu nghiệp vụ dùng chung.")
-    st.page_link("pages/10_📚_Knowledge_Base.py", label="Truy cập Phân hệ", icon="🚀")
-    st.markdown('</div>', unsafe_allow_html=True)
-with col9:
     from utils.auth_helper import ADMIN_EMAIL
     is_admin = st.session_state.get("is_logged_in") and st.session_state.user_info.get("email") == ADMIN_EMAIL
     if is_admin:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown("### ⚙️ Quản trị Hệ thống")
-        st.markdown("Quản lý người dùng, phân quyền, cấu hình AI và giám sát nhật ký hoạt động.")
-        st.page_link("pages/7_⚙️_Administration.py", label="Truy cập Phân hệ", icon="🚀")
+        st.markdown("Quản lý người dùng, phân quyền, cấu hình AI và giám sát nhật ký.")
+        st.page_link("pages/5_⚙️_Administration.py", label="Truy cập Hệ thống", icon="🛠️")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.markdown('<div class="glass-card" style="opacity: 0.5; cursor: not-allowed;">', unsafe_allow_html=True)
         st.markdown("### 🔒 Khu vực Quản trị")
-        st.markdown("Chỉ dành cho quản trị viên hệ thống để cấu hình và giám sát.")
+        st.markdown("Dành riêng cho Quản trị viên hệ thống.")
         st.button("Hạn chế truy cập", disabled=True, key="admin_locked", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ─── CỔNG THÔNG TIN HĐND ──────────────────────────────────────────────────────
-st.markdown("### 🌍 Kết nối & Công khai")
+st.markdown("### 🌍 Cửa sổ số HĐND")
 st.markdown('<div class="glass-card" style="border: 1px solid #457B9D; background: rgba(69, 123, 157, 0.1);">', unsafe_allow_html=True)
 c_left, c_right = st.columns([2, 1])
 with c_left:
     st.markdown("#### 🌍 Cổng thông tin Hội đồng Nhân dân")
-    st.markdown("Kênh giao tiếp chính thức giữa HĐND và Cử tri, công khai thông tin hoạt động và tra cứu hồ sơ.")
+    st.markdown("Kết nối thông tin trực tiếp từ website công cộng dành cho Cử tri.")
 with c_right:
-    st.page_link("pages/8_🌍_Portal.py", label="Truy cập Cổng thông tin", icon="🌐", use_container_width=True)
+    # We still use the link but it's now integrated in Center 3 as well
+    st.page_link("pages/3_📊_Voter_Engagement.py", label="Truy cập Cổng tin", icon="🌐", use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)

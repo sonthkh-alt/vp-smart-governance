@@ -32,20 +32,15 @@ init_auth()
 # Chú ý: Streamlit sẽ chạy script của trang được chọn.
 pages = [
     st.Page("home.py", title="Trang chủ", icon="🏛️", default=True),
-    st.Page("pages/1_🏛️_Legislative_Intelligence.py", title="Trợ lý Kỳ họp", icon="🏛️"),
-    st.Page("pages/2_📊_Petitions.py", title="Kiến nghị Cử tri", icon="📊"),
-    st.Page("pages/3_📝_Document_Drafting.py", title="Quản trị Điều hành", icon="📝"),
-    st.Page("pages/4_⚖️_Policy_Review.py", title="Thẩm tra Chính sách", icon="⚖️"),
-    st.Page("pages/5_🎓_Academic_Promotion.py", title="Học thuật & Nâng hạng", icon="🎓"),
-    st.Page("pages/6_📋_Document_Review.py", title="Kiểm soát Văn bản", icon="📋"),
-    st.Page("pages/9_🎤_Speech_Drafting.py", title="Soạn thảo bài phát biểu", icon="🎤"),
-    st.Page("pages/10_📚_Knowledge_Base.py", title="Kho tri thức tập trung", icon="📚"),
-    st.Page("pages/8_🌍_Portal.py", title="Cổng thông tin HĐND", icon="🌍"),
+    st.Page("pages/1_🏛️_Legislative_Center.py", title="Nghiệp vụ Dân cử", icon="🏛️"),
+    st.Page("pages/2_📝_Drafting_Hub.py", title="Trung tâm Soạn thảo", icon="📝"),
+    st.Page("pages/3_📊_Voter_Engagement.py", title="Cử tri & Kết nối", icon="📊"),
+    st.Page("pages/4_🎓_Academic_Promotion.py", title="Học thuật & Chuyên gia", icon="🎓"),
 ]
 
 # 3. Chỉ thêm trang Quản trị nếu là Admin
 if st.session_state.get("is_logged_in") and st.session_state.user_info.get("email") == ADMIN_EMAIL:
-    pages.append(st.Page("pages/7_⚙️_Administration.py", title="Quản trị Hệ thống", icon="⚙️"))
+    pages.append(st.Page("pages/5_⚙️_Administration.py", title="Quản trị Hệ thống", icon="⚙️"))
 
 # 4. Cấu hình điều hướng chuyên nghiệp
 pg = st.navigation(pages)
