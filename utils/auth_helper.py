@@ -2,10 +2,11 @@ import streamlit as st
 import requests
 import urllib.parse
 
-# Cấu hình Google OAuth
+# Cấu hình Google OAuth (Phòng thủ lỗi xuống dòng trong Secrets)
 raw_id = st.secrets.get("my_google_app", {}).get("id", "")
 raw_secret = st.secrets.get("my_google_app", {}).get("secret", "")
 
+# Làm sạch dữ liệu: xóa khoảng trắng và dấu xuống dòng
 CLIENT_ID = raw_id.strip().replace("\n", "").replace("\r", "")
 CLIENT_SECRET = raw_secret.strip().replace("\n", "").replace("\r", "")
 url_phan_hoi = "https://hdndthanhhoa.streamlit.app/"
@@ -18,6 +19,7 @@ def init_auth():
         st.session_state.is_logged_in = False
         st.session_state.user_info = None
 
+    # Tự động nhận diện khi Google gửi phản hồi về
     params = st.query_params
     if "code" in params and not st.session_state.is_logged_in:
         try:
@@ -37,13 +39,16 @@ def init_auth():
                 headers = {"Authorization": f"Bearer {tokens['access_token']}"}
                 user_info = requests.get(userinfo_url, headers=headers).json()
                 
+                # Biến khách thành User chính thức của hệ thống
                 st.session_state.is_logged_in = True
                 st.session_state.user_info = user_info
                 
+                # Cập nhật DB và ghi log
                 import database
                 is_admin = 1 if user_info.get("email") == ADMIN_EMAIL else 0
                 database.create_user(user_info.get("email"), user_info.get("name"), is_admin)
                 
+                # Ghi log đăng nhập
                 ip = st.context.headers.get("x-forwarded-for", "-")
                 ua = st.context.headers.get("user-agent", "-")
                 database.log_login(user_info.get("email"), ip, ua)
@@ -51,10 +56,16 @@ def init_auth():
                 st.query_params.clear()
                 st.rerun()
         except Exception as e:
-            st.error(f"Lỗi kết nối Google: {str(e)}")
+            st.error(f"Lỗi hệ thống khi kết nối Google: {str(e)}")
 
-def render_login_button(sidebar=False):
-    """Vẽ nút đăng nhập Google mở Tab mới hoàn toàn (Tránh lỗi 403 Iframe)."""
+def login_google():
+    """Kích hoạt luồng Đăng nhập Google duy nhất."""
+    if not CLIENT_ID or not CLIENT_SECRET:
+        st.error("### 🔐 Thiếu thông tin kết nối Google")
+        st.info("Vui lòng đảm bảo bạn đã dán mã ID và Secret vào Secrets với tên mục [my_google_app].")
+        return
+
+    # Xây dựng URL chuẩn
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
@@ -65,51 +76,30 @@ def render_login_button(sidebar=False):
     }
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
-    if sidebar:
-        # Nút Sidebar dùng HTML link target="_blank"
-        st.markdown(f"""
-            <a href="{auth_url}" target="_blank" style="text-decoration: none;">
-                <div style="background: #ff4b4b; color: white; padding: 10px; 
-                            border-radius: 8px; text-align: center; font-weight: 600;
-                            font-size: 14px; box-shadow: 0 2px 8px rgba(255, 75, 75, 0.2);">
-                    🔑 ĐĂNG NHẬP GOOGLE
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
-    else:
-        # Nút Trang chủ dùng HTML link target="_blank"
-        st.markdown(f"""
-            <a href="{auth_url}" target="_blank" style="text-decoration: none;">
-                <div style="background: linear-gradient(135deg, #ff4b4b 0%, #ff1f1f 100%);
-                            color: white; padding: 14px; border-radius: 10px;
-                            text-align: center; font-weight: 700; font-size: 18px;
-                            box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
-                            margin-bottom: 20px; display: block; width: 100%;">
-                    🚀 ĐĂNG NHẬP NGAY VỚI GOOGLE
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
-
-def login_google():
-    if not CLIENT_ID or not CLIENT_SECRET:
-        st.error("### 🔐 Thiếu thông tin kết nối Google")
-        return
-
-    render_login_button(sidebar=False)
+    st.markdown("### 🏛️ Đăng nhập Hệ thống")
+    st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
+    st.link_button("🔑 ĐĂNG NHẬP VỚI GOOGLE", auth_url, use_container_width=True, type="primary")
     st.stop()
 
 def logout():
+    """Đăng xuất."""
     st.session_state.is_logged_in = False
     st.session_state.user_info = None
     st.rerun()
 
 def check_auth_status():
+    """Kiểm tra trạng thái đăng nhập an toàn."""
     return st.session_state.get("is_logged_in", False)
 
 def get_user_info():
+    """Lấy thông tin người dùng."""
     return st.session_state.get("user_info", {})
 
 def require_auth(action_name="truy cập tính năng này"):
+    """
+    Kiểm tra quyền truy cập. Nếu chưa đăng nhập, hiển thị nút đăng nhập và dừng script.
+    Trả về True nếu đã đăng nhập.
+    """
     if not st.session_state.get("is_logged_in", False):
         st.warning(f"⚠️ Bạn cần đăng nhập để {action_name}.")
         login_google()
@@ -117,9 +107,14 @@ def require_auth(action_name="truy cập tính năng này"):
     
     import database
     user = database.get_user(st.session_state.user_info.get("email"))
-    if not user: return False
+    
+    if not user:
+        st.error("Lỗi dữ liệu người dùng. Vui lòng đăng nhập lại.")
+        return False
+        
     if not user["is_admin"] and user["credits"] <= 0:
-        st.error(f"### ❌ Hết lượt truy vấn AI")
+        st.error(f"### ❌ Hết lượt truy vấn AI\nBạn đã sử dụng hết số lượt truy vấn AI được cấp. Vui lòng liên hệ đồng chí **Hà Ngọc Sơn**, PCVP Đoàn ĐBQH và HĐND tỉnh để được gia hạn thêm lượt sử dụng.")
         st.stop()
         return False
+        
     return True
