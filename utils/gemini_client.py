@@ -17,8 +17,8 @@ except ImportError:
 load_dotenv(override=True)
 
 # Danh sách Model Ưu tiên
-FLASH_MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-8b"]
-PRO_MODELS = ["gemini-1.5-pro", "gemini-1.5-pro-002"]
+FLASH_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro"]
+PRO_MODELS = ["gemini-1.5-pro", "gemini-1.5-flash"]
 CLAUDE_MODELS = ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229"]
 
 @functools.lru_cache(maxsize=1)
