@@ -12,87 +12,83 @@ def _get_client():
     key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
     if not key:
         raise ValueError("Thiếu GEMINI_API_KEY trong cấu hình.")
-    return genai.Client(api_key=key)
+    return genai.Client(api_key=key, http_options={'api_version': 'v1'})
 
 def vectorize_document(doc_id, storage_path, file_name):
     """
-    Quy trình Vectorize vạn năng: Quét sạch mọi mô hình khả dụng trong tài khoản.
+    Quy trình Vectorize hợp nhất: Dùng chung kết nối SQL của database.py để đảm bảo ID chính xác.
     """
     try:
         client = _get_client()
         
-        # 1. Tìm kiếm mô hình Embedding thực tế
-        embedding_models = []
-        try:
-            for m in client.models.list():
-                methods = getattr(m, 'supported_generation_methods', [])
-                if "embedContent" in methods or "embed_content" in str(methods).lower() or "embedding" in m.name.lower():
-                    embedding_models.append(m.name)
-        except:
-            pass
-        
-        # Danh sách dự phòng cứng
-        fallback_list = ["text-embedding-004", "embedding-001", "models/text-embedding-004", "models/embedding-001"]
-        all_to_try = list(dict.fromkeys(embedding_models + fallback_list))
-        
-        st.info(f"Đang kiểm tra {len(all_to_try)} mô hình tiềm năng...")
-
-        # 2. Tải file
+        # 1. Tải file từ Supabase Storage
         res = supabase.storage.from_("reference-docs").download(storage_path)
+        if not res:
+            return False, "Không thể tải file từ Storage."
+        
+        # 2. Bóc tách văn bản
+        text = ""
         file_io = io.BytesIO(res)
-        text = extract_text_from_pdf(file_io) if file_name.lower().endswith(".pdf") else extract_text_from_docx(file_io)
+        if file_name.lower().endswith(".pdf"):
+            text = extract_text_from_pdf(file_io)
+        elif file_name.lower().endswith(".docx"):
+            text = extract_text_from_docx(file_io)
         
         if not text or len(text.strip()) < 10:
-            return False, "Tài liệu không có nội dung."
+            return False, "Tài liệu không có nội dung văn bản."
 
-        # 3. Chia nhỏ
+        # 3. Chia nhỏ văn bản
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         chunks = text_splitter.split_text(text)
+        st.info(f"Đã chia {len(chunks)} đoạn. Đang tạo Vector và lưu trực tiếp qua SQL...")
+
+        # 4. Tạo Vector và lưu bằng kết nối SQL duy nhất
+        working_model = "text-embedding-004"
         
-        # 4. Thử Vectorize với từng mô hình cho đến khi thành công
-        working_model = None
-        for test_model in all_to_try:
+        for i, chunk_text in enumerate(chunks):
             try:
-                # Thử với đoạn đầu tiên
                 resp = client.models.embed_content(
-                    model=test_model,
-                    contents=chunks[0],
+                    model=working_model,
+                    contents=chunk_text,
+                    config=types.EmbedContentConfig(
+                        task_type="RETRIEVAL_DOCUMENT",
+                        output_dimensionality=768
+                    )
+                )
+                vector = resp.embeddings[0].values
+                
+                # Cắt bớt nếu cần
+                if len(vector) > 768: vector = vector[:768]
+
+                # LƯU TRỰC TIẾP QUA DATABASE.PY (Hợp nhất kết nối)
+                # Chuyển vector list thành chuỗi định dạng PostgreSQL: [1.2, 3.4, ...]
+                vector_str = "[" + ",".join(map(str, vector)) + "]"
+                
+                database._execute(
+                    "INSERT INTO document_chunks (document_id, content, embedding, metadata) VALUES (%s, %s, %s::vector, %s)",
+                    (doc_id, chunk_text, vector_str, '{"source": "' + file_name + '"}')
+                )
+                
+            except Exception as e:
+                # Fallback model nếu cần
+                st.warning(f"Đang thử model dự phòng cho đoạn {i}...")
+                resp = client.models.embed_content(
+                    model="embedding-001",
+                    contents=chunk_text,
                     config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
                 )
-                if resp.embeddings:
-                    working_model = test_model
-                    st.success(f"✅ Đã tìm thấy mô hình hoạt động: {working_model}")
-                    break
-            except:
-                continue
-        
-        if not working_model:
-            return False, f"Không tìm thấy mô hình Embedding nào hoạt động trong tài khoản của bạn. Đã thử: {', '.join(all_to_try)}"
-
-        # 5. Tiến hành Vectorize toàn bộ bằng mô hình đã tìm thấy
-        for i, chunk_text in enumerate(chunks):
-            # Thử ép về 768 chiều nếu model là bản mới (v004), nếu không thì để mặc định
-            embed_config = {"task_type": "RETRIEVAL_DOCUMENT"}
-            if "004" in working_model:
-                embed_config["output_dimensionality"] = 768
+                vector = resp.embeddings[0].values
+                if len(vector) > 768: vector = vector[:768]
+                vector_str = "[" + ",".join(map(str, vector)) + "]"
                 
-            resp = client.models.embed_content(
-                model=working_model,
-                contents=chunk_text,
-                config=types.EmbedContentConfig(**embed_config)
-            )
-            vector = resp.embeddings[0].values
-            
-            # Đảm bảo vector lưu vào luôn là 768 (Cắt bớt nếu model trả về 3072 mà không hỗ trợ tham số ép chiều)
-            if len(vector) > 768:
-                vector = vector[:768]
+                database._execute(
+                    "INSERT INTO document_chunks (document_id, content, embedding, metadata) VALUES (%s, %s, %s::vector, %s)",
+                    (doc_id, chunk_text, vector_str, '{}')
+                )
 
-            supabase.table("document_chunks").insert({
-                "document_id": doc_id, "content": chunk_text, "embedding": vector, "metadata": {"source": file_name}
-            }).execute()
-
+        # 5. Cập nhật trạng thái
         database.mark_as_vectorized(doc_id)
-        return True, f"Thành công! Đã xử lý bằng mô hình {working_model}."
+        return True, f"Thành công mỹ mãn! Đã xử lý {len(chunks)} đoạn tri thức."
 
     except Exception as e:
-        return False, f"Lỗi: {str(e)}"
+        return False, f"Lỗi xử lý: {str(e)}"
