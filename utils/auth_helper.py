@@ -21,36 +21,34 @@ def init_auth():
     params = st.query_params
     
     # TRƯỜNG HỢP 1: Đây là cửa sổ Popup vừa nhận code từ Google
-    if "code" in params and params.get("state") == "popup":
-        # Lưu tín hiệu thành công vào localStorage để trang chính nhận biết
-        # Sau đó tự đóng cửa sổ
+    if "code" in params and params.get("state") == "gauth_popup":
         st.components.v1.html(f"""
             <script>
-                localStorage.setItem('google_login_success', 'true');
-                localStorage.setItem('google_login_code', '{params["code"]}');
+                localStorage.setItem('glogin_success', 'true');
+                localStorage.setItem('glogin_code', '{params["code"]}');
                 window.close();
             </script>
         """, height=0)
         st.stop()
 
-    # TRƯỜNG HỢP 2: Trang chính đang "lắng nghe" tín hiệu từ Popup
-    # Chúng ta dùng một đoạn JS nhỏ để tự động reload trang chính khi thấy tín hiệu thành công
+    # TRƯỜNG HỢP 2: Trang chính lắng nghe tín hiệu
     if not st.session_state.is_logged_in and "code" not in params:
         st.components.v1.html("""
             <script>
-                const checkLogin = setInterval(() => {
-                    if (localStorage.getItem('google_login_success') === 'true') {
-                        const code = localStorage.getItem('google_login_code');
-                        localStorage.removeItem('google_login_success');
-                        localStorage.removeItem('google_login_code');
+                const timer = setInterval(() => {
+                    if (localStorage.getItem('glogin_success') === 'true') {
+                        const code = localStorage.getItem('glogin_code');
+                        localStorage.removeItem('glogin_success');
+                        localStorage.removeItem('glogin_code');
                         window.location.href = window.location.origin + window.location.pathname + '?code=' + code + '&state=verified';
+                        clearInterval(timer);
                     }
-                }, 1000);
+                }, 500);
             </script>
         """, height=0)
 
-    # TRƯỜNG HỢP 3: Trang chính nhận code và tiến hành đổi token
-    if ("code" in params) and not st.session_state.is_logged_in:
+    # TRƯỜNG HỢP 3: Xử lý code tại trang chính
+    if "code" in params and params.get("state") == "verified":
         try:
             token_url = "https://oauth2.googleapis.com/token"
             data = {
@@ -93,7 +91,7 @@ def render_login_button(sidebar=False):
         "scope": "openid email profile",
         "access_type": "offline",
         "prompt": "select_account",
-        "state": "popup"
+        "state": "gauth_popup"
     }
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
