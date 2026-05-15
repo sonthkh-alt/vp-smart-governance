@@ -230,7 +230,8 @@ def draw_sidebar():
         # ─── PHẦN ĐĂNG NHẬP (BOTTOM) ──────────────────────────────────────────
         if not is_logged_in:
             st.markdown("### 🔐 Tài khoản")
-            st.button("🔑 Đăng nhập với Google", on_click=login_google, use_container_width=True)
+            from .auth_helper import render_login_button
+            render_login_button(sidebar=True)
             st.caption("Sử dụng bất kỳ tài khoản Google nào để truy cập AI.")
         else:
             import database

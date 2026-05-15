@@ -48,6 +48,7 @@ _TABLES_SQL = [
     '''CREATE TABLE IF NOT EXISTS users (
         email TEXT PRIMARY KEY,
         full_name TEXT,
+        password TEXT DEFAULT '123456',
         is_approved INTEGER DEFAULT 0,
         credits INTEGER DEFAULT 3,
         is_admin INTEGER DEFAULT 0,
@@ -278,6 +279,13 @@ def create_user(email, full_name, is_admin=0):
         'INSERT OR IGNORE INTO users (email, full_name, is_approved, credits, is_admin, created_at) VALUES (?,?,?,?,?,?)',
         (email, full_name, 1, 9999 if is_admin else 3, is_admin, _now())
     )
+
+def verify_password_login(email, password):
+    _ensure_db()
+    row = _execute('SELECT email, full_name, is_admin FROM users WHERE email=? AND password=?', (email, password), fetchone=True)
+    if row:
+        return {"email": row[0], "name": row[1], "is_admin": row[2]}
+    return None
 
 def get_all_users():
     _ensure_db()

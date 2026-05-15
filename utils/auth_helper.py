@@ -58,14 +58,8 @@ def init_auth():
         except Exception as e:
             st.error(f"Lỗi hệ thống khi kết nối Google: {str(e)}")
 
-def login_google():
-    """Kích hoạt luồng Đăng nhập Google duy nhất."""
-    if not CLIENT_ID or not CLIENT_SECRET:
-        st.error("### 🔐 Thiếu thông tin kết nối Google")
-        st.info("Vui lòng đảm bảo bạn đã dán mã ID và Secret vào Secrets với tên mục [my_google_app].")
-        return
-
-    # Xây dựng URL chuẩn
+def render_login_button(sidebar=False):
+    """Vẽ nút đăng nhập Google (Mở Tab mới)."""
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
@@ -76,9 +70,51 @@ def login_google():
     }
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
-    st.markdown("### 🏛️ Đăng nhập Hệ thống")
-    st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
-    st.link_button("🔑 ĐĂNG NHẬP VỚI GOOGLE", auth_url, use_container_width=True, type="primary")
+    if sidebar:
+        st.link_button("🔑 Đăng nhập Google", auth_url, use_container_width=True, type="primary")
+    else:
+        st.link_button("🔑 ĐĂNG NHẬP VỚI TÀI KHOẢN GOOGLE", auth_url, use_container_width=True)
+
+def login_google():
+    """Giao diện đăng nhập đa phương thức: User/Pass + Google."""
+    if not CLIENT_ID or not CLIENT_SECRET:
+        st.error("### 🔐 Thiếu thông tin kết nối Google")
+        return
+
+    st.markdown("<div style='text-align: center; padding: 20px 0;'>", unsafe_allow_html=True)
+    st.markdown("### 🏛️ HỆ THỐNG QUẢN TRỊ THÔNG MINH HĐND")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        with st.form("login_form"):
+            st.markdown("#### 👤 Đăng nhập hệ thống")
+            email = st.text_input("Tên đăng nhập / Email")
+            password = st.text_input("Mật khẩu", type="password")
+            submitted = st.form_submit_button("ĐĂNG NHẬP", use_container_width=True, type="primary")
+            
+            if submitted:
+                if email and password:
+                    import database
+                    user = database.verify_password_login(email, password)
+                    if user:
+                        st.session_state.is_logged_in = True
+                        st.session_state.user_info = {
+                            "email": user["email"],
+                            "name": user["name"],
+                            "picture": "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                        }
+                        database.log_login(user["email"], st.context.headers.get("x-forwarded-for", "-"))
+                        st.success("Đăng nhập thành công!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Thông tin đăng nhập không chính xác.")
+                else:
+                    st.warning("Vui lòng điền đầy đủ thông tin.")
+
+        st.markdown("<div style='text-align: center; margin: 20px 0; color: #94A3B8;'>─── HOẶC ───</div>", unsafe_allow_html=True)
+        render_login_button(sidebar=False)
+    
     st.stop()
 
 def logout():
