@@ -29,6 +29,12 @@ st.caption("🚀 Phiên bản: 2.5.1 (Cập nhật tính năng Upload file)")
 
 tab1, tab2, tab3 = st.tabs(["📝 Soạn thảo Văn bản", "🎤 Soạn thảo Phát biểu", "📋 Soát xét & Kiểm lỗi"])
 
+# --- Cấu hình AI chung cho trang ---
+with st.sidebar:
+    st.markdown("### 🤖 Cấu hình AI")
+    ai_provider = st.radio("Chọn mô hình AI ưu tiên:", ["Google Gemini", "Anthropic Claude"], index=0, key="global_ai_provider")
+    provider_key = "gemini" if ai_provider == "Google Gemini" else "claude"
+
 # --- TAB 1: SOẠN THẢO VĂN BẢN ---
 with tab1:
     st.markdown("### 📝 Tham mưu & Soạn thảo chuẩn NĐ 30")
@@ -40,16 +46,16 @@ with tab1:
         ref_files = st.file_uploader("Tài liệu tham khảo:", type=["pdf", "docx"], accept_multiple_files=True, key="draft_ref")
         if st.button("🚀 TẠO DỰ THẢO VĂN BẢN", type="primary", use_container_width=True, key="draft_run"):
             if require_auth("Soạn thảo văn bản"):
-                with st.spinner("AI đang soạn thảo..."):
+                with st.spinner(f"AI ({ai_provider}) đang soạn thảo..."):
                     context = ""
                     if ref_files:
                         for f in ref_files: context += (extract_text_from_pdf(f) if f.name.endswith(".pdf") else extract_text_from_docx(f)) + "\n"
-                    res = generate_document_content(prompt, doc_type=doc_type, context=context, notebook_lm_data=legal_data)
+                    res = generate_document_content(prompt, doc_type=doc_type, context=context, notebook_lm_data=legal_data, provider=provider_key)
                     if isinstance(res, dict) and "error" not in res:
                         st.session_state.draft_res = res.get("noi_dung_chinh", "")
                         st.session_state.draft_dict = res
                         database.save_draft(doc_type, prompt, res)
-                    else: st.error("Có lỗi xảy ra.")
+                    else: st.error(f"Lỗi: {res.get('error') if isinstance(res, dict) else res}")
     with col2:
         if "draft_res" in st.session_state:
             edited = st.text_area("Nội dung dự thảo:", value=st.session_state.draft_res, height=400, key="draft_edit")
@@ -72,8 +78,8 @@ with tab2:
         if st.button("🚀 SOẠN THẢO BÀI PHÁT BIỂU", type="primary", use_container_width=True, key="speech_run"):
             if require_auth("Soạn thảo phát biểu"):
                 prompt = f"Soạn bài phát biểu cho {s_role} tại {s_event}. Ý chính: {s_key}"
-                with st.spinner("AI đang soạn thảo..."):
-                    res = generate_document_content(prompt, doc_type="Bài phát biểu")
+                with st.spinner(f"AI ({ai_provider}) đang soạn thảo..."):
+                    res = generate_document_content(prompt, doc_type="Bài phát biểu", provider=provider_key)
                     if isinstance(res, dict) and "error" not in res:
                         st.session_state.speech_res = res.get("noi_dung_chinh", "")
                         database.save_draft("Bài phát biểu", prompt, res)
@@ -121,9 +127,9 @@ with tab3:
                 if not st.session_state.rev_text_content.strip():
                     st.error("⚠️ Vui lòng tải file hoặc nhập nội dung văn bản!")
                 else:
-                    with st.spinner("AI đang soát lỗi..."):
+                    with st.spinner(f"AI ({ai_provider}) đang soát lỗi..."):
                         p = f"Hãy soát lỗi và tối ưu văn bản sau. Trọng tâm: {', '.join(rev_focus)}\n\nNội dung:\n{st.session_state.rev_text_content}"
-                        res = generate_text(p, use_pro=True)
+                        res = generate_text(p, use_pro=True, provider=provider_key)
                         st.session_state.rev_res = res
     with cr:
         if "rev_res" in st.session_state:

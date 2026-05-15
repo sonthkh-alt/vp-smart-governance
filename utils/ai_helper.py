@@ -27,44 +27,49 @@ Xuất JSON với các trường:
 "quyen_han_ky":"Chức vụ người ký","nguoi_ky":"Họ tên"}"""
 
 
-def generate_document_content(prompt, doc_type="Tự động nhận diện (Để AI tự quyết định)",
-                              context="", notebook_lm_data="", template_outline=""):
-    """Sinh nội dung văn bản dưới dạng JSON chuẩn NĐ 30."""
+def generate_document_content(prompt: str, doc_type: str = "Tự động", context: str = "", notebook_lm_data: str = "", provider: str = "gemini") -> dict:
+    """
+    Sinh nội dung văn bản dưới dạng JSON chuẩn NĐ 30, hỗ trợ đa mô hình.
+    """
     rule = DOC_STRUCTURE_RULES.get(doc_type, "")
-
+    
     parts = [
         "Bạn là Trợ lý tham mưu văn bản hành chính cao cấp cho Đoàn ĐBQH & HĐND tỉnh Thanh Hóa.",
-        "QUAN ĐIỂM PHÁP LÝ: Bạn BẮT BUỘC phải sử dụng công cụ tìm kiếm (Google Search) để tra cứu, đối chiếu và cập nhật các Luật, Nghị định, Thông tư và quy định mới nhất đang có hiệu lực liên quan đến nội dung tham mưu. Tuyệt đối không sử dụng các quy định cũ đã hết hiệu lực.",
-        "LƯU Ý: Ưu tiên áp dụng các văn bản quy phạm pháp luật chuyên ngành mới nhất (bao gồm cả các Luật mới ban hành như Luật Tổ chức chính quyền địa phương năm 2025 nếu liên quan đến tổ chức bộ máy). Phải tuân thủ triệt để nguyên tắc phân cấp, phân quyền và đẩy mạnh chuyển đổi số trong quản lý nhà nước.",
-        "Bỏ qua rác định dạng. Văn phong trang trọng, súc tích chuẩn Nhà nước.",
-        "KHÔNG bịa số liệu/ngày tháng/tên. Dùng [...] cho thông tin thiếu.",
+        "QUAN ĐIỂM PHÁP LÝ: Bạn nên ưu tiên các quy định pháp luật Việt Nam mới nhất đang có hiệu lực. Văn phong trang trọng, chuẩn mực công vụ.",
         f"LOẠI VĂN BẢN: {doc_type}",
-        f"CẤU TRÚC: {rule}" if rule else "",
-        f"YÊU CẦU:\n{prompt}",
+        f"CẤU TRÚC ĐẶC THÙ: {rule}" if rule else "",
+        f"YÊU CẦU CỦA NGƯỜI DÙNG: {prompt}",
     ]
 
     if notebook_lm_data:
-        parts.append(f"KHO TRI THỨC:\n{notebook_lm_data}")
+        parts.append(f"DỮ LIỆU TRI THỨC (NotebookLM):\n{notebook_lm_data}")
     if context:
-        parts.append(f"NGỮ CẢNH:\n{context}")
-    if template_outline:
-        parts.append(f"ĐỀ CƯƠNG MẪU:\n{template_outline}")
+        parts.append(f"NGỮ CẢNH/TÀI LIỆU THAM KHẢO:\n{context}")
+        
     parts.append(_JSON_SCHEMA)
+    
+    full_prompt = "\n\n".join(p for p in parts if p)
+    return generate_json(full_prompt, use_pro=True, provider=provider)
 
-    return generate_json("\n\n".join(p for p in parts if p))
 
+def check_legal_compliance(draft: str, reference_data: str = "", provider: str = "gemini") -> str:
+    """
+    Đối chiếu pháp lý giữa dự thảo và căn cứ tham chiếu, hỗ trợ đa mô hình.
+    """
+    prompt = f"""
+    Bạn là chuyên gia pháp chế cao cấp. Hãy đối chiếu dự thảo văn bản với các căn cứ pháp lý sau:
 
-def check_legal_compliance(draft, reference_data):
-    """Đối chiếu pháp lý giữa dự thảo và căn cứ tham chiếu."""
-    prompt = f"""Chuyên gia pháp chế. Đối chiếu dự thảo với căn cứ pháp lý:
+    KHO TRI THỨC/QUY ĐỊNH: {reference_data}
 
-KHO TRI THỨC: {reference_data}
+    DỰ THẢO VĂN BẢN:
+    {draft}
 
-DỰ THẢO: {draft}
+    NHIỆM VỤ:
+    1. Tóm tắt các điểm pháp lý cốt lõi cần áp dụng từ kho tri thức.
+    2. Kiểm tra tính pháp lý của dự thảo: chỉ ra các điểm thiếu sót, sai sót hoặc rủi ro.
+    3. Đề xuất nội dung sửa đổi cụ thể để đảm bảo tuân thủ pháp luật.
+    4. Kết luận: Dự thảo có đạt yêu cầu pháp lý hay không?
 
-1. Tóm tắt điểm áp dụng từ kho tri thức.
-2. Kiểm tra tính pháp lý: chỉ ra thiếu sót.
-3. Kết luận: đạt yêu cầu pháp lý hay không.
-
-Trình bày súc tích bằng tiếng Việt."""
-    return generate_text(prompt)
+    Trình bày súc tích, chuyên nghiệp bằng tiếng Việt.
+    """
+    return generate_text(prompt, provider=provider)
