@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import time
 from google import genai
 from google.genai import types
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -65,6 +66,9 @@ def vectorize_document(doc_id, storage_path, file_name):
 
         # 4. Lưu dữ liệu
         for i, chunk_text in enumerate(chunks):
+            # Nghỉ 1 giây để tránh lỗi Rate Limit (RESOURCE_EXHAUSTED) của gói miễn phí
+            time.sleep(1)
+            
             resp = client.models.embed_content(
                 model=working_model, contents=chunk_text,
                 config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
