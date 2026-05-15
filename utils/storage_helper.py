@@ -4,10 +4,17 @@ import database
 import os
 from datetime import datetime
 
-# Khởi tạo Supabase Client
-url = st.secrets["supabase"]["url"]
-key = st.secrets["supabase"]["key"]
-supabase: Client = create_client(url, key)
+# Khởi tạo Supabase Client an toàn
+supabase = None
+try:
+    if "supabase" in st.secrets:
+        url = st.secrets["supabase"]["url"]
+        key = st.secrets["supabase"]["key"]
+        supabase: Client = create_client(url, key)
+    else:
+        st.warning("⚠️ Thiếu cấu hình [supabase] trong Secrets. Vui lòng cấu hình để sử dụng tính năng lưu trữ.")
+except Exception as e:
+    st.error(f"Không thể khởi tạo kết nối Supabase: {e}")
 
 BUCKET_NAME = "reference-docs"
 
@@ -15,7 +22,8 @@ def upload_file(uploaded_file, module="Chưa xác định"):
     """
     Upload file lên Supabase Storage và lưu metadata vào Database.
     """
-    if uploaded_file is None:
+    if uploaded_file is None or supabase is None:
+        if supabase is None: st.error("Lỗi: Chưa kết nối được tới hệ thống lưu trữ Supabase.")
         return None
 
     try:
@@ -52,6 +60,7 @@ def get_file_url(storage_path):
     """
     Lấy URL công khai của file.
     """
+    if supabase is None: return None
     try:
         res = supabase.storage.from_(BUCKET_NAME).get_public_url(storage_path)
         return res
@@ -63,6 +72,7 @@ def delete_file(doc_id, storage_path):
     """
     Xóa file khỏi Storage và Database.
     """
+    if supabase is None: return False
     try:
         # 1. Xóa khỏi Storage
         supabase.storage.from_(BUCKET_NAME).remove([storage_path])
