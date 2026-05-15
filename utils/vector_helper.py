@@ -31,7 +31,7 @@ def vectorize_document(doc_id, storage_path, file_name):
             st.error(f"Không thể liệt kê mô hình: {e_list}")
 
         # Thử một danh sách tên mô hình đa dạng nhất có thể
-        to_try = models + ["text-embedding-004", "embedding-001", "models/text-embedding-004", "models/embedding-001"]
+        to_try = ["models/gemini-embedding-2", "text-embedding-004", "embedding-001"]
         # Lọc trùng
         to_try = list(dict.fromkeys(to_try))
 
