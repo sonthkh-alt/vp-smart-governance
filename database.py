@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 import os
 
-# Cố gắng import psycopg2 nếu có (cho PostgreSQL trên Cloud)
+# Cố gắng import psycopg2
 try:
     import psycopg2
     from psycopg2.extras import RealDictCursor
@@ -13,7 +13,6 @@ except ImportError:
 
 DB_PATH = "draft_history.db"
 
-# --- SQL Definition (Generic) ---
 _TABLES_SQL = [
     '''CREATE TABLE IF NOT EXISTS drafts (
         id SERIAL_OR_AUTO,
@@ -97,9 +96,13 @@ def _is_postgres():
 
 def _connect():
     if _is_postgres():
-        conn = psycopg2.connect(st.secrets["database"]["url"])
-        conn.autocommit = True
-        return conn
+        try:
+            conn = psycopg2.connect(st.secrets["database"]["url"])
+            conn.autocommit = True
+            return conn
+        except Exception as e:
+            st.error(f"❌ Lỗi kết nối Supabase: {e}")
+            raise e
     else:
         conn = sqlite3.connect(DB_PATH, timeout=10)
         conn.execute("PRAGMA journal_mode=WAL")
@@ -107,18 +110,16 @@ def _connect():
 
 def _transform_sql(sql):
     if _is_postgres():
-        # SQLite -> Postgres transformations
         sql = sql.replace("?", "%s")
         sql = sql.replace("SERIAL_OR_AUTO", "SERIAL PRIMARY KEY")
         sql = sql.replace("INSERT OR IGNORE INTO users", "INSERT INTO users")
         if "INSERT INTO users" in sql:
             sql += " ON CONFLICT (email) DO NOTHING"
     else:
-        # SQLite transformations
         sql = sql.replace("SERIAL_OR_AUTO", "INTEGER PRIMARY KEY AUTOINCREMENT")
     return sql
 
-def _execute(sql, params=(), fetchone=False, fetchall=False, commit=True):
+def _execute(sql, params=(), fetchone=False, fetchall=False):
     sql = _transform_sql(sql)
     conn = _connect()
     try:
@@ -159,7 +160,7 @@ def init_db():
 def _now():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-# --- Logic Functions (Generic) ---
+# --- Logic Functions ---
 
 def save_draft(doc_type, prompt, ai_content_dict):
     _execute(
@@ -351,8 +352,6 @@ def get_action_logs(limit=200):
     keys = ["id", "timestamp", "email", "action", "module", "detail"]
     return [dict(zip(keys, r)) for r in rows]
 
-# --- Documents Logic ---
-
 def save_document(file_name, file_type, file_size, storage_path, uploader_email, module):
     _execute(
         'INSERT INTO documents (created_at, file_name, file_type, file_size, storage_path, uploader_email, module) VALUES (?,?,?,?,?,?,?)',
@@ -360,7 +359,7 @@ def save_document(file_name, file_type, file_size, storage_path, uploader_email,
     )
 
 def get_all_documents():
-    _ensure_db()
+    init_db()
     rows = _execute('SELECT * FROM documents ORDER BY created_at DESC', fetchall=True)
     keys = ["id", "created_at", "file_name", "file_type", "file_size", "storage_path", "uploader_email", "module", "is_vectorized"]
     return [dict(zip(keys, r)) for r in rows]
