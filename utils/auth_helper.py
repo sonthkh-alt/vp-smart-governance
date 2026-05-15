@@ -84,13 +84,8 @@ def init_auth():
         except Exception as e:
             st.error(f"Lỗi hệ thống khi kết nối Google: {str(e)}")
 
-def login_google():
-    """Kích hoạt luồng Đăng nhập Google với cơ chế Popup an toàn."""
-    if not CLIENT_ID or not CLIENT_SECRET:
-        st.error("### 🔐 Thiếu thông tin kết nối Google")
-        st.info("Vui lòng đảm bảo cấu hình Secrets đúng mục [my_google_app].")
-        return
-
+def render_login_button(sidebar=False):
+    """Vẽ nút đăng nhập Google với Popup (Dùng chung cho cả Sidebar và Trang chủ)."""
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
@@ -102,25 +97,26 @@ def login_google():
     }
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
-    st.markdown("### 🏛️ Đăng nhập Hệ thống")
-    st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
-    
-    # Nút bấm kích hoạt Popup
+    height = 70 if not sidebar else 60
+    btn_padding = "12px" if not sidebar else "10px"
+    font_size = "16px" if not sidebar else "14px"
+
     st.components.v1.html(f"""
         <style>
             .login-btn {{
                 background: linear-gradient(135deg, #ff4b4b 0%, #ff1f1f 100%);
-                color: white; border: none; padding: 14px; border-radius: 10px;
-                font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600;
-                width: 100%; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
-                transition: all 0.3s ease;
+                color: white; border: none; padding: {btn_padding}; border-radius: 10px;
+                font-family: 'Inter', sans-serif; font-size: {font_size}; font-weight: 600;
+                width: 100%; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 75, 75, 0.2);
+                transition: all 0.3s ease; text-align: center; display: block;
+                text-decoration: none;
             }}
             .login-btn:hover {{
                 transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(255, 75, 75, 0.4);
+                box-shadow: 0 6px 20px rgba(255, 75, 75, 0.3);
             }}
         </style>
-        <button onclick="openPopup()" class="login-btn">🚀 ĐĂNG NHẬP NGAY VỚI GOOGLE</button>
+        <button onclick="openPopup()" class="login-btn">🔑 ĐĂNG NHẬP GOOGLE</button>
         <script>
             function openPopup() {{
                 const w = 500, h = 600;
@@ -128,7 +124,18 @@ def login_google():
                 window.open('{auth_url}', 'GoogleLogin', 'width='+w+',height='+h+',top='+top+',left='+left);
             }}
         </script>
-    """, height=80)
+    """, height=height)
+
+def login_google():
+    """Kích hoạt giao diện đăng nhập tại trang chính."""
+    if not CLIENT_ID or not CLIENT_SECRET:
+        st.error("### 🔐 Thiếu thông tin kết nối Google")
+        return
+
+    st.markdown("### 🏛️ Đăng nhập Hệ thống")
+    st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
+    
+    render_login_button(sidebar=False)
     
     if st.button("🔄 TẢI LẠI TRANG (Nếu bị kẹt)", use_container_width=True):
         st.rerun()
