@@ -118,6 +118,8 @@ def _transform_sql(sql):
             sql += " ON CONFLICT (email) DO NOTHING"
     else:
         sql = sql.replace("SERIAL_OR_AUTO", "INTEGER PRIMARY KEY AUTOINCREMENT")
+        # Remove PostgreSQL specific vector casting for SQLite
+        sql = sql.replace("::vector", "")
     return sql
 
 def _execute(sql, params=(), fetchone=False, fetchall=False):

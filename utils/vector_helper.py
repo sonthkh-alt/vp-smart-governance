@@ -94,7 +94,7 @@ def vectorize_document(doc_id, storage_path, file_name):
             
             vector_str = "[" + ",".join(map(str, vector)) + "]"
             database._execute(
-                "INSERT INTO document_chunks (document_id, content, embedding, metadata) VALUES (%s, %s, %s::vector, %s)",
+                "INSERT INTO document_chunks (document_id, content, embedding, metadata) VALUES (?, ?, ?::vector, ?)",
                 (doc_id, chunk_text, vector_str, '{}')
             )
 
