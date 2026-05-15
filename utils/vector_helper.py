@@ -8,19 +8,34 @@ from utils.storage_helper import supabase
 import database
 import io
 
-# Khởi tạo client đồng bộ với gemini_client.py
 def _get_client():
     key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
     if not key:
         raise ValueError("Thiếu GEMINI_API_KEY trong cấu hình.")
     return genai.Client(api_key=key)
 
+def _find_embedding_model(client):
+    """
+    Tự động tìm kiếm mô hình embedding khả dụng trong tài khoản.
+    """
+    try:
+        models = client.models.list()
+        for m in models:
+            # Tìm mô hình có hỗ trợ tính năng embedContent hoặc có tên chứa 'embedding'
+            if "embedContent" in m.supported_methods and "embedding" in m.name:
+                return m.name
+        return "models/embedding-001" # Fallback mặc định
+    except:
+        return "models/embedding-001"
+
 def vectorize_document(doc_id, storage_path, file_name):
     """
-    Quy trình Vectorize sử dụng SDK google-genai mới nhất (v1.0+).
+    Quy trình Vectorize với tính năng tự động dò tìm mô hình tương thích.
     """
     try:
         client = _get_client()
+        model_name = _find_embedding_model(client)
+        st.caption(f"Sử dụng mô hình AI: {model_name}")
         
         # 1. Tải file từ Supabase Storage
         res = supabase.storage.from_("reference-docs").download(storage_path)
@@ -44,39 +59,22 @@ def vectorize_document(doc_id, storage_path, file_name):
         
         st.info(f"Đã chia tài liệu thành {len(chunks)} đoạn tri thức. Đang tạo Vector...")
 
-        # 4. Tạo Vector bằng mô hình embedding-004 (Chuẩn mới nhất của SDK v1.0)
-        # Nếu không có embedding-004, hệ thống sẽ tự động dùng mô hình mặc định
+        # 4. Tạo Vector
         for i, chunk_text in enumerate(chunks):
-            try:
-                # Gọi API Embed của SDK mới
-                resp = client.models.embed_content(
-                    model="text-embedding-004",
-                    contents=chunk_text,
-                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
-                )
-                
-                # Lấy vector từ kết quả
-                vector = resp.embeddings[0].values
-                
-                # Lưu vào Supabase
-                supabase.table("document_chunks").insert({
-                    "document_id": doc_id,
-                    "content": chunk_text,
-                    "embedding": vector,
-                    "metadata": {"source": file_name, "chunk_index": i}
-                }).execute()
-                
-            except Exception as inner_e:
-                # Fallback sang model đời cũ hơn nếu cần
-                resp = client.models.embed_content(
-                    model="embedding-001",
-                    contents=chunk_text,
-                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
-                )
-                vector = resp.embeddings[0].values
-                supabase.table("document_chunks").insert({
-                    "document_id": doc_id, "content": chunk_text, "embedding": vector, "metadata": {"source": file_name}
-                }).execute()
+            resp = client.models.embed_content(
+                model=model_name,
+                contents=chunk_text,
+                config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+            )
+            
+            vector = resp.embeddings[0].values
+            
+            supabase.table("document_chunks").insert({
+                "document_id": doc_id,
+                "content": chunk_text,
+                "embedding": vector,
+                "metadata": {"source": file_name, "chunk_index": i}
+            }).execute()
 
         # 5. Cập nhật trạng thái
         database.mark_as_vectorized(doc_id)
