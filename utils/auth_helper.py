@@ -18,7 +18,6 @@ def init_auth():
         st.session_state.is_logged_in = False
         st.session_state.user_info = None
 
-    # Nhận diện code khi Google quay trở lại trang chính
     params = st.query_params
     if "code" in params and not st.session_state.is_logged_in:
         try:
@@ -49,14 +48,13 @@ def init_auth():
                 ua = st.context.headers.get("user-agent", "-")
                 database.log_login(user_info.get("email"), ip, ua)
                 
-                # Xóa code trên URL cho sạch và reload
                 st.query_params.clear()
                 st.rerun()
         except Exception as e:
             st.error(f"Lỗi kết nối Google: {str(e)}")
 
 def render_login_button(sidebar=False):
-    """Vẽ nút đăng nhập Google luồng chuẩn (Chuyển hướng trực tiếp)."""
+    """Vẽ nút đăng nhập Google luồng chuẩn."""
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
@@ -68,18 +66,12 @@ def render_login_button(sidebar=False):
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
     if sidebar:
-        # Nút trong sidebar thiết kế gọn hơn nhưng vẫn dùng target="_top"
-        st.markdown(f"""
-            <a href="{auth_url}" target="_top" style="text-decoration: none;">
-                <div style="background: #ff4b4b; color: white; padding: 10px; 
-                            border-radius: 8px; text-align: center; font-weight: 600;
-                            font-size: 14px; box-shadow: 0 2px 8px rgba(255, 75, 75, 0.2);">
-                    🔑 ĐĂNG NHẬP GOOGLE
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
+        # Trong Sidebar dùng nút chuẩn Streamlit kết hợp JS Redirect
+        if st.button("🔑 ĐĂNG NHẬP GOOGLE", use_container_width=True, type="primary"):
+            st.markdown(f'<meta http-equiv="refresh" content="0; url={auth_url}">', unsafe_allow_html=True)
+            st.write(f'<script>window.top.location.href="{auth_url}"</script>', unsafe_allow_html=True)
     else:
-        # Nút trang chủ thiết kế đẹp hơn với target="_top"
+        # Ngoài trang chủ dùng HTML Anchor với target="_top" cực kỳ ổn định
         st.markdown(f"""
             <a href="{auth_url}" target="_top" style="text-decoration: none;">
                 <div style="background: linear-gradient(135deg, #ff4b4b 0%, #ff1f1f 100%);
@@ -93,7 +85,6 @@ def render_login_button(sidebar=False):
         """, unsafe_allow_html=True)
 
 def login_google():
-    """Giao diện đăng nhập tập trung."""
     if not CLIENT_ID or not CLIENT_SECRET:
         st.error("### 🔐 Thiếu thông tin kết nối Google")
         return
