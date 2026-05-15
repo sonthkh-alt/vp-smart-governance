@@ -12,43 +12,22 @@ def _get_client():
     key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
     if not key:
         raise ValueError("Thiếu GEMINI_API_KEY trong cấu hình.")
-    return genai.Client(api_key=key)
+    # ÉP BUỘC sử dụng API version v1 chính thức thay vì v1beta
+    return genai.Client(api_key=key, http_options={'api_version': 'v1'})
 
 def vectorize_document(doc_id, storage_path, file_name):
     """
-    Quy trình Vectorize với hệ thống Chẩn đoán và Thử sai đa tầng.
+    Quy trình Vectorize ép buộc sử dụng API v1 để tránh lỗi 404 trên v1beta.
     """
     try:
         client = _get_client()
         
-        # 1. CHẨN ĐOÁN & CHỌN MÔ HÌNH
-        model_name = None
-        try:
-            # Liệt kê các mô hình có khả năng Embedding
-            available_models = []
-            for m in client.models.list():
-                # Trong SDK mới, dùng supported_generation_methods
-                methods = getattr(m, 'supported_generation_methods', [])
-                if "embedContent" in methods or "embed_content" in str(methods).lower():
-                    available_models.append(m.name)
-            
-            if available_models:
-                st.info(f"🔍 Tìm thấy mô hình: {', '.join(available_models)}")
-                model_name = available_models[0]
-            else:
-                # Nếu không liệt kê được, dùng danh sách ưu tiên
-                st.warning("⚠️ Không liệt kê được mô hình, chuyển sang chế độ Thử sai...")
-                model_name = "text-embedding-004"
-        except Exception as diag_e:
-            st.caption(f"(Chẩn đoán nhẹ: {diag_e})")
-            model_name = "text-embedding-004"
-
-        # 2. Tải file từ Supabase Storage
+        # 1. Tải file từ Supabase Storage
         res = supabase.storage.from_("reference-docs").download(storage_path)
         if not res:
             return False, "Không thể tải file từ Storage."
         
-        # 3. Bóc tách văn bản
+        # 2. Bóc tách văn bản
         text = ""
         file_io = io.BytesIO(res)
         if file_name.lower().endswith(".pdf"):
@@ -59,47 +38,43 @@ def vectorize_document(doc_id, storage_path, file_name):
         if not text or len(text.strip()) < 10:
             return False, "Tài liệu không có nội dung văn bản hoặc quá ngắn."
 
-        # 4. Chia nhỏ văn bản
+        # 3. Chia nhỏ văn bản
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         chunks = text_splitter.split_text(text)
-        st.info(f"Đã chia tài liệu thành {len(chunks)} đoạn. Đang tạo Vector...")
+        st.info(f"Đã chia tài liệu thành {len(chunks)} đoạn. Đang tạo Vector qua API v1...")
 
-        # 5. Tạo Vector (Có cơ chế dự phòng)
-        priority_models = [model_name, "text-embedding-004", "embedding-001", "models/embedding-001"]
-        # Loại bỏ các tên trùng lặp và None
-        priority_models = [m for m in dict.fromkeys(priority_models) if m]
-
+        # 4. Tạo Vector (Sử dụng model chuẩn nhất của v1)
         for i, chunk_text in enumerate(chunks):
-            vector = None
-            last_err = ""
-            
-            for m_test in priority_models:
-                try:
-                    resp = client.models.embed_content(
-                        model=m_test,
-                        contents=chunk_text,
-                        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
-                    )
-                    vector = resp.embeddings[0].values
-                    if vector: break # Thành công
-                except Exception as e:
-                    last_err = str(e)
-                    continue # Thử model tiếp theo
-            
-            if not vector:
-                return False, f"Tất cả các mô hình Embedding đều thất bại. Lỗi cuối: {last_err}"
-            
-            # Lưu vào Supabase
-            supabase.table("document_chunks").insert({
-                "document_id": doc_id,
-                "content": chunk_text,
-                "embedding": vector,
-                "metadata": {"source": file_name, "chunk_index": i}
-            }).execute()
+            try:
+                resp = client.models.embed_content(
+                    model="text-embedding-004",
+                    contents=chunk_text,
+                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+                )
+                vector = resp.embeddings[0].values
+                
+                # Lưu vào Supabase
+                supabase.table("document_chunks").insert({
+                    "document_id": doc_id,
+                    "content": chunk_text,
+                    "embedding": vector,
+                    "metadata": {"source": file_name, "chunk_index": i}
+                }).execute()
+            except Exception as e1:
+                # Dự phòng sang model cũ hơn trên v1
+                resp = client.models.embed_content(
+                    model="embedding-001",
+                    contents=chunk_text,
+                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+                )
+                vector = resp.embeddings[0].values
+                supabase.table("document_chunks").insert({
+                    "document_id": doc_id, "content": chunk_text, "embedding": vector, "metadata": {"source": file_name}
+                }).execute()
 
-        # 6. Cập nhật trạng thái
+        # 5. Cập nhật trạng thái
         database.mark_as_vectorized(doc_id)
-        return True, f"Thành công! Đã Vectorize {len(chunks)} đoạn tri thức."
+        return True, f"Thành công! Đã Vectorize {len(chunks)} đoạn qua API v1."
 
     except Exception as e:
-        return False, f"Lỗi hệ thống: {str(e)}"
+        return False, f"Lỗi Vectorize (v1): {str(e)}"
