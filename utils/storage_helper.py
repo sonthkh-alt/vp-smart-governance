@@ -18,6 +18,18 @@ except Exception as e:
 
 BUCKET_NAME = "reference-docs"
 
+# Tự động tạo Bucket nếu chưa có (Chỉ chạy được nếu dùng Service Role Key)
+if supabase:
+    try:
+        # Kiểm tra xem bucket đã tồn tại chưa
+        buckets = supabase.storage.list_buckets()
+        exists = any(b.name == BUCKET_NAME for b in buckets)
+        if not exists:
+            supabase.storage.create_bucket(BUCKET_NAME, options={"public": True})
+            print(f"Đã tạo Bucket {BUCKET_NAME} thành công.")
+    except Exception as be:
+        print(f"Lưu ý: Không thể tự tạo bucket (có thể do quyền): {be}")
+
 def upload_file(uploaded_file, module="Chưa xác định"):
     """
     Upload file lên Supabase Storage và lưu metadata vào Database.
