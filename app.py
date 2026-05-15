@@ -28,10 +28,6 @@ from utils.ui_helper import set_premium_css
 # 1. Khởi tạo Auth ngay lập tức
 init_auth()
 
-# KIỂM TRA: Nếu là cửa sổ Popup thì dừng ngay tại đây để không tải giao diện nặng
-if st.query_params.get("state") in ["gauth_popup", "popup"]:
-    st.stop()
-
 # 2. Định nghĩa các trang
 # Chú ý: Streamlit sẽ chạy script của trang được chọn.
 pages = [

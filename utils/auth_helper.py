@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import urllib.parse
-import time
 
 # Cấu hình Google OAuth
 raw_id = st.secrets.get("my_google_app", {}).get("id", "")
@@ -19,59 +18,9 @@ def init_auth():
         st.session_state.is_logged_in = False
         st.session_state.user_info = None
 
+    # Nhận diện code khi Google quay trở lại trang chính
     params = st.query_params
-    
-    # TRƯỜNG HỢP 1: Cửa sổ Popup vừa được mở ra (Chưa đi đến Google)
-    if params.get("state") == "gauth_popup" and "code" not in params:
-        # Xây dựng URL Google ngay tại đây
-        g_params = {
-            "client_id": CLIENT_ID,
-            "redirect_uri": url_phan_hoi,
-            "response_type": "code",
-            "scope": "openid email profile",
-            "access_type": "offline",
-            "prompt": "select_account",
-            "state": "gauth_popup"
-        }
-        auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(g_params)}"
-        
-        # Ép cửa sổ Popup đi đến Google
-        st.components.v1.html(f"""
-            <script>
-                window.location.href = "{auth_url}";
-            </script>
-        """, height=0)
-        st.stop()
-
-    # TRƯỜNG HỢP 2: Cửa sổ Popup đã nhận được code từ Google
-    if "code" in params and params.get("state") == "gauth_popup":
-        st.components.v1.html(f"""
-            <script>
-                localStorage.setItem('glogin_success', 'true');
-                localStorage.setItem('glogin_code', '{params["code"]}');
-                window.close();
-            </script>
-        """, height=0)
-        st.stop()
-
-    # TRƯỜNG HỢP 3: Trang chính lắng nghe tín hiệu
-    if not st.session_state.is_logged_in and "code" not in params:
-        st.components.v1.html("""
-            <script>
-                const timer = setInterval(() => {
-                    if (localStorage.getItem('glogin_success') === 'true') {
-                        const code = localStorage.getItem('glogin_code');
-                        localStorage.removeItem('glogin_success');
-                        localStorage.removeItem('glogin_code');
-                        window.location.href = window.location.origin + window.location.pathname + '?code=' + code + '&state=verified';
-                        clearInterval(timer);
-                    }
-                }, 500);
-            </script>
-        """, height=0)
-
-    # TRƯỜNG HỢP 4: Xử lý code tại trang chính (Sau khi đã verified)
-    if "code" in params and params.get("state") == "verified":
+    if "code" in params and not st.session_state.is_logged_in:
         try:
             token_url = "https://oauth2.googleapis.com/token"
             data = {
@@ -100,47 +49,43 @@ def init_auth():
                 ua = st.context.headers.get("user-agent", "-")
                 database.log_login(user_info.get("email"), ip, ua)
                 
+                # Xóa code trên URL cho sạch và reload
                 st.query_params.clear()
                 st.rerun()
         except Exception as e:
-            st.error(f"Lỗi hệ thống khi kết nối Google: {str(e)}")
+            st.error(f"Lỗi kết nối Google: {str(e)}")
 
 def render_login_button(sidebar=False):
-    """Vẽ nút đăng nhập Google sử dụng kỹ thuật Redirect-in-Popup."""
-    # URL Popup chính là URL của app nhưng thêm dấu hiệu state=gauth_popup
-    popup_trigger_url = url_phan_hoi + "?state=gauth_popup"
+    """Vẽ nút đăng nhập Google luồng chuẩn (Chuyển hướng trực tiếp)."""
+    params = {
+        "client_id": CLIENT_ID,
+        "redirect_uri": url_phan_hoi,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account"
+    }
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
-    height = 70 if not sidebar else 60
-    btn_padding = "12px" if not sidebar else "10px"
-    font_size = "16px" if not sidebar else "14px"
-
-    st.components.v1.html(f"""
-        <style>
-            .login-btn {{
-                background: linear-gradient(135deg, #ff4b4b 0%, #ff1f1f 100%);
-                color: white; border: none; padding: {btn_padding}; border-radius: 10px;
-                font-family: 'Inter', sans-serif; font-size: {font_size}; font-weight: 600;
-                width: 100%; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 75, 75, 0.2);
-                transition: all 0.3s ease; text-align: center; display: block;
-                text-decoration: none;
-            }}
-            .login-btn:hover {{
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(255, 75, 75, 0.3);
-            }}
-        </style>
-        <button onclick="openPopup()" class="login-btn">🔑 ĐĂNG NHẬP GOOGLE</button>
-        <script>
-            function openPopup() {{
-                const w = 500, h = 600;
-                const left = (screen.width/2)-(w/2), top = (screen.height/2)-(h/2);
-                // Mở chính APP của mình trước để trình duyệt không chặn
-                window.open('{popup_trigger_url}', 'GoogleLogin', 'width='+w+',height='+h+',top='+top+',left='+left);
-            }}
-        </script>
-    """, height=height)
+    if sidebar:
+        # Nút trong sidebar dùng link_button chuẩn
+        st.link_button("🔑 Đăng nhập Google", auth_url, use_container_width=True, type="primary")
+    else:
+        # Nút trang chủ thiết kế đẹp hơn
+        st.markdown(f"""
+            <a href="{auth_url}" target="_self" style="text-decoration: none;">
+                <div style="background: linear-gradient(135deg, #ff4b4b 0%, #ff1f1f 100%);
+                            color: white; padding: 14px; border-radius: 10px;
+                            text-align: center; font-weight: 700; font-size: 16px;
+                            box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
+                            margin-bottom: 10px;">
+                    🚀 ĐĂNG NHẬP NGAY VỚI GOOGLE
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
 
 def login_google():
+    """Giao diện đăng nhập tập trung."""
     if not CLIENT_ID or not CLIENT_SECRET:
         st.error("### 🔐 Thiếu thông tin kết nối Google")
         return
@@ -148,9 +93,6 @@ def login_google():
     st.markdown("### 🏛️ Đăng nhập Hệ thống")
     st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
     render_login_button(sidebar=False)
-    
-    if st.button("🔄 TẢI LẠI TRANG (Nếu bị kẹt)", use_container_width=True):
-        st.rerun()
     st.stop()
 
 def logout():
