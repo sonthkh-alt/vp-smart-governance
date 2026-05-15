@@ -20,6 +20,10 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 database.init_db()
 set_premium_css()
 
+# Khởi tạo Session State
+if "rev_text_content" not in st.session_state:
+    st.session_state.rev_text_content = ""
+
 draw_module_header(
     "Trung tâm Soạn thảo & Kiểm soát Chất lượng",
     "📝",
@@ -107,19 +111,23 @@ with tab3:
         st.markdown("#### 📥 Nhập Văn bản")
         rev_file = st.file_uploader("Tải lên văn bản (PDF/DOCX):", type=["pdf", "docx"], key="rev_file")
         
-        # Xử lý text từ file upload
+        # Xử lý trích xuất text từ file upload
         if rev_file and ("last_rev_file" not in st.session_state or st.session_state.last_rev_file != rev_file.name):
-            with st.spinner("Đang trích xuất văn bản..."):
+            with st.spinner("🔍 Đang trích xuất văn bản..."):
+                extracted_text = ""
                 if rev_file.name.endswith(".pdf"):
-                    st.session_state.rev_text_content = extract_text_from_pdf(rev_file)
+                    extracted_text = extract_text_from_pdf(rev_file)
                 else:
-                    st.session_state.rev_text_content = extract_text_from_docx(rev_file)
+                    extracted_text = extract_text_from_docx(rev_file)
+                
+                if extracted_text.strip():
+                    st.session_state.rev_text_content = extracted_text
+                else:
+                    st.warning("⚠️ Không thể trích xuất văn bản từ file này hoặc file trống.")
                 st.session_state.last_rev_file = rev_file.name
 
-        # Hiển thị text area (lấy từ session state nếu có)
-        current_text = st.session_state.get("rev_text_content", "")
-        rev_input = st.text_area("Nội dung văn bản cần kiểm tra:", value=current_text, height=300, key="rev_input_area")
-        st.session_state.rev_text_content = rev_input # Cập nhật lại nếu người dùng sửa trực tiếp
+        # Hiển thị text area - Tự động đồng bộ với st.session_state.rev_text_content
+        st.text_area("Nội dung văn bản cần kiểm tra:", height=300, key="rev_text_content")
         
         rev_focus = st.multiselect("Trọng tâm kiểm tra:", ["Chính tả & Ngữ pháp", "Thể thức NĐ 30", "Văn phong hành chính", "Logic quản lý"], default=["Chính tả & Ngữ pháp", "Văn phong hành chính"], key="rev_focus")
         if st.button("🚀 BẮT ĐẦU KIỂM TRA", type="primary", use_container_width=True, key="rev_run"):
