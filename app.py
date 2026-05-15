@@ -39,6 +39,7 @@ pages = [
     st.Page("pages/5_🎓_Academic_Promotion.py", title="Học thuật & Nâng hạng", icon="🎓"),
     st.Page("pages/6_📋_Document_Review.py", title="Kiểm soát Văn bản", icon="📋"),
     st.Page("pages/9_🎤_Speech_Drafting.py", title="Soạn thảo bài phát biểu", icon="🎤"),
+    st.Page("pages/10_📚_Knowledge_Base.py", title="Kho tri thức tập trung", icon="📚"),
     st.Page("pages/8_🌍_Portal.py", title="Cổng thông tin HĐND", icon="🌍"),
 ]
 

@@ -78,6 +78,17 @@ _TABLES_SQL = [
         action TEXT NOT NULL,
         module TEXT,
         detail TEXT
+    )''',
+    '''CREATE TABLE IF NOT EXISTS documents (
+        id SERIAL_OR_AUTO,
+        created_at TEXT NOT NULL,
+        file_name TEXT NOT NULL,
+        file_type TEXT,
+        file_size INTEGER,
+        storage_path TEXT NOT NULL,
+        uploader_email TEXT,
+        module TEXT,
+        is_vectorized INTEGER DEFAULT 0
     )'''
 ]
 
@@ -339,3 +350,20 @@ def get_action_logs(limit=200):
     rows = _execute('SELECT * FROM action_logs ORDER BY id DESC LIMIT ?', (limit,), fetchall=True)
     keys = ["id", "timestamp", "email", "action", "module", "detail"]
     return [dict(zip(keys, r)) for r in rows]
+
+# --- Documents Logic ---
+
+def save_document(file_name, file_type, file_size, storage_path, uploader_email, module):
+    _execute(
+        'INSERT INTO documents (created_at, file_name, file_type, file_size, storage_path, uploader_email, module) VALUES (?,?,?,?,?,?,?)',
+        (_now(), file_name, file_type, file_size, storage_path, uploader_email, module)
+    )
+
+def get_all_documents():
+    _ensure_db()
+    rows = _execute('SELECT * FROM documents ORDER BY created_at DESC', fetchall=True)
+    keys = ["id", "created_at", "file_name", "file_type", "file_size", "storage_path", "uploader_email", "module", "is_vectorized"]
+    return [dict(zip(keys, r)) for r in rows]
+
+def delete_document(doc_id):
+    _execute('DELETE FROM documents WHERE id=?', (doc_id,))
