@@ -6,9 +6,8 @@ from utils.storage_helper import supabase
 import database
 import io
 
-# Khởi tạo mô hình Embedding của Google
-# text-embedding-004 là mô hình mới nhất và tối ưu nhất của Google hiện nay (768 chiều)
-embeddings_model = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+# Khởi tạo mô hình Embedding của Google (Sử dụng mô hình embedding-001 ổn định nhất)
+embeddings_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
 def vectorize_document(doc_id, storage_path, file_name):
     """
