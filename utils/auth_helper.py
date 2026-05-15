@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import urllib.parse
+import time
 
 # Cấu hình Google OAuth
 raw_id = st.secrets.get("my_google_app", {}).get("id", "")
@@ -20,7 +21,29 @@ def init_auth():
 
     params = st.query_params
     
-    # TRƯỜNG HỢP 1: Đây là cửa sổ Popup vừa nhận code từ Google
+    # TRƯỜNG HỢP 1: Cửa sổ Popup vừa được mở ra (Chưa đi đến Google)
+    if params.get("state") == "gauth_popup" and "code" not in params:
+        # Xây dựng URL Google ngay tại đây
+        g_params = {
+            "client_id": CLIENT_ID,
+            "redirect_uri": url_phan_hoi,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "access_type": "offline",
+            "prompt": "select_account",
+            "state": "gauth_popup"
+        }
+        auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(g_params)}"
+        
+        # Ép cửa sổ Popup đi đến Google
+        st.components.v1.html(f"""
+            <script>
+                window.location.href = "{auth_url}";
+            </script>
+        """, height=0)
+        st.stop()
+
+    # TRƯỜNG HỢP 2: Cửa sổ Popup đã nhận được code từ Google
     if "code" in params and params.get("state") == "gauth_popup":
         st.components.v1.html(f"""
             <script>
@@ -31,7 +54,7 @@ def init_auth():
         """, height=0)
         st.stop()
 
-    # TRƯỜNG HỢP 2: Trang chính lắng nghe tín hiệu
+    # TRƯỜNG HỢP 3: Trang chính lắng nghe tín hiệu
     if not st.session_state.is_logged_in and "code" not in params:
         st.components.v1.html("""
             <script>
@@ -47,7 +70,7 @@ def init_auth():
             </script>
         """, height=0)
 
-    # TRƯỜNG HỢP 3: Xử lý code tại trang chính
+    # TRƯỜNG HỢP 4: Xử lý code tại trang chính (Sau khi đã verified)
     if "code" in params and params.get("state") == "verified":
         try:
             token_url = "https://oauth2.googleapis.com/token"
@@ -83,17 +106,9 @@ def init_auth():
             st.error(f"Lỗi hệ thống khi kết nối Google: {str(e)}")
 
 def render_login_button(sidebar=False):
-    """Vẽ nút đăng nhập Google với Popup (Dùng chung cho cả Sidebar và Trang chủ)."""
-    params = {
-        "client_id": CLIENT_ID,
-        "redirect_uri": url_phan_hoi,
-        "response_type": "code",
-        "scope": "openid email profile",
-        "access_type": "offline",
-        "prompt": "select_account",
-        "state": "gauth_popup"
-    }
-    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    """Vẽ nút đăng nhập Google sử dụng kỹ thuật Redirect-in-Popup."""
+    # URL Popup chính là URL của app nhưng thêm dấu hiệu state=gauth_popup
+    popup_trigger_url = url_phan_hoi + "?state=gauth_popup"
     
     height = 70 if not sidebar else 60
     btn_padding = "12px" if not sidebar else "10px"
@@ -119,20 +134,19 @@ def render_login_button(sidebar=False):
             function openPopup() {{
                 const w = 500, h = 600;
                 const left = (screen.width/2)-(w/2), top = (screen.height/2)-(h/2);
-                window.open('{auth_url}', 'GoogleLogin', 'width='+w+',height='+h+',top='+top+',left='+left);
+                // Mở chính APP của mình trước để trình duyệt không chặn
+                window.open('{popup_trigger_url}', 'GoogleLogin', 'width='+w+',height='+h+',top='+top+',left='+left);
             }}
         </script>
     """, height=height)
 
 def login_google():
-    """Kích hoạt giao diện đăng nhập tại trang chính."""
     if not CLIENT_ID or not CLIENT_SECRET:
         st.error("### 🔐 Thiếu thông tin kết nối Google")
         return
 
     st.markdown("### 🏛️ Đăng nhập Hệ thống")
     st.info("Sử dụng tài khoản Google để truy cập đầy đủ tính năng AI.")
-    
     render_login_button(sidebar=False)
     
     if st.button("🔄 TẢI LẠI TRANG (Nếu bị kẹt)", use_container_width=True):
