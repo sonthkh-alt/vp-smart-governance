@@ -36,9 +36,11 @@ def _get_gemini_client():
     return genai.Client(api_key=key)
 
 def _get_claude_client():
-    if not anthropic: return None
+    if not anthropic: 
+        return "MISSING_LIB"
     key = _get_api_key("claude")
-    if not key: return None
+    if not key: 
+        return "MISSING_KEY"
     return anthropic.Anthropic(api_key=key)
 
 def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, use_search: bool = True) -> str:
@@ -52,9 +54,13 @@ def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, u
     )
 
 def _call_claude(prompt: str, use_pro: bool = True) -> str:
-    client = _get_claude_client()
-    if not client: return "❌ Chưa cấu hình Claude API hoặc thiếu thư viện."
+    client_res = _get_claude_client()
+    if client_res == "MISSING_LIB":
+        return "❌ Lỗi: Thư viện 'anthropic' chưa được cài đặt trên máy chủ. Vui lòng đợi hệ thống cập nhật requirements.txt (có thể mất 1-2 phút)."
+    if client_res == "MISSING_KEY":
+        return "❌ Lỗi: Chưa tìm thấy ANTHROPIC_API_KEY trong cấu hình (.env hoặc Secrets)."
     
+    client = client_res
     try:
         model = CLAUDE_MODELS[0] if use_pro else "claude-3-haiku-20240307"
         resp = client.messages.create(
