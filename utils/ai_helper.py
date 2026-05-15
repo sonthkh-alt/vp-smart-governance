@@ -15,6 +15,7 @@ DOC_STRUCTURE_RULES = {
     ),
     "Công văn": "Văn xuôi hành chính, chia mục 1., 2., 3.",
     "Tờ trình": "Văn xuôi hành chính, chia mục 1., 2., 3.",
+    "Bài phát biểu": "Cấu trúc: Kính thưa (đúng thứ bậc) → Phần mở đầu (lý do) → Phần nội dung (đánh giá, nhiệm vụ trọng tâm) → Phần kết thúc (lời chúc, bế mạc).",
 }
 
 _JSON_SCHEMA = """\
