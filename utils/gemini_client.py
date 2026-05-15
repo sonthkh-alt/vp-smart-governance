@@ -182,7 +182,11 @@ def check_api_status():
     results = {}
     
     try:
-        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        key = _get_api_key()
+        if not key:
+             return {"Hệ thống": {"status": "❌ Thiếu API Key", "detail": "Vui lòng cấu hình GEMINI_API_KEY."}}
+             
+        client = genai.Client(api_key=key)
         # Danh sách các model muốn kiểm tra
         to_test = ["gemini-3.1-pro", "gemini-3-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
         

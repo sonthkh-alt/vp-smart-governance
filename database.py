@@ -198,7 +198,9 @@ def update_petition_status(petition_id, new_status, resolution=""):
 
 def get_petitions():
     _ensure_db()
-    return _execute('SELECT * FROM petitions ORDER BY id DESC', fetchall=True)
+    rows = _execute('SELECT id, created_at, voter_name, district, content, category, status, resolution FROM petitions ORDER BY id DESC', fetchall=True)
+    keys = ["id", "created_at", "voter_name", "district", "content", "category", "status", "resolution"]
+    return [dict(zip(keys, r)) for r in rows]
 
 def save_policy_review(policy_name, analysis_result):
     _execute(
@@ -208,7 +210,9 @@ def save_policy_review(policy_name, analysis_result):
 
 def get_policy_reviews():
     _ensure_db()
-    return _execute('SELECT * FROM policy_reviews ORDER BY id DESC', fetchall=True)
+    rows = _execute('SELECT id, created_at, policy_name, analysis_result FROM policy_reviews ORDER BY id DESC', fetchall=True)
+    keys = ["id", "created_at", "policy_name", "analysis_result"]
+    return [dict(zip(keys, r)) for r in rows]
 
 def save_academic_profile(profile: dict):
     _execute('DELETE FROM academic_profile')
@@ -235,7 +239,7 @@ def save_academic_profile(profile: dict):
 
 def get_academic_profile() -> dict:
     _ensure_db()
-    row = _execute('SELECT * FROM academic_profile WHERE id=1', fetchone=True)
+    row = _execute('SELECT id, full_name, current_title, field, sub_field, institution, phd_year, target_year, teaching_hours, supervised_masters, supervised_phds, research_projects_national, research_projects_local, foreign_language, updated_at FROM academic_profile WHERE id=1', fetchone=True)
     if not row: return {}
     fields = [
         "full_name", "current_title", "field", "sub_field", "institution",
@@ -261,14 +265,16 @@ def save_publication(pub: dict):
 
 def get_publications():
     _ensure_db()
-    return _execute('SELECT * FROM publications ORDER BY year DESC, id DESC', fetchall=True)
+    rows = _execute('SELECT id, title, pub_type, journal_name, year, is_isi_scopus, is_first_author, points, doi, notes, created_at FROM publications ORDER BY year DESC, id DESC', fetchall=True)
+    keys = ["id", "title", "pub_type", "journal_name", "year", "is_isi_scopus", "is_first_author", "points", "doi", "notes", "created_at"]
+    return [dict(zip(keys, r)) for r in rows]
 
 def delete_publication(pub_id):
     _execute('DELETE FROM publications WHERE id=?', (pub_id,))
 
 def get_user(email):
     _ensure_db()
-    row = _execute('SELECT * FROM users WHERE email=?', (email,), fetchone=True)
+    row = _execute('SELECT email, full_name, is_approved, credits, is_admin, created_at FROM users WHERE email=?', (email,), fetchone=True)
     if row:
         keys = ["email", "full_name", "is_approved", "credits", "is_admin", "created_at"]
         return dict(zip(keys, row))
@@ -289,7 +295,7 @@ def verify_password_login(email, password):
 
 def get_all_users():
     _ensure_db()
-    rows = _execute('SELECT * FROM users ORDER BY created_at DESC', fetchall=True)
+    rows = _execute('SELECT email, full_name, is_approved, credits, is_admin, created_at FROM users ORDER BY created_at DESC', fetchall=True)
     keys = ["email", "full_name", "is_approved", "credits", "is_admin", "created_at"]
     return [dict(zip(keys, r)) for r in rows]
 
@@ -350,13 +356,13 @@ def log_action(email, action, module="-", detail="-"):
 
 def get_login_logs(limit=100):
     _ensure_db()
-    rows = _execute('SELECT * FROM login_logs ORDER BY id DESC LIMIT ?', (limit,), fetchall=True)
+    rows = _execute('SELECT id, timestamp, email, ip_address, user_agent FROM login_logs ORDER BY id DESC LIMIT ?', (limit,), fetchall=True)
     keys = ["id", "timestamp", "email", "ip_address", "user_agent"]
     return [dict(zip(keys, r)) for r in rows]
 
 def get_action_logs(limit=200):
     _ensure_db()
-    rows = _execute('SELECT * FROM action_logs ORDER BY id DESC LIMIT ?', (limit,), fetchall=True)
+    rows = _execute('SELECT id, timestamp, email, action, module, detail FROM action_logs ORDER BY id DESC LIMIT ?', (limit,), fetchall=True)
     keys = ["id", "timestamp", "email", "action", "module", "detail"]
     return [dict(zip(keys, r)) for r in rows]
 
@@ -368,7 +374,7 @@ def save_document(file_name, file_type, file_size, storage_path, uploader_email,
 
 def get_all_documents():
     init_db()
-    rows = _execute('SELECT * FROM documents ORDER BY created_at DESC', fetchall=True)
+    rows = _execute('SELECT id, created_at, file_name, file_type, file_size, storage_path, uploader_email, module, is_vectorized FROM documents ORDER BY created_at DESC', fetchall=True)
     keys = ["id", "created_at", "file_name", "file_type", "file_size", "storage_path", "uploader_email", "module", "is_vectorized"]
     return [dict(zip(keys, r)) for r in rows]
 

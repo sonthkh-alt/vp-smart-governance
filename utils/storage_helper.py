@@ -1,5 +1,9 @@
 import streamlit as st
-from supabase import create_client, Client
+try:
+    from supabase import create_client, Client
+except ImportError:
+    create_client = None
+    Client = None
 import database
 import os
 from datetime import datetime
