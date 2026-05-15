@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import database
 from utils.storage_helper import upload_file, get_file_url, delete_file
+from utils.vector_helper import vectorize_document
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.auth_helper import require_auth
 import pandas as pd
@@ -85,8 +86,18 @@ if docs:
                             st.success(f"Đã xóa {doc['Tên file']}")
                             st.rerun()
             with c4:
-                # Nút Vectorize (Tính năng tương lai)
-                st.button("🧠 Vectorize", key=f"vec_{doc['ID']}", use_container_width=True, disabled=True, help="Tính năng RAG đang phát triển")
+                # Nút Vectorize
+                is_vec = d['is_vectorized'] == 1
+                btn_label = "✅ Đã xử lý" if is_vec else "🧠 Vectorize"
+                if st.button(btn_label, key=f"vec_{doc['ID']}", use_container_width=True, disabled=is_vec):
+                    if require_auth("Xử lý dữ liệu AI"):
+                        with st.spinner(f"AI đang đọc hiểu: {doc['Tên file']}..."):
+                            success, msg = vectorize_document(doc['ID'], doc['Path'], doc['Tên file'])
+                            if success:
+                                st.success(msg)
+                                st.rerun()
+                            else:
+                                st.error(msg)
             st.markdown("<hr style='margin: 0.5rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
 else:
     st.info("Kho tri thức hiện đang trống. Hãy tải lên tài liệu đầu tiên!")

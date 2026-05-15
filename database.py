@@ -367,3 +367,6 @@ def get_all_documents():
 
 def delete_document(doc_id):
     _execute('DELETE FROM documents WHERE id=?', (doc_id,))
+
+def mark_as_vectorized(doc_id):
+    _execute('UPDATE documents SET is_vectorized=1 WHERE id=?', (doc_id,))
