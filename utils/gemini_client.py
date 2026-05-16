@@ -62,11 +62,23 @@ def _get_groq_client():
     return Groq(api_key=key)
 
 def generate_text(prompt: str, provider: str = "groq", use_pro: bool = True, use_search: bool = True) -> str:
-    """Hàm gọi AI tổng quát, hỗ trợ Gemini, Claude và Groq."""
+    """Hàm gọi AI tổng quát, hỗ trợ Gemini, Claude và Groq với cơ chế Fallback."""
     if provider == "claude":
         return _call_claude(prompt, use_pro)
+    
     if provider == "groq":
-        return _call_groq(prompt, use_pro)
+        res = _call_groq(prompt, use_pro)
+        # Kiểm tra nếu bị giới hạn (Rate Limit / Quota)
+        limit_keywords = ["rate_limit", "quota_exceeded", "limit_exceeded", "429"]
+        if any(k in res.lower() for k in limit_keywords) or "❌ Lỗi Groq API" in res:
+            print(f"⚠️ Groq bị giới hạn hoặc lỗi, đang tự động chuyển sang Gemini... (Lỗi: {res[:50]}...)")
+            return _call_gemini_with_fallback(
+                PRO_MODELS if use_pro else FLASH_MODELS,
+                {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
+                use_search=use_search
+            )
+        return res
+
     return _call_gemini_with_fallback(
         PRO_MODELS if use_pro else FLASH_MODELS,
         {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -170,6 +182,17 @@ def generate_json(prompt: str, provider: str = "groq", use_pro: bool = True) -> 
     
     if provider == "groq":
         res = _call_groq(prompt + "\nBẮT BUỘC TRẢ VỀ JSON NGUYÊN BẢN.", use_pro)
+        limit_keywords = ["rate_limit", "quota_exceeded", "limit_exceeded", "429"]
+        
+        # Nếu Groq lỗi/limit, chuyển sang Gemini
+        if any(k in res.lower() for k in limit_keywords) or "❌ Lỗi Groq API" in res:
+            print("⚠️ Groq JSON bị giới hạn, đang chuyển sang Gemini...")
+            return _call_gemini_with_fallback(
+                PRO_MODELS if use_pro else FLASH_MODELS,
+                {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192, "response_mime_type": "application/json"}},
+                parse_json=True
+            )
+
         try:
             # Làm sạch nếu có markdown
             text = res.strip()
