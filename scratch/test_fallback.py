@@ -20,7 +20,7 @@ class TestFallback(unittest.TestCase):
         # Kiểm tra xem có gọi Gemini không
         mock_gemini.assert_called_once()
         self.assertEqual(result, "Đây là câu trả lời từ Gemini (Fallback)")
-        print("✅ Test Fallback thành công!")
+        print("Test Fallback thanh cong!")
 
 if __name__ == "__main__":
     unittest.main()
