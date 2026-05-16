@@ -61,7 +61,7 @@ def _get_groq_client():
         return "MISSING_KEY"
     return Groq(api_key=key)
 
-def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, use_search: bool = True) -> str:
+def generate_text(prompt: str, provider: str = "groq", use_pro: bool = True, use_search: bool = True) -> str:
     """Hàm gọi AI tổng quát, hỗ trợ Gemini, Claude và Groq."""
     if provider == "claude":
         return _call_claude(prompt, use_pro)
@@ -160,7 +160,7 @@ def _call_gemini_with_fallback(model_list, config, max_retries=1, parse_json=Fal
             
     return f"⚠️ Lỗi kết nối Gemini (đã thử toàn bộ model): {last_error}"
 
-def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -> dict:
+def generate_json(prompt: str, provider: str = "groq", use_pro: bool = True) -> dict:
     if provider == "claude":
         # Claude mặc định hỗ trợ JSON tốt qua prompt, nhưng ở đây ta gọi text rồi load
         res = _call_claude(prompt + "\nBẮT BUỘC TRẢ VỀ JSON NGUYÊN BẢN.", use_pro)
