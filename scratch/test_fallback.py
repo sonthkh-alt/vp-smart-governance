@@ -11,7 +11,7 @@ class TestFallback(unittest.TestCase):
     @patch('utils.gemini_client._call_gemini_with_fallback')
     def test_groq_fallback_to_gemini(self, mock_gemini, mock_groq):
         # Giả lập Groq bị giới hạn (Rate Limit)
-        mock_groq.return_value = "❌ Lỗi Groq API: Rate limit reached (429)"
+        mock_groq.return_value = "ERR: Groq API Rate limit reached (429)"
         mock_gemini.return_value = "Đây là câu trả lời từ Gemini (Fallback)"
         
         # Gọi hàm với provider mặc định là groq
