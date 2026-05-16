@@ -149,10 +149,10 @@ with tab3:
 
 # --- MỚI: TÌNH TRẠNG LIVE TỪ GOOGLE ---
 st.markdown("---")
-st.markdown("### 🌐 Tình trạng Kết nối Google (Live Check)")
-if st.button("🔄 Kiểm tra kết nối trực tiếp đến Google"):
+st.markdown("### 🌐 Tình trạng Kết nối AI (Live Check)")
+if st.button("🔄 Kiểm tra kết nối trực tiếp đến các Provider"):
     from utils.gemini_client import check_api_status
-    with st.spinner("Đang ping hệ thống Google..."):
+    with st.spinner("Đang ping hệ thống AI..."):
         health_results = check_api_status()
         
         cols = st.columns(len(health_results))

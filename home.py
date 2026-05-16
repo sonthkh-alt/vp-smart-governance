@@ -105,34 +105,42 @@ import os
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
-sc1, sc2, sc3, sc4 = st.columns(4)
+sc1, sc2, sc3, sc4, sc5 = st.columns(5)
 
 # Kiểm tra API Key
 from utils.gemini_client import _get_api_key
-api_key = _get_api_key()
+gemini_key = _get_api_key("gemini")
+groq_key = _get_api_key("groq")
+
 with sc1:
-    if api_key:
-        st.success("✅ **Gemini API Key**\nĐã cấu hình")
+    if gemini_key:
+        st.success("✅ **Gemini**\nĐã cấu hình")
     else:
-        st.error("❌ **Gemini API Key**\nChưa cấu hình")
+        st.error("❌ **Gemini**\nChưa có Key")
+
+with sc2:
+    if groq_key:
+        st.success("✅ **Groq**\nĐã cấu hình")
+    else:
+        st.info("➖ **Groq**\nChưa có Key")
 
 # Kiểm tra ChromaDB
-with sc2:
+with sc3:
     if os.path.exists("chroma_db"):
-        st.success("✅ **Knowledge Base**\nĐã có dữ liệu")
+        st.success("✅ **Knowledge**\nĐã sẵn sàng")
     else:
-        st.warning("⚠️ **Knowledge Base**\nChưa có dữ liệu")
+        st.warning("⚠️ **Knowledge**\nChưa có data")
 
 # Kiểm tra DB
-with sc3:
+with sc4:
     if os.path.exists("draft_history.db"):
-        st.success("✅ **SQLite DB**\nHoạt động bình thường")
+        st.success("✅ **SQLite DB**\nHoạt động")
     else:
-        st.warning("⚠️ **SQLite DB**\nChưa khởi tạo")
+        st.warning("⚠️ **SQLite DB**\nChưa có")
 
 # Phiên bản
-with sc4:
-    st.info("ℹ️ **Platform Version**\nv2.5 — Optimized AI")
+with sc5:
+    st.info("ℹ️ **Version**\nv2.5")
 
 # Footer
 st.markdown("""

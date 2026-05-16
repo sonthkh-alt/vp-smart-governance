@@ -8,11 +8,16 @@ from google.genai import types
 import streamlit as st
 import database
 
-# Thêm thư viện Anthropic
+# Thêm thư viện Anthropic & Groq
 try:
     import anthropic
 except ImportError:
     anthropic = None
+
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
 
 load_dotenv(override=True)
 
@@ -20,10 +25,15 @@ load_dotenv(override=True)
 FLASH_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro"]
 PRO_MODELS = ["gemini-1.5-pro", "gemini-1.5-flash"]
 CLAUDE_MODELS = ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229"]
+GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
 
 @functools.lru_cache(maxsize=1)
 def _get_api_key(provider="gemini") -> str:
-    prefix = "GEMINI" if provider == "gemini" else "ANTHROPIC"
+    if provider == "gemini": prefix = "GEMINI"
+    elif provider == "claude": prefix = "ANTHROPIC"
+    elif provider == "groq": prefix = "GROQ"
+    else: prefix = provider.upper()
+    
     try:
         key = st.secrets.get(f"{prefix}_API_KEY")
         if key: return key
@@ -43,10 +53,20 @@ def _get_claude_client():
         return "MISSING_KEY"
     return anthropic.Anthropic(api_key=key)
 
+def _get_groq_client():
+    if not Groq:
+        return "MISSING_LIB"
+    key = _get_api_key("groq")
+    if not key:
+        return "MISSING_KEY"
+    return Groq(api_key=key)
+
 def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, use_search: bool = True) -> str:
-    """Hàm gọi AI tổng quát, hỗ trợ Gemini và Claude."""
+    """Hàm gọi AI tổng quát, hỗ trợ Gemini, Claude và Groq."""
     if provider == "claude":
         return _call_claude(prompt, use_pro)
+    if provider == "groq":
+        return _call_groq(prompt, use_pro)
     return _call_gemini_with_fallback(
         PRO_MODELS if use_pro else FLASH_MODELS,
         {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -75,6 +95,30 @@ def _call_claude(prompt: str, use_pro: bool = True) -> str:
         err_msg = str(e)
         print(f"CLAUDE ERROR: {err_msg}")
         return f"❌ Lỗi Claude API: {err_msg}"
+
+def _call_groq(prompt: str, use_pro: bool = True) -> str:
+    client_res = _get_groq_client()
+    if client_res == "MISSING_LIB":
+        return "❌ Lỗi: Thư viện 'groq' chưa được cài đặt."
+    if client_res == "MISSING_KEY":
+        return "❌ Lỗi: Chưa tìm thấy GROQ_API_KEY. Hãy kiểm tra file .env hoặc Secrets."
+    
+    client = client_res
+    try:
+        model = GROQ_MODELS[0] if use_pro else GROQ_MODELS[1]
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=4096,
+        )
+        if "user_info" in st.session_state:
+            database.log_api_usage(st.session_state.user_info.get("email"), model, "success")
+        return completion.choices[0].message.content
+    except Exception as e:
+        err_msg = str(e)
+        print(f"GROQ ERROR: {err_msg}")
+        return f"❌ Lỗi Groq API: {err_msg}"
 
 def _call_gemini_with_fallback(model_list, config, max_retries=1, parse_json=False, use_search=False):
     try:
@@ -124,6 +168,19 @@ def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -
             return json.loads(res)
         except: return {"error": "Claude không trả về JSON hợp lệ", "raw": res}
     
+    if provider == "groq":
+        res = _call_groq(prompt + "\nBẮT BUỘC TRẢ VỀ JSON NGUYÊN BẢN.", use_pro)
+        try:
+            # Làm sạch nếu có markdown
+            text = res.strip()
+            if text.startswith("```"):
+                parts = text.split("```")
+                if len(parts) >= 3:
+                    text = parts[1]
+                    if text.startswith("json"): text = text[4:]
+            return json.loads(text)
+        except: return {"error": "Groq không trả về JSON hợp lệ", "raw": res}
+    
     return _call_gemini_with_fallback(
         PRO_MODELS if use_pro else FLASH_MODELS,
         {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192, "response_mime_type": "application/json"}},
@@ -145,5 +202,14 @@ def check_api_status():
             results["Claude"] = {"status": "✅ Hoạt động"}
         else: results["Claude"] = {"status": "➖ Chưa cấu hình"}
     except: results["Claude"] = {"status": "❌ Lỗi"}
+    
+    # Test Groq
+    try:
+        client = _get_groq_client()
+        if client and client != "MISSING_KEY" and client != "MISSING_LIB":
+            # Thử gọi list models nhẹ nhàng
+            results["Groq"] = {"status": "✅ Hoạt động"}
+        else: results["Groq"] = {"status": "➖ Chưa cấu hình"}
+    except: results["Groq"] = {"status": "❌ Lỗi"}
     
     return results

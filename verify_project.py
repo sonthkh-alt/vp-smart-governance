@@ -1,63 +1,90 @@
 import os
 import sys
-import importlib.util
+import subprocess
+import json
+from dotenv import load_dotenv
 
-# Ensure stdout handles emojis and utf-8
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout.reconfigure(encoding='utf-8')
+# Fix encoding for Windows console
+if sys.platform == "win32":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-def check_file(file_path):
-    print(f"Checking {file_path}...")
+
+def log(msg):
+    print(f"[VERIFY] {msg}")
+
+def check_requirements_encoding():
+    log("Checking requirements.txt encoding...")
     try:
-        # Check syntax
-        with open(file_path, 'r', encoding='utf-8') as f:
-            source = f.read()
-        compile(source, file_path, 'exec')
-        
-        # Try to import only utils for now, as pages might depend on streamlit context
-        if "utils" in file_path and not file_path.endswith("__init__.py"):
-            module_name = file_path.replace(".\\", "").replace("\\", ".").replace(".py", "")
-            if module_name.startswith("."): module_name = module_name[1:]
-            print(f"  Attempting to import {module_name}...")
-            # We use importlib to avoid polluting the namespace too much
-            spec = importlib.util.spec_from_file_location(module_name, file_path)
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-        
-        return True, None
+        with open("requirements.txt", "rb") as f:
+            content = f.read()
+            if b"\x00" in content:
+                log("DETECTED: UTF-16 or NULL characters in requirements.txt. Fixing...")
+                # Try to decode and re-write as clean UTF-8
+                text = content.replace(b"\x00", b"").decode("utf-8", errors="ignore")
+                with open("requirements.txt", "w", encoding="utf-8") as f2:
+                    f2.write(text)
+                log("FIXED: requirements.txt is now clean UTF-8.")
+            else:
+                log("OK: requirements.txt encoding looks fine.")
     except Exception as e:
-        return False, str(e)
+        log(f"ERROR checking encoding: {e}")
 
-def main():
-    root_dir = "."
-    files_to_check = []
+def check_dependencies():
+    log("Checking dependencies...")
+    needed = ["streamlit", "google-genai", "python-docx", "pypdf", "groq"]
+    for pkg in needed:
+        try:
+            __import__(pkg.replace("-", "_"))
+            log(f"OK: {pkg} is installed.")
+        except ImportError:
+            log(f"MISSING: {pkg}. Attempting to install...")
+            subprocess.run([sys.executable, "-m", "pip", "install", pkg], check=True)
+            log(f"FIXED: Installed {pkg}.")
+
+def check_api_keys():
+    log("Checking API Keys...")
+    load_dotenv(override=True)
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    groq_key = os.getenv("GROQ_API_KEY")
     
-    # Root files
-    for f in os.listdir(root_dir):
-        if f.endswith(".py"):
-            files_to_check.append(os.path.join(root_dir, f))
-            
-    # Subdirectories
-    for sub in ["pages", "utils"]:
-        sub_dir = os.path.join(root_dir, sub)
-        if os.path.exists(sub_dir):
-            for f in os.listdir(sub_dir):
-                if f.endswith(".py"):
-                    files_to_check.append(os.path.join(sub_dir, f))
-                    
-    results = []
-    for f in files_to_check:
-        success, error = check_file(f)
-        if not success:
-            results.append((f, error))
-            
-    if not results:
-        print("✅ No syntax errors found.")
+    if not gemini_key:
+        log("WARNING: GEMINI_API_KEY not found in .env")
     else:
-        print(f"❌ Found {len(results)} errors:")
-        for f, err in results:
-            print(f"--- {f} ---\n{err}\n")
+        log(f"OK: GEMINI_API_KEY found ({gemini_key[:5]}...)")
+
+    if not groq_key:
+        log("WARNING: GROQ_API_KEY not found in .env")
+    else:
+        log(f"OK: GROQ_API_KEY found ({groq_key[:5]}...)")
+
+def test_connectivity():
+    log("Testing AI Connectivity...")
+    try:
+        from utils.gemini_client import generate_text
+        # Test Gemini
+        log("Testing Gemini...")
+        res_g = generate_text("Ping", provider="gemini", use_pro=False)
+        if "❌" in res_g or "⚠️" in res_g:
+            log(f"GEMINI FAILED: {res_g}")
+        else:
+            log("GEMINI SUCCESS!")
+            
+        # Test Groq
+        log("Testing Groq...")
+        res_gr = generate_text("Ping", provider="groq", use_pro=False)
+        if "❌" in res_gr:
+            log(f"GROQ FAILED: {res_gr}")
+        else:
+            log("GROQ SUCCESS!")
+            
+
+    except Exception as e:
+        log(f"ERROR during connectivity test: {e}")
 
 if __name__ == "__main__":
-    main()
+    check_requirements_encoding()
+    check_dependencies()
+    check_api_keys()
+    test_connectivity()
+    log("Verification Loop Completed.")
