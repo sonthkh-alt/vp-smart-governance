@@ -71,7 +71,7 @@ def generate_text(prompt: str, provider: str = "groq", use_pro: bool = True, use
         # Kiểm tra nếu bị giới hạn (Rate Limit / Quota)
         limit_keywords = ["rate_limit", "quota_exceeded", "limit_exceeded", "429"]
         if any(k in res.lower() for k in limit_keywords) or "❌ Lỗi Groq API" in res:
-            print(f"⚠️ Groq bị giới hạn hoặc lỗi, đang tự động chuyển sang Gemini... (Lỗi: {res[:50]}...)")
+            print(f"WARNING: Groq bi gioi han hoac loi, dang tu dong chuyen sang Gemini... (Loi: {res[:50]}...)")
             return _call_gemini_with_fallback(
                 PRO_MODELS if use_pro else FLASH_MODELS,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -186,7 +186,7 @@ def generate_json(prompt: str, provider: str = "groq", use_pro: bool = True) -> 
         
         # Nếu Groq lỗi/limit, chuyển sang Gemini
         if any(k in res.lower() for k in limit_keywords) or "❌ Lỗi Groq API" in res:
-            print("⚠️ Groq JSON bị giới hạn, đang chuyển sang Gemini...")
+            print("WARNING: Groq JSON bi gioi han, dang chuyen sang Gemini...")
             return _call_gemini_with_fallback(
                 PRO_MODELS if use_pro else FLASH_MODELS,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192, "response_mime_type": "application/json"}},
