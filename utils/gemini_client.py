@@ -85,11 +85,24 @@ def generate_text(prompt: str, provider: str = "claude", use_pro: bool = True, u
     if provider == "claude":
         res = _call_claude(prompt, use_pro)
         if "❌ Lỗi Claude API" in res or "❌ Lỗi: Chưa tìm thấy" in res:
-            print("WARNING: Claude gặp sự cố. Tự động chuyển đổi dự phòng sang OpenAI...")
+            msg = "⚠️ Mô hình Claude gặp sự cố. Hệ thống tự động chuyển đổi dự phòng sang OpenAI ChatGPT..."
+            print(msg)
+            try:
+                st.toast(msg, icon="⚠️")
+                st.warning(msg)
+            except Exception:
+                pass
             openai_res = _call_openai(prompt, use_pro)
             if not "❌ Lỗi OpenAI API" in openai_res:
                 return openai_res
-            print("WARNING: Cả Claude và OpenAI đều lỗi. Chuyển sang Gemini Pro...")
+            
+            msg2 = "⚠️ Cả Claude và OpenAI đều lỗi. Hệ thống tự động chuyển đổi sang Google Gemini Pro..."
+            print(msg2)
+            try:
+                st.toast(msg2, icon="⚠️")
+                st.warning(msg2)
+            except Exception:
+                pass
             gemini_res = _call_gemini_with_fallback(
                 PRO_MODELS_ONLY,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -101,7 +114,13 @@ def generate_text(prompt: str, provider: str = "claude", use_pro: bool = True, u
     if provider == "openai":
         res = _call_openai(prompt, use_pro)
         if "❌ Lỗi OpenAI API" in res:
-            print("WARNING: OpenAI gặp sự cố. Tự động chuyển đổi sang Gemini Pro...")
+            msg = "⚠️ Mô hình OpenAI gặp sự cố. Hệ thống tự động chuyển đổi sang Google Gemini Pro..."
+            print(msg)
+            try:
+                st.toast(msg, icon="⚠️")
+                st.warning(msg)
+            except Exception:
+                pass
             return _call_gemini_with_fallback(
                 PRO_MODELS_ONLY,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -113,7 +132,13 @@ def generate_text(prompt: str, provider: str = "claude", use_pro: bool = True, u
         res = _call_groq(prompt, use_pro)
         limit_keywords = ["rate_limit", "quota_exceeded", "limit_exceeded", "429"]
         if any(k in res.lower() for k in limit_keywords) or "❌ Lỗi Groq API" in res:
-            print(f"WARNING: Groq bị giới hạn, tự động chuyển sang Gemini Pro...")
+            msg = "⚠️ Mô hình Groq gặp sự cố. Hệ thống tự động chuyển đổi sang Google Gemini Pro..."
+            print(msg)
+            try:
+                st.toast(msg, icon="⚠️")
+                st.warning(msg)
+            except Exception:
+                pass
             gemini_pro_res = _call_gemini_with_fallback(
                 PRO_MODELS_ONLY,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -121,6 +146,14 @@ def generate_text(prompt: str, provider: str = "claude", use_pro: bool = True, u
             )
             if not (any(k in gemini_pro_res.lower() for k in limit_keywords) or "lỗi kết nối gemini" in gemini_pro_res.lower()):
                 return gemini_pro_res
+            
+            msg2 = "⚠️ Cả Groq và Gemini Pro đều gặp sự cố. Hệ thống tự động chuyển đổi sang Gemini Flash..."
+            print(msg2)
+            try:
+                st.toast(msg2, icon="⚠️")
+                st.warning(msg2)
+            except Exception:
+                pass
             return _call_gemini_with_fallback(
                 FLASH_MODELS,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -137,11 +170,24 @@ def generate_text(prompt: str, provider: str = "claude", use_pro: bool = True, u
         )
         limit_keywords = ["rate_limit", "quota_exceeded", "limit_exceeded", "429", "lỗi kết nối gemini", "kết nối gemini (đã thử toàn bộ model)"]
         if any(k in res.lower() for k in limit_keywords) or "❌ Lỗi cấu hình Gemini" in res:
-            print("WARNING: Gemini Pro gặp sự cố. Chuyển đổi sang Groq (Llama 3.3)...")
+            msg = "⚠️ Mô hình Google Gemini Pro gặp sự cố. Hệ thống tự động chuyển đổi sang Groq (Llama 3.3)..."
+            print(msg)
+            try:
+                st.toast(msg, icon="⚠️")
+                st.warning(msg)
+            except Exception:
+                pass
             groq_res = _call_groq(prompt, use_pro=True)
             if not (any(k in groq_res.lower() for k in limit_keywords[:4]) or "❌ Lỗi Groq API" in groq_res):
                 return groq_res
-            print("WARNING: Dùng Gemini Flash làm cứu cánh cuối cùng...")
+            
+            msg2 = "⚠️ Tất cả mô hình Pro gặp sự cố. Hệ thống tự động chuyển sang Gemini Flash làm phương án cuối..."
+            print(msg2)
+            try:
+                st.toast(msg2, icon="⚠️")
+                st.warning(msg2)
+            except Exception:
+                pass
             return _call_gemini_with_fallback(
                 FLASH_MODELS,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
