@@ -34,7 +34,6 @@ pages = [
     st.Page("home.py", title="Trang chủ", icon="🏛️", default=True),
     st.Page("pages/1_🏛️_Legislative_Center.py", title="Nghiệp vụ Dân cử", icon="🏛️"),
     st.Page("pages/2_📝_Drafting_Hub.py", title="Trung tâm Soạn thảo", icon="📝"),
-    st.Page("pages/3_📊_Voter_Engagement.py", title="Cử tri & Kết nối", icon="📊"),
     st.Page("pages/4_🎓_Academic_Promotion.py", title="Học thuật & Chuyên gia", icon="🎓"),
 ]
 
