@@ -1,6 +1,6 @@
 """ai_helper.py — Tham mưu và soạn thảo văn bản hành chính (Gemini AI)."""
 
-from .gemini_client import generate_text, generate_json
+from utils.gemini_client import generate_text, generate_json
 
 DOC_STRUCTURE_RULES = {
     "Quyết định": "Sinh cấu trúc: Căn cứ pháp lý → Điều 1, Điều 2, Điều 3.",

@@ -13,8 +13,8 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from dotenv import load_dotenv
-from .doc_helper import extract_text_from_pdf, extract_text_from_docx
-from .gemini_client import generate_text, _get_api_key
+from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
+from utils.gemini_client import generate_text, _get_api_key
 
 load_dotenv(override=True)
 

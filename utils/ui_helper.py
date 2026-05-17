@@ -1,5 +1,5 @@
 import streamlit as st
-from .auth_helper import init_auth, check_auth_status, get_user_info, login_google, logout
+from utils.auth_helper import init_auth, check_auth_status, get_user_info, login_google, logout
 
 def set_premium_css():
     """
@@ -227,7 +227,7 @@ def draw_sidebar():
         # ─── PHẦN ĐĂNG NHẬP (BOTTOM) ──────────────────────────────────────────
         if not is_logged_in:
             st.markdown("### 🔐 Tài khoản")
-            from .auth_helper import render_login_button
+            from utils.auth_helper import render_login_button
             render_login_button(sidebar=True)
             st.caption("Sử dụng bất kỳ tài khoản Google nào để truy cập AI.")
         else:
