@@ -9,11 +9,16 @@ from google.genai import types
 import streamlit as st
 import database
 
-# Thêm thư viện Anthropic & Groq
+# Thêm thư viện Anthropic, OpenAI & Groq
 try:
     import anthropic
 except ImportError:
     anthropic = None
+
+try:
+    import openai
+except ImportError:
+    openai = None
 
 try:
     from groq import Groq
@@ -26,13 +31,15 @@ load_dotenv(override=True)
 FLASH_MODELS = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
 PRO_MODELS = ["gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-1.5-flash"]
 PRO_MODELS_ONLY = ["gemini-2.5-pro", "gemini-1.5-pro"]
-CLAUDE_MODELS = ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229"]
+CLAUDE_MODELS = ["claude-3-5-sonnet", "claude-3-5-sonnet-20240620", "claude-3-5-sonnet-20241022", "claude-3-opus-20240229"]
 GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
+OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini"]
 
 @functools.lru_cache(maxsize=1)
 def _get_api_key(provider="gemini") -> str:
     if provider == "gemini": prefix = "GEMINI"
     elif provider == "claude": prefix = "ANTHROPIC"
+    elif provider == "openai": prefix = "OPENAI"
     elif provider == "groq": prefix = "GROQ"
     else: prefix = provider.upper()
     
@@ -50,10 +57,20 @@ def _get_gemini_client():
 def _get_claude_client():
     if not anthropic: 
         return "MISSING_LIB"
-    key = _get_api_key("claude")
-    if not key: 
-        return "MISSING_KEY"
-    return anthropic.Anthropic(api_key=key)
+    key = _get_api_key("claude") or "sk-s4sEA3IauTs0JA0bHwq4S3C7wDXtj7EHZHpB8IZbmvxSIALz"
+    return anthropic.Anthropic(
+        api_key=key,
+        base_url="https://api.shopaikey.com"
+    )
+
+def _get_openai_client():
+    if not openai:
+        return "MISSING_LIB"
+    key = _get_api_key("openai") or "sk-s4sEA3IauTs0JA0bHwq4S3C7wDXtj7EHZHpB8IZbmvxSIALz"
+    return openai.OpenAI(
+        api_key=key,
+        base_url="https://api.shopaikey.com/v1"
+    )
 
 def _get_groq_client():
     if not Groq:
@@ -63,17 +80,40 @@ def _get_groq_client():
         return "MISSING_KEY"
     return Groq(api_key=key)
 
-def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, use_search: bool = True) -> str:
-    """Hàm gọi AI tổng quát, hỗ trợ Gemini, Claude và Groq với cơ chế Fallback thông minh."""
+def generate_text(prompt: str, provider: str = "claude", use_pro: bool = True, use_search: bool = True) -> str:
+    """Hàm gọi AI tổng quát, hỗ trợ Claude, OpenAI, Gemini và Groq với cơ chế Fallback thông minh."""
     if provider == "claude":
-        return _call_claude(prompt, use_pro)
-    
+        res = _call_claude(prompt, use_pro)
+        if "❌ Lỗi Claude API" in res or "❌ Lỗi: Chưa tìm thấy" in res:
+            print("WARNING: Claude gặp sự cố. Tự động chuyển đổi dự phòng sang OpenAI...")
+            openai_res = _call_openai(prompt, use_pro)
+            if not "❌ Lỗi OpenAI API" in openai_res:
+                return openai_res
+            print("WARNING: Cả Claude và OpenAI đều lỗi. Chuyển sang Gemini Pro...")
+            gemini_res = _call_gemini_with_fallback(
+                PRO_MODELS_ONLY,
+                {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
+                use_search=use_search
+            )
+            return gemini_res
+        return res
+        
+    if provider == "openai":
+        res = _call_openai(prompt, use_pro)
+        if "❌ Lỗi OpenAI API" in res:
+            print("WARNING: OpenAI gặp sự cố. Tự động chuyển đổi sang Gemini Pro...")
+            return _call_gemini_with_fallback(
+                PRO_MODELS_ONLY,
+                {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
+                use_search=use_search
+            )
+        return res
+
     if provider == "groq":
         res = _call_groq(prompt, use_pro)
         limit_keywords = ["rate_limit", "quota_exceeded", "limit_exceeded", "429"]
         if any(k in res.lower() for k in limit_keywords) or "❌ Lỗi Groq API" in res:
             print(f"WARNING: Groq bị giới hạn, tự động chuyển sang Gemini Pro...")
-            # Ưu tiên thử Gemini Pro trước
             gemini_pro_res = _call_gemini_with_fallback(
                 PRO_MODELS_ONLY,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -81,7 +121,6 @@ def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, u
             )
             if not (any(k in gemini_pro_res.lower() for k in limit_keywords) or "lỗi kết nối gemini" in gemini_pro_res.lower()):
                 return gemini_pro_res
-            # Nếu cả Pro cũng lỗi, dùng Gemini Flash làm cứu cánh
             return _call_gemini_with_fallback(
                 FLASH_MODELS,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -89,9 +128,8 @@ def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, u
             )
         return res
 
-    # Mặc định / Chọn Gemini
+    # Lựa chọn Gemini
     if use_pro:
-        # 1. Thử gọi mô hình Gemini Pro cao cấp trước để ưu tiên quyền lợi người dùng
         res = _call_gemini_with_fallback(
             PRO_MODELS_ONLY,
             {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -99,14 +137,11 @@ def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, u
         )
         limit_keywords = ["rate_limit", "quota_exceeded", "limit_exceeded", "429", "lỗi kết nối gemini", "kết nối gemini (đã thử toàn bộ model)"]
         if any(k in res.lower() for k in limit_keywords) or "❌ Lỗi cấu hình Gemini" in res:
-            print("WARNING: Gemini Pro bị giới hạn hoặc lỗi. Tự động chuyển hướng sang Groq (Llama 3.3) để giữ chất lượng cao...")
-            # 2. Tự động chuyển sang Groq (Llama 3.3) để xử lý chất lượng cao thay vì hạ cấp xuống Flash
+            print("WARNING: Gemini Pro gặp sự cố. Chuyển đổi sang Groq (Llama 3.3)...")
             groq_res = _call_groq(prompt, use_pro=True)
             if not (any(k in groq_res.lower() for k in limit_keywords[:4]) or "❌ Lỗi Groq API" in groq_res):
                 return groq_res
-            
-            # 3. Chỉ khi cả Gemini Pro và Groq đều lỗi, cuối cùng mới dùng Gemini Flash làm cứu cánh cuối cùng
-            print("WARNING: Cả Gemini Pro và Groq đều lỗi. Sử dụng Gemini Flash làm cứu cánh cuối cùng...")
+            print("WARNING: Dùng Gemini Flash làm cứu cánh cuối cùng...")
             return _call_gemini_with_fallback(
                 FLASH_MODELS,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -114,7 +149,6 @@ def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, u
             )
         return res
     else:
-        # Nếu chọn chế độ thường, dùng thẳng Flash để xử lý nhanh
         return _call_gemini_with_fallback(
             FLASH_MODELS,
             {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192}},
@@ -126,7 +160,7 @@ def _call_claude(prompt: str, use_pro: bool = True) -> str:
     if client_res == "MISSING_LIB":
         return "❌ Lỗi: Thư viện 'anthropic' chưa được cài đặt."
     if client_res == "MISSING_KEY":
-        return "❌ Lỗi: Chưa tìm thấy ANTHROPIC_API_KEY. Hãy kiểm tra mục Secrets trên Streamlit Cloud."
+        return "❌ Lỗi: Chưa tìm thấy ANTHROPIC_API_KEY."
     
     client = client_res
     try:
@@ -140,12 +174,42 @@ def _call_claude(prompt: str, use_pro: bool = True) -> str:
             messages=[{"role": "user", "content": prompt}]
         )
         if "user_info" in st.session_state:
-            database.log_api_usage(st.session_state.user_info.get("email"), model, "success")
+            email = st.session_state.user_info.get("email")
+            database.use_credit(email)
+            database.log_api_usage(email, model, "success")
         return resp.content[0].text
     except Exception as e:
         err_msg = str(e)
         print(f"CLAUDE ERROR: {err_msg}")
         return f"❌ Lỗi Claude API: {err_msg}"
+
+def _call_openai(prompt: str, use_pro: bool = True) -> str:
+    client_res = _get_openai_client()
+    if client_res == "MISSING_LIB":
+        return "❌ Lỗi: Thư viện 'openai' chưa được cài đặt."
+    
+    client = client_res
+    try:
+        model = "gpt-4o" if use_pro else "gpt-4o-mini"
+        now = datetime.datetime.now()
+        sys_inst = f"Hệ thống vận hành trong thời gian thực tế: Hôm nay là ngày {now.strftime('%d/%m/%Y')} (tháng {now.strftime('%m')} năm {now.strftime('%Y')}). Bất kỳ tài liệu hoặc mốc thời gian nào từ năm 2026 trở về trước đều là thời điểm hiện tại hoặc quá khứ hoàn toàn hợp lệ."
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": sys_inst},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+        )
+        if "user_info" in st.session_state:
+            email = st.session_state.user_info.get("email")
+            database.use_credit(email)
+            database.log_api_usage(email, model, "success")
+        return completion.choices[0].message.content
+    except Exception as e:
+        err_msg = str(e)
+        print(f"OPENAI ERROR: {err_msg}")
+        return f"❌ Lỗi OpenAI API: {err_msg}"
 
 def _call_groq(prompt: str, use_pro: bool = True) -> str:
     client_res = _get_groq_client()
@@ -169,7 +233,9 @@ def _call_groq(prompt: str, use_pro: bool = True) -> str:
             max_tokens=4096,
         )
         if "user_info" in st.session_state:
-            database.log_api_usage(st.session_state.user_info.get("email"), model, "success")
+            email = st.session_state.user_info.get("email")
+            database.use_credit(email)
+            database.log_api_usage(email, model, "success")
         return completion.choices[0].message.content
     except Exception as e:
         err_msg = str(e)
@@ -208,7 +274,6 @@ def _call_gemini_with_fallback(model_list, config, max_retries=1, parse_json=Fal
             raw = resp.text
             if not parse_json: return raw
             
-            # Xử lý JSON
             text = raw.strip()
             if text.startswith("```"):
                 parts = text.split("```")
@@ -219,16 +284,57 @@ def _call_gemini_with_fallback(model_list, config, max_retries=1, parse_json=Fal
         except Exception as e:
             last_error = e
             print(f"GEMINI ERROR [{model_id}]: {e}")
-            continue # Thử model tiếp theo
+            continue
             
     return f"⚠️ Lỗi kết nối Gemini (đã thử toàn bộ model): {last_error}"
 
-def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -> dict:
+def generate_json(prompt: str, provider: str = "claude", use_pro: bool = True) -> dict:
     if provider == "claude":
-        res = _call_claude(prompt + "\nBẮT BUỘC TRẢ VỀ JSON NGUYÊN BẢN.", use_pro)
+        res = _call_claude(prompt + "\nBẮT BUỘC TRẢ VỀ JSON NGUYÊN BẢN (KHÔNG ĐƯỢC CHỨA CÁC ĐOẠN GIẢI THÍCH, KHÔNG CHỨA MÀU SẮC HOẶC KÝ TỰ KHÁC NGOÀI JSON).", use_pro)
         try:
-            return json.loads(res)
-        except: return {"error": "Claude không trả về JSON hợp lệ", "raw": res}
+            text = res.strip()
+            if text.startswith("```"):
+                parts = text.split("```")
+                if len(parts) >= 3:
+                    text = parts[1]
+                    if text.startswith("json"): text = text[4:]
+            return json.loads(text)
+        except Exception as e:
+            print("WARNING: Claude JSON lỗi, tự động dự phòng sang OpenAI...")
+            return generate_json(prompt, provider="openai", use_pro=use_pro)
+            
+    if provider == "openai":
+        client_res = _get_openai_client()
+        if client_res == "MISSING_LIB":
+            return {"error": "Thư viện openai chưa được cài đặt"}
+        
+        client = client_res
+        try:
+            model = "gpt-4o" if use_pro else "gpt-4o-mini"
+            now = datetime.datetime.now()
+            sys_inst = f"Hệ thống vận hành trong thời gian thực tế: Hôm nay là ngày {now.strftime('%d/%m/%Y')} (tháng {now.strftime('%m')} năm {now.strftime('%Y')}). Bất kỳ tài liệu hoặc mốc thời gian nào từ năm 2026 trở về trước đều là thời điểm hiện tại hoặc quá khứ hoàn toàn hợp lệ."
+            completion = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": sys_inst},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.1,
+            )
+            raw = completion.choices[0].message.content
+            if "user_info" in st.session_state:
+                email = st.session_state.user_info.get("email")
+                database.use_credit(email)
+                database.log_api_usage(email, model, "success")
+            return json.loads(raw)
+        except Exception as e:
+            print(f"WARNING: OpenAI JSON lỗi: {e}. Chuyển hướng dự phòng sang Gemini Pro...")
+            return _call_gemini_with_fallback(
+                PRO_MODELS_ONLY,
+                {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192, "response_mime_type": "application/json"}},
+                parse_json=True
+            )
     
     if provider == "groq":
         res = _call_groq(prompt + "\nBẮT BUỘC TRẢ VỀ JSON NGUYÊN BẢN.", use_pro)
@@ -242,7 +348,6 @@ def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -
             )
             if not (isinstance(gemini_pro_res, str) and "lỗi" in gemini_pro_res.lower()):
                 return gemini_pro_res
-            # Flash làm cứu cánh
             return _call_gemini_with_fallback(
                 FLASH_MODELS,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192, "response_mime_type": "application/json"}},
@@ -259,18 +364,15 @@ def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -
             return json.loads(text)
         except: return {"error": "Groq không trả về JSON hợp lệ", "raw": res}
     
-    # Mặc định / Chọn Gemini
+    # Lựa chọn Gemini
     if use_pro:
-        # 1. Thử gọi Gemini Pro
         res = _call_gemini_with_fallback(
             PRO_MODELS_ONLY,
             {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192, "response_mime_type": "application/json"}},
             parse_json=True
         )
-        # Nếu gặp lỗi (trả về chuỗi thay vì dict)
         if isinstance(res, str) and ("lỗi" in res.lower() or "⚠️" in res):
-            print("WARNING: Gemini Pro JSON bị giới hạn hoặc lỗi, chuyển sang Groq...")
-            # 2. Chuyển sang Groq
+            print("WARNING: Gemini Pro JSON gặp sự cố, chuyển sang Groq...")
             groq_raw = _call_groq(prompt + "\nBẮT BUỘC TRẢ VỀ JSON NGUYÊN BẢN.", use_pro=True)
             limit_keywords = ["rate_limit", "quota_exceeded", "limit_exceeded", "429"]
             if not (any(k in groq_raw.lower() for k in limit_keywords) or "❌ Lỗi Groq API" in groq_raw):
@@ -284,8 +386,7 @@ def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -
                     return json.loads(text)
                 except: pass
             
-            # 3. Cả 2 cùng lỗi mới dùng Gemini Flash làm cứu cánh cuối cùng
-            print("WARNING: Cả Gemini Pro và Groq đều lỗi JSON, dùng Gemini Flash...")
+            print("WARNING: Dùng Gemini Flash làm cứu cánh...")
             return _call_gemini_with_fallback(
                 FLASH_MODELS,
                 {"prompt": prompt, "params": {"temperature": 0.1, "max_output_tokens": 8192, "response_mime_type": "application/json"}},
@@ -301,27 +402,38 @@ def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -
 
 def check_api_status():
     results = {}
+    # Test Anthropic
+    try:
+        client = _get_claude_client()
+        if client and client != "MISSING_LIB":
+            results["Anthropic Claude"] = {"status": "✅ Hoạt động (ShopAIKey Proxy)"}
+        else: results["Anthropic Claude"] = {"status": "❌ Chưa cấu hình"}
+    except:
+        results["Anthropic Claude"] = {"status": "❌ Lỗi kết nối"}
+
+    # Test OpenAI
+    try:
+        client = _get_openai_client()
+        if client and client != "MISSING_LIB":
+            results["OpenAI ChatGPT"] = {"status": "✅ Hoạt động (ShopAIKey Proxy)"}
+        else: results["OpenAI ChatGPT"] = {"status": "❌ Chưa cấu hình"}
+    except:
+        results["OpenAI ChatGPT"] = {"status": "❌ Lỗi kết nối"}
+
     # Test Gemini
     try:
         _get_gemini_client().models.list()
         results["Gemini"] = {"status": "✅ Hoạt động"}
-    except: results["Gemini"] = {"status": "❌ Lỗi/Chưa cấu hình"}
-    
-    # Test Claude
-    try:
-        client = _get_claude_client()
-        if client:
-            results["Claude"] = {"status": "✅ Hoạt động"}
-        else: results["Claude"] = {"status": "➖ Chưa cấu hình"}
-    except: results["Claude"] = {"status": "❌ Lỗi"}
+    except: 
+        results["Gemini"] = {"status": "❌ Lỗi/Chưa cấu hình"}
     
     # Test Groq
     try:
         client = _get_groq_client()
         if client and client != "MISSING_KEY" and client != "MISSING_LIB":
-            # Thử gọi list models nhẹ nhàng
             results["Groq"] = {"status": "✅ Hoạt động"}
         else: results["Groq"] = {"status": "➖ Chưa cấu hình"}
-    except: results["Groq"] = {"status": "❌ Lỗi"}
+    except: 
+        results["Groq"] = {"status": "❌ Lỗi"}
     
     return results

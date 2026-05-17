@@ -23,3 +23,5 @@ requests
 psycopg2-binary
 supabase
 groq
+openai
+anthropic

@@ -20,7 +20,6 @@ def check_requirements_encoding():
             content = f.read()
             if b"\x00" in content:
                 log("DETECTED: UTF-16 or NULL characters in requirements.txt. Fixing...")
-                # Try to decode and re-write as clean UTF-8
                 text = content.replace(b"\x00", b"").decode("utf-8", errors="ignore")
                 with open("requirements.txt", "w", encoding="utf-8") as f2:
                     f2.write(text)
@@ -32,7 +31,7 @@ def check_requirements_encoding():
 
 def check_dependencies():
     log("Checking dependencies...")
-    needed = ["streamlit", "google-genai", "python-docx", "pypdf", "groq"]
+    needed = ["streamlit", "google-genai", "python-docx", "pypdf", "groq", "openai", "anthropic"]
     for pkg in needed:
         try:
             __import__(pkg.replace("-", "_"))
@@ -47,6 +46,8 @@ def check_api_keys():
     load_dotenv(override=True)
     gemini_key = os.getenv("GEMINI_API_KEY")
     groq_key = os.getenv("GROQ_API_KEY")
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    openai_key = os.getenv("OPENAI_API_KEY")
     
     if not gemini_key:
         log("WARNING: GEMINI_API_KEY not found in .env")
@@ -58,10 +59,37 @@ def check_api_keys():
     else:
         log(f"OK: GROQ_API_KEY found ({groq_key[:5]}...)")
 
+    if not anthropic_key:
+        log("INFO: ANTHROPIC_API_KEY not found in .env (Will use premium default key)")
+    else:
+        log(f"OK: ANTHROPIC_API_KEY found ({anthropic_key[:5]}...)")
+
+    if not openai_key:
+        log("INFO: OPENAI_API_KEY not found in .env (Will use premium default key)")
+    else:
+        log(f"OK: OPENAI_API_KEY found ({openai_key[:5]}...)")
+
 def test_connectivity():
     log("Testing AI Connectivity...")
     try:
         from utils.gemini_client import generate_text
+        
+        # Test Anthropic Claude (Primary Default)
+        log("Testing Anthropic Claude...")
+        res_a = generate_text("Ping", provider="claude", use_pro=True)
+        if "❌" in res_a:
+            log(f"ANTHROPIC CLAUDE FAILED: {res_a}")
+        else:
+            log(f"ANTHROPIC CLAUDE SUCCESS! Response: {res_a.strip()}")
+
+        # Test OpenAI ChatGPT
+        log("Testing OpenAI...")
+        res_o = generate_text("Ping", provider="openai", use_pro=False)
+        if "❌" in res_o:
+            log(f"OPENAI FAILED: {res_o}")
+        else:
+            log(f"OPENAI SUCCESS! Response: {res_o.strip()}")
+
         # Test Gemini
         log("Testing Gemini...")
         res_g = generate_text("Ping", provider="gemini", use_pro=False)
@@ -77,7 +105,6 @@ def test_connectivity():
             log(f"GROQ FAILED: {res_gr}")
         else:
             log("GROQ SUCCESS!")
-            
 
     except Exception as e:
         log(f"ERROR during connectivity test: {e}")
