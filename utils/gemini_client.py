@@ -31,7 +31,7 @@ load_dotenv(override=True)
 FLASH_MODELS = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
 PRO_MODELS = ["gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-1.5-flash"]
 PRO_MODELS_ONLY = ["gemini-2.5-pro", "gemini-1.5-pro"]
-CLAUDE_MODELS = ["claude-3-5-sonnet", "claude-3-5-sonnet-20240620", "claude-3-5-sonnet-20241022", "claude-3-opus-20240229"]
+CLAUDE_MODELS = ["claude-sonnet-4-6", "claude-sonnet-4-5", "claude-opus-4-6", "claude-3-5-sonnet", "claude-3-5-sonnet-20240620", "claude-3-5-sonnet-20241022", "claude-3-opus-20240229"]
 GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
 OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini"]
 
