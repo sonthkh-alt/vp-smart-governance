@@ -27,11 +27,10 @@ draw_module_header(
     "Trung tâm trí tuệ hỗ trợ Thẩm tra, Kỳ họp và Quản trị Tri thức tập trung."
 )
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "🏛️ Trợ lý Kỳ họp (RAG)", 
     "⚖️ Thẩm tra Chính sách", 
     "📊 Kiến nghị Cử tri", 
-    "🌐 Cổng thông tin HĐND", 
     "📚 Thư viện & Kho tri thức"
 ])
 
@@ -184,14 +183,8 @@ Hãy phân tích kỹ nội dung trên và trình bày báo cáo tổng hợp ch
                 st.markdown("#### 📋 Kết quả Phân tích từ File:")
                 st.info(st.session_state.pet_file_analysis)
 
-# --- TAB 4: CỔNG THÔNG TIN HĐND ---
+# --- TAB 4: THƯ VIỆN & KHO TRI THỨC ---
 with tab4:
-    st.markdown("### 🌐 Cổng thông tin Công cộng dành cho Cử tri")
-    st.caption("Truy cập trang tin tức và công bố thông tin phục vụ Cử tri (Web Portal).")
-    st.components.v1.iframe("https://hdnd.vercel.app/", height=800, scrolling=True)
-
-# --- TAB 5: THƯ VIỆN & KHO TRI THỨC ---
-with tab5:
     st.markdown("### 📚 Quản trị Tài liệu & Thư viện Số")
     with st.expander("➕ Tải tài liệu lên Kho tri thức", expanded=False):
         c1, c2 = st.columns([2, 1])
