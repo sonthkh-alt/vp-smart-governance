@@ -2,6 +2,7 @@ import os
 import time
 import json
 import functools
+import datetime
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -63,6 +64,10 @@ def _get_groq_client():
 
 def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, use_search: bool = True) -> str:
     """Hàm gọi AI tổng quát, hỗ trợ Gemini, Claude và Groq với cơ chế Fallback."""
+    now = datetime.datetime.now()
+    time_context = f"[Ngữ cảnh hệ thống: Thời điểm hiện tại là ngày {now.strftime('%d/%m/%Y')} (Tháng {now.strftime('%m')} năm {now.strftime('%Y')}). Vui lòng coi đây là thời gian thực tại khi xử lý bất kỳ mốc thời gian nào trong prompt hoặc văn bản, đảm bảo không nhận định nhầm các mốc thời gian này là tương lai.]\n\n"
+    prompt = time_context + prompt
+
     if provider == "claude":
         return _call_claude(prompt, use_pro)
     
@@ -173,6 +178,10 @@ def _call_gemini_with_fallback(model_list, config, max_retries=1, parse_json=Fal
     return f"⚠️ Lỗi kết nối Gemini (đã thử toàn bộ model): {last_error}"
 
 def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -> dict:
+    now = datetime.datetime.now()
+    time_context = f"[Ngữ cảnh hệ thống: Thời điểm hiện tại là ngày {now.strftime('%d/%m/%Y')} (Tháng {now.strftime('%m')} năm {now.strftime('%Y')}). Vui lòng coi đây là thời gian thực tại khi xử lý bất kỳ mốc thời gian nào trong prompt hoặc văn bản, đảm bảo không nhận định nhầm các mốc thời gian này là tương lai.]\n\n"
+    prompt = time_context + prompt
+
     if provider == "claude":
         # Claude mặc định hỗ trợ JSON tốt qua prompt, nhưng ở đây ta gọi text rồi load
         res = _call_claude(prompt + "\nBẮT BUỘC TRẢ VỀ JSON NGUYÊN BẢN.", use_pro)
