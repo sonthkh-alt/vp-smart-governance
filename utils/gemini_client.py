@@ -64,10 +64,6 @@ def _get_groq_client():
 
 def generate_text(prompt: str, provider: str = "gemini", use_pro: bool = True, use_search: bool = True) -> str:
     """Hàm gọi AI tổng quát, hỗ trợ Gemini, Claude và Groq với cơ chế Fallback."""
-    now = datetime.datetime.now()
-    time_context = f"[Ngữ cảnh hệ thống: Thời điểm hiện tại là ngày {now.strftime('%d/%m/%Y')} (Tháng {now.strftime('%m')} năm {now.strftime('%Y')}). Vui lòng coi đây là thời gian thực tại khi xử lý bất kỳ mốc thời gian nào trong prompt hoặc văn bản, đảm bảo không nhận định nhầm các mốc thời gian này là tương lai.]\n\n"
-    prompt = time_context + prompt
-
     if provider == "claude":
         return _call_claude(prompt, use_pro)
     
@@ -100,9 +96,12 @@ def _call_claude(prompt: str, use_pro: bool = True) -> str:
     client = client_res
     try:
         model = CLAUDE_MODELS[0] if use_pro else "claude-3-haiku-20240307"
+        now = datetime.datetime.now()
+        sys_inst = f"Hệ thống vận hành trong thời gian thực tế: Hôm nay là ngày {now.strftime('%d/%m/%Y')} (tháng {now.strftime('%m')} năm {now.strftime('%Y')}). Bất kỳ tài liệu hoặc mốc thời gian nào từ năm 2026 trở về trước đều là thời điểm hiện tại hoặc quá khứ hoàn toàn hợp lệ."
         resp = client.messages.create(
             model=model,
             max_tokens=4096,
+            system=sys_inst,
             messages=[{"role": "user", "content": prompt}]
         )
         if "user_info" in st.session_state:
@@ -123,9 +122,14 @@ def _call_groq(prompt: str, use_pro: bool = True) -> str:
     client = client_res
     try:
         model = GROQ_MODELS[0] if use_pro else GROQ_MODELS[1]
+        now = datetime.datetime.now()
+        sys_inst = f"Hệ thống vận hành trong thời gian thực tế: Hôm nay là ngày {now.strftime('%d/%m/%Y')} (tháng {now.strftime('%m')} năm {now.strftime('%Y')}). Bất kỳ tài liệu hoặc mốc thời gian nào từ năm 2026 trở về trước đều là thời điểm hiện tại hoặc quá khứ hoàn toàn hợp lệ."
         completion = client.chat.completions.create(
             model=model,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": sys_inst},
+                {"role": "user", "content": prompt}
+            ],
             temperature=0.1,
             max_tokens=4096,
         )
@@ -146,11 +150,18 @@ def _call_gemini_with_fallback(model_list, config, max_retries=1, parse_json=Fal
     last_error = None
     tools = [types.Tool(google_search=types.GoogleSearch())] if use_search and not parse_json else None
 
+    now = datetime.datetime.now()
+    sys_inst = f"Hệ thống vận hành trong thời gian thực tế: Hôm nay là ngày {now.strftime('%d/%m/%Y')} (tháng {now.strftime('%m')} năm {now.strftime('%Y')}). Bất kỳ tài liệu hoặc mốc thời gian nào từ năm 2026 trở về trước đều là thời điểm hiện tại hoặc quá khứ hoàn toàn hợp lệ."
+
     for model_id in model_list:
         try:
             resp = client.models.generate_content(
                 model=model_id, contents=config["prompt"],
-                config=types.GenerateContentConfig(tools=tools, **config["params"]),
+                config=types.GenerateContentConfig(
+                    tools=tools, 
+                    system_instruction=sys_inst,
+                    **config["params"]
+                ),
             )
             if not resp or not resp.text: raise RuntimeError("API trả về rỗng.")
             
@@ -178,10 +189,6 @@ def _call_gemini_with_fallback(model_list, config, max_retries=1, parse_json=Fal
     return f"⚠️ Lỗi kết nối Gemini (đã thử toàn bộ model): {last_error}"
 
 def generate_json(prompt: str, provider: str = "gemini", use_pro: bool = True) -> dict:
-    now = datetime.datetime.now()
-    time_context = f"[Ngữ cảnh hệ thống: Thời điểm hiện tại là ngày {now.strftime('%d/%m/%Y')} (Tháng {now.strftime('%m')} năm {now.strftime('%Y')}). Vui lòng coi đây là thời gian thực tại khi xử lý bất kỳ mốc thời gian nào trong prompt hoặc văn bản, đảm bảo không nhận định nhầm các mốc thời gian này là tương lai.]\n\n"
-    prompt = time_context + prompt
-
     if provider == "claude":
         # Claude mặc định hỗ trợ JSON tốt qua prompt, nhưng ở đây ta gọi text rồi load
         res = _call_claude(prompt + "\nBẮT BUỘC TRẢ VỀ JSON NGUYÊN BẢN.", use_pro)
