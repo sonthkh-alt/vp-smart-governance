@@ -17,6 +17,12 @@ import database
 # Áp dụng giao diện Premium
 set_premium_css()
 
+# Yêu cầu đăng nhập để bảo mật dữ liệu học thuật riêng tư của từng user
+if not require_auth("xem lộ trình học thuật"):
+    st.stop()
+
+email = st.session_state.user_info.get("email")
+
 draw_module_header("Academic Promotion Roadmap", "🎓",
     "Lộ trình cá nhân hóa đạt chức danh Phó Giáo sư — Theo QĐ 37/2018/QĐ-TTg")
 
@@ -31,7 +37,7 @@ PGS_REQUIREMENTS = {
 }
 
 # ─── SIDEBAR: Hồ sơ Học thuật ─────────────────────────────────────────────────
-profile = database.get_academic_profile()
+profile = database.get_academic_profile(email)
 
 with st.sidebar:
     st.markdown("### 👤 Hồ sơ Học thuật")
@@ -58,7 +64,7 @@ with st.sidebar:
         foreign_lang = st.text_input("Ngoại ngữ (VD: IELTS 6.0)", value=profile.get("foreign_language", ""))
 
         if st.form_submit_button("💾 Lưu Hồ sơ", use_container_width=True):
-            database.save_academic_profile({
+            database.save_academic_profile(email, {
                 "full_name": full_name, "current_title": current_title,
                 "field": field, "sub_field": sub_field, "institution": institution,
                 "phd_year": phd_year, "target_year": target_year,
@@ -81,7 +87,7 @@ with st.sidebar:
         points = st.number_input("Điểm quy đổi (theo HĐGSNN)", min_value=0.0, max_value=3.0, value=0.5, step=0.25)
         if st.form_submit_button("➕ Thêm công trình", use_container_width=True):
             if pub_title.strip():
-                database.save_publication({
+                database.save_publication(email, {
                     "title": pub_title, "pub_type": pub_type, "journal_name": journal,
                     "year": pub_year, "is_isi_scopus": is_isi, "is_first_author": is_first, "points": points,
                 })
@@ -89,8 +95,8 @@ with st.sidebar:
                 st.rerun()
 
 # ─── Load data ────────────────────────────────────────────────────────────────
-profile = database.get_academic_profile()
-pubs_raw = database.get_publications()
+profile = database.get_academic_profile(email)
+pubs_raw = database.get_publications(email)
 pubs_df = pd.DataFrame(pubs_raw, columns=["id","title","pub_type","journal_name","year","is_isi_scopus","is_first_author","points","doi","notes","created_at"]) if pubs_raw else pd.DataFrame()
 
 # ─── KPI DASHBOARD ────────────────────────────────────────────────────────────

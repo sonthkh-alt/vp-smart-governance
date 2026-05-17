@@ -31,7 +31,8 @@ _TABLES_SQL = [
         analysis_result TEXT NOT NULL
     )''',
     '''CREATE TABLE IF NOT EXISTS academic_profile (
-        id INTEGER PRIMARY KEY, full_name TEXT, current_title TEXT,
+        email TEXT PRIMARY KEY,
+        full_name TEXT, current_title TEXT,
         field TEXT, sub_field TEXT, institution TEXT,
         phd_year INTEGER, target_year INTEGER DEFAULT 2032,
         teaching_hours INTEGER DEFAULT 0, supervised_masters INTEGER DEFAULT 0,
@@ -40,6 +41,7 @@ _TABLES_SQL = [
     )''',
     '''CREATE TABLE IF NOT EXISTS publications (
         id SERIAL_OR_AUTO,
+        user_email TEXT,
         title TEXT NOT NULL, pub_type TEXT NOT NULL, journal_name TEXT,
         year INTEGER, is_isi_scopus INTEGER DEFAULT 0,
         is_first_author INTEGER DEFAULT 0, points REAL DEFAULT 0,
@@ -223,10 +225,21 @@ def get_policy_reviews():
     keys = ["id", "created_at", "policy_name", "analysis_result"]
     return [dict(zip(keys, r)) for r in rows]
 
-def save_academic_profile(profile: dict):
-    _execute('DELETE FROM academic_profile')
+def save_academic_profile(email: str, profile: dict):
+    _ensure_db()
+    # Thêm cột email cho database cũ
+    try:
+        _execute('SELECT email FROM academic_profile LIMIT 1')
+    except Exception:
+        try:
+            _execute('ALTER TABLE academic_profile ADD COLUMN email TEXT')
+        except Exception: pass
+
+    # Xóa bản ghi cũ của user này
+    _execute('DELETE FROM academic_profile WHERE email=?', (email,))
+    
     _PROFILE_FIELDS = [
-        "full_name", "current_title", "field", "sub_field", "institution",
+        "email", "full_name", "current_title", "field", "sub_field", "institution",
         "phd_year", "target_year", "teaching_hours", "supervised_masters",
         "supervised_phds", "research_projects_national", "research_projects_local",
         "foreign_language", "updated_at",
@@ -238,17 +251,24 @@ def save_academic_profile(profile: dict):
         "research_projects_national": 0, "research_projects_local": 0,
         "foreign_language": "",
     }
-    vals = tuple(profile.get(k, _PROFILE_DEFAULTS.get(k, "")) for k in _PROFILE_FIELDS[:-1])
+    vals = (email,) + tuple(profile.get(k, _PROFILE_DEFAULTS.get(k, "")) for k in _PROFILE_FIELDS[1:-1])
     placeholders = ",".join(["?"] * len(_PROFILE_FIELDS))
     cols = ",".join(_PROFILE_FIELDS)
     _execute(
-        f'INSERT INTO academic_profile (id, {cols}) VALUES (1, {placeholders})',
+        f'INSERT INTO academic_profile ({cols}) VALUES ({placeholders})',
         vals + (_now(),)
     )
 
-def get_academic_profile() -> dict:
+def get_academic_profile(email: str) -> dict:
     _ensure_db()
-    row = _execute('SELECT id, full_name, current_title, field, sub_field, institution, phd_year, target_year, teaching_hours, supervised_masters, supervised_phds, research_projects_national, research_projects_local, foreign_language, updated_at FROM academic_profile WHERE id=1', fetchone=True)
+    try:
+        row = _execute('SELECT full_name, current_title, field, sub_field, institution, phd_year, target_year, teaching_hours, supervised_masters, supervised_phds, research_projects_national, research_projects_local, foreign_language, updated_at FROM academic_profile WHERE email=?', (email,), fetchone=True)
+    except Exception:
+        try:
+            _execute('ALTER TABLE academic_profile ADD COLUMN email TEXT')
+        except Exception: pass
+        row = _execute('SELECT full_name, current_title, field, sub_field, institution, phd_year, target_year, teaching_hours, supervised_masters, supervised_phds, research_projects_national, research_projects_local, foreign_language, updated_at FROM academic_profile WHERE email=?', (email,), fetchone=True)
+        
     if not row: return {}
     fields = [
         "full_name", "current_title", "field", "sub_field", "institution",
@@ -256,14 +276,22 @@ def get_academic_profile() -> dict:
         "supervised_phds", "research_projects_national", "research_projects_local",
         "foreign_language", "updated_at",
     ]
-    return dict(zip(fields, row[1:]))
+    return dict(zip(fields, row))
 
-def save_publication(pub: dict):
+def save_publication(email: str, pub: dict):
+    _ensure_db()
+    try:
+        _execute('SELECT user_email FROM publications LIMIT 1')
+    except Exception:
+        try:
+            _execute('ALTER TABLE publications ADD COLUMN user_email TEXT')
+        except Exception: pass
+
     _execute(
-        'INSERT INTO publications (title,pub_type,journal_name,year,is_isi_scopus,is_first_author,points,doi,notes,created_at) '
-        'VALUES (?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO publications (user_email, title, pub_type, journal_name, year, is_isi_scopus, is_first_author, points, doi, notes, created_at) '
+        'VALUES (?,?,?,?,?,?,?,?,?,?,?)',
         (
-            pub.get("title", ""), pub.get("pub_type", ""),
+            email, pub.get("title", ""), pub.get("pub_type", ""),
             pub.get("journal_name", ""), pub.get("year", 2026),
             1 if pub.get("is_isi_scopus") else 0,
             1 if pub.get("is_first_author") else 0,
@@ -272,14 +300,25 @@ def save_publication(pub: dict):
         )
     )
 
-def get_publications():
+def get_publications(email: str):
     _ensure_db()
-    rows = _execute('SELECT id, title, pub_type, journal_name, year, is_isi_scopus, is_first_author, points, doi, notes, created_at FROM publications ORDER BY year DESC, id DESC', fetchall=True)
+    try:
+        _execute('SELECT user_email FROM publications LIMIT 1')
+    except Exception:
+        try:
+            _execute('ALTER TABLE publications ADD COLUMN user_email TEXT')
+        except Exception: pass
+
+    rows = _execute('SELECT id, title, pub_type, journal_name, year, is_isi_scopus, is_first_author, points, doi, notes, created_at FROM publications WHERE user_email=? ORDER BY year DESC, id DESC', (email,), fetchall=True)
     keys = ["id", "title", "pub_type", "journal_name", "year", "is_isi_scopus", "is_first_author", "points", "doi", "notes", "created_at"]
     return [dict(zip(keys, r)) for r in rows]
 
-def delete_publication(pub_id):
-    _execute('DELETE FROM publications WHERE id=?', (pub_id,))
+def delete_publication(pub_id, email: str):
+    try:
+        _execute('SELECT user_email FROM publications LIMIT 1')
+        _execute('DELETE FROM publications WHERE id=? AND user_email=?', (pub_id, email))
+    except Exception:
+        _execute('DELETE FROM publications WHERE id=?', (pub_id,))
 
 def get_user(email):
     _ensure_db()
