@@ -1,4 +1,5 @@
 import io
+import re
 from docx import Document
 import pypdf
 
@@ -191,4 +192,149 @@ def create_nd30_document(content_dict):
 
     except Exception as e:
         print(f"Lỗi khi xử lý template DOCX: {e}")
+        return None
+
+
+def create_tham_tra_document(report_text: str, ban_name: str, nghi_quyet_name: str = ""):
+    """Tạo file Word Báo cáo Thẩm tra chuẩn Nghị định 30/2020/NĐ-CP."""
+    try:
+        from docx.shared import Cm, Pt
+        from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+        from docx.enum.table import WD_TABLE_ALIGNMENT
+        from datetime import datetime
+
+        doc = Document()
+
+        for section in doc.sections:
+            section.page_width = Cm(21.0)
+            section.page_height = Cm(29.7)
+            section.top_margin = Cm(2.0)
+            section.bottom_margin = Cm(2.0)
+            section.left_margin = Cm(3.0)
+            section.right_margin = Cm(2.0)
+
+        def _add_run(paragraph, text, size=13, bold=False, italic=False, name='Times New Roman'):
+            run = paragraph.add_run(text)
+            run.font.name = name
+            run.font.size = Pt(size)
+            run.bold = bold
+            run.italic = italic
+            return run
+
+        # Header Table
+        tbl = doc.add_table(rows=2, cols=2)
+        tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+        for row in tbl.rows:
+            row.cells[0].width = Cm(7.0)
+            row.cells[1].width = Cm(9.0)
+
+        p = tbl.cell(0, 0).paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        _add_run(p, "HỘI ĐỒNG NHÂN DÂN", size=12)
+
+        p = tbl.cell(1, 0).paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_after = Pt(0)
+        _add_run(p, f"BAN {ban_name.upper()}", size=13, bold=True)
+        p_line = tbl.cell(1, 0).add_paragraph()
+        p_line.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_line.paragraph_format.space_before = Pt(0)
+        p_line.paragraph_format.space_after = Pt(0)
+        _add_run(p_line, "**********", size=10)
+
+        p_so = tbl.cell(1, 0).add_paragraph()
+        p_so.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        _add_run(p_so, "Số:      /BC-HĐND")
+
+        p = tbl.cell(0, 1).paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        _add_run(p, "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", bold=True)
+
+        p = tbl.cell(1, 1).paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_after = Pt(0)
+        _add_run(p, "Độc lập - Tự do - Hạnh phúc", size=14, bold=True)
+        p_line2 = tbl.cell(1, 1).add_paragraph()
+        p_line2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_line2.paragraph_format.space_before = Pt(0)
+        p_line2.paragraph_format.space_after = Pt(0)
+        _add_run(p_line2, "________________________", size=12)
+        p_date = tbl.cell(1, 1).add_paragraph()
+        p_date.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        now = datetime.now()
+        _add_run(p_date, f"Thanh Hóa, ngày {now.day} tháng {now.month} năm {now.year}", size=14, italic=True)
+
+        doc.add_paragraph()
+
+        # Title
+        p_title = doc.add_paragraph()
+        p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        _add_run(p_title, "BÁO CÁO THẨM TRA", size=14, bold=True)
+
+        trich_yeu = nghi_quyet_name if nghi_quyet_name else "Dự thảo Nghị quyết"
+        p_trich = doc.add_paragraph()
+        p_trich.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        _add_run(p_trich, trich_yeu, size=14, bold=True)
+
+        doc.add_paragraph()
+
+        # Body content
+        for line in report_text.split('\n'):
+            stripped = line.strip()
+            if not stripped:
+                continue
+
+            new_p = doc.add_paragraph()
+            new_p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            new_p.paragraph_format.first_line_indent = Cm(1.27)
+            new_p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+            new_p.paragraph_format.line_spacing = Pt(19)
+            new_p.paragraph_format.space_before = Pt(6)
+            new_p.paragraph_format.space_after = Pt(6)
+
+            # Detect section headings (I., II., III., 1., 2., etc.)
+            heading_match = re.match(r'^((?:[IVX]+\.|[0-9]+(?:\.\d+)*\.))\s+(.*)', stripped)
+            if heading_match:
+                _add_run(new_p, heading_match.group(1) + " ", size=14, bold=True)
+                stripped = heading_match.group(2)
+
+            # Process bold markdown markers
+            for part in re.split(r'(\*\*.*?\*\*)', stripped):
+                is_bold = part.startswith('**') and part.endswith('**')
+                text = part[2:-2] if is_bold else part.replace('*', '')
+                if text:
+                    _add_run(new_p, text, size=14, bold=is_bold)
+
+        doc.add_paragraph()
+
+        # Signature block
+        tbl_f = doc.add_table(rows=1, cols=2)
+        tbl_f.alignment = WD_TABLE_ALIGNMENT.CENTER
+        tbl_f.rows[0].cells[0].width = Cm(7.0)
+        tbl_f.rows[0].cells[1].width = Cm(9.0)
+
+        p_nn = tbl_f.cell(0, 0).paragraphs[0]
+        p_nn.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        _add_run(p_nn, "Nơi nhận:", size=12, bold=True, italic=True)
+        for nn in ["- Thường trực HĐND tỉnh;", "- UBND tỉnh;", "- Các Ban HĐND tỉnh;", "- Lưu: VT."]:
+            p = tbl_f.cell(0, 0).add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            p.paragraph_format.space_after = Pt(0)
+            _add_run(p, nn, size=11)
+
+        p_sign = tbl_f.cell(0, 1).paragraphs[0]
+        p_sign.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        _add_run(p_sign, "TRƯỞNG BAN\n", size=14, bold=True)
+
+        p_name = tbl_f.cell(0, 1).add_paragraph()
+        p_name.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_name.paragraph_format.space_before = Pt(60)
+
+        buf = io.BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+        return buf
+
+    except Exception as e:
+        print(f"Lỗi khi tạo Báo cáo Thẩm tra DOCX: {e}")
         return None
