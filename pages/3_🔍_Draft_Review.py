@@ -46,8 +46,7 @@ with tt_col1:
     
     nq_name = st.text_input("📋 Tên Dự thảo Nghị quyết:", placeholder="Ví dụ: Nghị quyết về phân bổ ngân sách địa phương năm 2026", key="tt_nq_name")
     
-    tt_to_trinh = st.file_uploader("📄 Tờ trình của UBND tỉnh:", type=["pdf", "docx"], key="tt_totrinh")
-    tt_du_thao = st.file_uploader("📄 Dự thảo Nghị quyết:", type=["pdf", "docx"], key="tt_duthao")
+    tt_files = st.file_uploader("📄 Tờ trình UBND tỉnh, Dự thảo Nghị quyết:", type=["pdf", "docx"], accept_multiple_files=True, key="tt_files")
     tt_lien_quan = st.file_uploader("📄 Văn bản liên quan (nếu có):", type=["pdf", "docx"], accept_multiple_files=True, key="tt_lienquan")
     
     tt_note = st.text_area("📝 Ghi chú / Yêu cầu đặc biệt (nếu có):", height=100, placeholder="Ví dụ: Tập trung phản biện nguồn kinh phí bố trí...", key="tt_note")
@@ -56,18 +55,15 @@ with tt_col1:
     with tt_c1:
         if st.button("🚀 TẠO BÁO CÁO THẨM TRA", type="primary", use_container_width=True, key="tt_run"):
             if require_auth("Thẩm tra dự thảo NQ"):
-                if not tt_to_trinh and not tt_du_thao:
-                    st.error("⚠️ Vui lòng tải lên ít nhất Tờ trình hoặc Dự thảo Nghị quyết!")
+                if not tt_files:
+                    st.error("⚠️ Vui lòng tải lên Tờ trình UBND tỉnh và Dự thảo Nghị quyết!")
                 else:
                     with st.spinner(f"AI ({ai_provider}) đang thẩm tra chuyên sâu..."):
-                        to_trinh_text = ""
-                        du_thao_text = ""
+                        to_trinh_du_thao_text = ""
                         lien_quan_text = ""
                         
-                        if tt_to_trinh:
-                            to_trinh_text = extract_text_from_pdf(tt_to_trinh) if tt_to_trinh.name.endswith(".pdf") else extract_text_from_docx(tt_to_trinh)
-                        if tt_du_thao:
-                            du_thao_text = extract_text_from_pdf(tt_du_thao) if tt_du_thao.name.endswith(".pdf") else extract_text_from_docx(tt_du_thao)
+                        for f in tt_files:
+                            to_trinh_du_thao_text += (extract_text_from_pdf(f) if f.name.endswith(".pdf") else extract_text_from_docx(f)) + "\n---\n"
                         if tt_lien_quan:
                             for f in tt_lien_quan:
                                 lien_quan_text += (extract_text_from_pdf(f) if f.name.endswith(".pdf") else extract_text_from_docx(f)) + "\n---\n"
@@ -107,11 +103,8 @@ YÊU CẦU VĂN PHONG:
 
 {f"GHI CHÚ CỦA NGƯỜI DÙNG: {tt_note}" if tt_note else ""}
 
---- TỜ TRÌNH CỦA UBND TỈNH ---
-{to_trinh_text if to_trinh_text else "(Không có)"}
-
---- DỰ THẢO NGHỊ QUYẾT ---
-{du_thao_text if du_thao_text else "(Không có)"}
+--- TỜ TRÌNH UBND TỈNH VÀ DỰ THẢO NGHỊ QUYẾT ---
+{to_trinh_du_thao_text}
 
 --- VĂN BẢN LIÊN QUAN ---
 {lien_quan_text if lien_quan_text else "(Không có)"}
