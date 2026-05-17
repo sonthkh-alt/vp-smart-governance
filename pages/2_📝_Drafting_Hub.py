@@ -36,8 +36,8 @@ tab1, tab2, tab3 = st.tabs(["📝 Soạn thảo Văn bản", "🎤 Soạn thảo
 # --- Cấu hình AI chung cho trang ---
 with st.sidebar:
     st.markdown("### 🤖 Cấu hình AI")
-    ai_provider = st.radio("Chọn mô hình AI ưu tiên:", ["Groq (Llama 3.3)", "Google Gemini"], index=0, key="global_ai_provider")
-    provider_key = "groq" if "Groq" in ai_provider else "gemini"
+    ai_provider = st.radio("Chọn mô hình AI ưu tiên:", ["Google Gemini", "Groq (Llama 3.3)"], index=0, key="global_ai_provider")
+    provider_key = "gemini" if "Gemini" in ai_provider else "groq"
 
 # --- TAB 1: SOẠN THẢO VĂN BẢN ---
 with tab1:

@@ -27,7 +27,7 @@ Xuất JSON với các trường:
 "quyen_han_ky":"Chức vụ người ký","nguoi_ky":"Họ tên"}"""
 
 
-def generate_document_content(prompt: str, doc_type: str = "Tự động", context: str = "", notebook_lm_data: str = "", provider: str = "groq") -> dict:
+def generate_document_content(prompt: str, doc_type: str = "Tự động", context: str = "", notebook_lm_data: str = "", provider: str = "gemini") -> dict:
     """
     Sinh nội dung văn bản dưới dạng JSON chuẩn NĐ 30, hỗ trợ đa mô hình.
     """
@@ -52,7 +52,7 @@ def generate_document_content(prompt: str, doc_type: str = "Tự động", conte
     return generate_json(full_prompt, use_pro=True, provider=provider)
 
 
-def check_legal_compliance(draft: str, reference_data: str = "", provider: str = "groq") -> str:
+def check_legal_compliance(draft: str, reference_data: str = "", provider: str = "gemini") -> str:
     """
     Đối chiếu pháp lý giữa dự thảo và căn cứ tham chiếu, hỗ trợ đa mô hình.
     """
