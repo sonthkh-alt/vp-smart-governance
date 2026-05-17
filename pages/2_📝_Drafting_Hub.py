@@ -140,35 +140,26 @@ with tab3:
                     with st.spinner(f"AI ({ai_provider}) đang soát lỗi..."):
                         p = f"""
 Bạn là Chuyên gia Kiểm soát Chất lượng & Pháp chế Hành chính cao cấp của Văn phòng Đoàn ĐBQH và HĐND tỉnh Thanh Hóa.
-Nhiệm vụ của bạn là soát xét, hiệu chỉnh lỗi và tối ưu hóa văn bản hành chính dưới đây với tiêu chuẩn khắt khe nhất.
+Nhiệm vụ của bạn là soát xét, phát hiện các lỗi sai và đưa ra đề xuất hiệu chỉnh cho văn bản hành chính dưới đây.
+
+LƯU Ý QUAN TRỌNG: Bạn chỉ cần chỉ ra các lỗi sai, phân tích lỗi và đề xuất cách sửa chi tiết. KHÔNG CẦN VÀ KHÔNG ĐƯỢC viết lại hay hoàn thiện lại toàn bộ văn bản gốc để tránh làm dài dòng báo cáo.
 
 TRỌNG TÂM KIỂM TRA ĐƯỢC YÊU CẦU: {', '.join(rev_focus)}
 
-QUY TẮC HIỆU CHỈNH BẮT BUỘC:
-1. SỬA LỖI CHÍNH TẢ & PHỤC HỒI TIẾNG VIỆT: Khôi phục chính xác 100% tiếng Việt có dấu, sửa các lỗi chính tả, đánh máy, viết hoa tùy tiện, từ ngữ bị dính hoặc thiếu ký tự.
-2. THỂ THỨC HÀNH CHÍNH CHUẨN NĐ 30/2020/NĐ-CP: Điều chỉnh cách đánh số mục (I., 1., a)), cách viết hoa các chức danh, cơ quan nhà nước, địa danh (Ví dụ: "Hội đồng nhân dân", "Ủy ban nhân dân", "tỉnh Thanh Hóa").
-3. VĂN PHONG HÀNH CHÍNH CÔNG VỤ: Tối ưu câu từ để đạt sự trang trọng, súc tích, mạch lạc, khách quan và chuyên nghiệp của cơ quan công quyền.
-4. BẢO TOÀN NỘI DUNG TUYỆT ĐỐI: KHÔNG tóm tắt, KHÔNG lược bỏ, KHÔNG tự ý cắt ngắn bất kỳ câu chữ hay số liệu nào của văn bản gốc. Phải soát lỗi và trả ra TOÀN BỘ văn bản từ đầu đến cuối.
+HÃY TRÌNH BÀY BÁO CÁO SOÁT LỖI THEO CẤU TRÚC PHÂN TÍCH SAU:
 
-HÃY TRÌNH BÀY BÁO CÁO THEO CẤU TRÚC PHÂN TÍCH SAU:
-
-### 🌟 1. VĂN BẢN ĐÃ ĐƯỢC HIỆU CHỈNH HOÀN CHỈNH
-[Dán toàn bộ văn bản sau khi đã sửa toàn bộ lỗi chính tả, dấu câu, từ ngữ và thể thức ở đây. Đảm bảo văn bản đầy đủ từ đầu đến cuối, trình bày sạch sẽ, phân đoạn rõ ràng bằng Markdown]
+### 📊 1. BẢNG PHÂN TÍCH CHI TIẾT CÁC LỖI PHÁT HIỆN & ĐỀ XUẤT HIỆU CHỈNH
+| STT | Vị trí (Dòng/Đoạn) | Nội dung gốc (Có lỗi) | Đề xuất hiệu chỉnh | Phân loại lỗi | Chi tiết lý do & Căn cứ sửa đổi |
+|---|---|---|---|---|---|
+| 1 | [Ví dụ: Đoạn 1] | [Nội dung lỗi] | [Đề xuất sửa] | [Chính tả / Thể thức NĐ 30 / Văn phong] | [Lý do & Căn cứ quy định] |
+| ... | ... | ... | ... | ... | ... |
 
 ---
 
-### 📊 2. BẢNG PHÂN TÍCH & CHI TIẾT CÁC LỖI ĐÃ KHẮC PHỤC
-| STT | Nội dung gốc (Lỗi) | Nội dung đã hiệu chỉnh | Phân loại lỗi | Chi tiết lý do sửa đổi |
-|---|---|---|---|---|
-| 1 | [Nội dung lỗi] | [Nội dung sửa] | [Chính tả/Thể thức/Văn phong] | [Lý do ngắn gọn] |
-| ... | ... | ... | ... | ... |
-
----
-
-### 📈 3. ĐÁNH GIÁ CHẤT LƯỢNG VĂN BẢN CHUNG
-* **Điểm chất lượng:** [Cho điểm trên thang 10]
-* **Đánh giá văn phong:** [Nhận xét ngắn gọn về văn phong]
-* **Đề xuất thêm (nếu có):** [Gợi ý cải thiện cấu trúc hoặc từ ngữ cho chuyên nghiệp hơn]
+### 📈 2. ĐÁNH GIÁ CHẤT LƯỢNG VĂN BẢN CHUNG
+* **Điểm đánh giá chất lượng hiện tại:** [Cho điểm trên thang 10]
+* **Tổng hợp các vấn đề chính:** [Tóm tắt ngắn gọn các lỗi hệ thống hoặc lỗi lặp đi lặp lại nhiều nhất]
+* **Khuyến nghị cải thiện:** [Các hướng dẫn chuyên gia để tác giả tự hoàn thiện văn bản tốt hơn]
 
 Nội dung văn bản cần soát lỗi:
 {st.session_state.rev_text_content}
