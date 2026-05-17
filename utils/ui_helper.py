@@ -223,9 +223,6 @@ def draw_sidebar():
     user = get_user_info()
 
     with st.sidebar:
-        st.markdown("### 🛠️ Cài đặt & Hỗ trợ")
-        st.info("Phiên bản v2.1 - Python 3.14 Compatible")
-        st.markdown("---")
 
         # ─── PHẦN ĐĂNG NHẬP (BOTTOM) ──────────────────────────────────────────
         if not is_logged_in:
