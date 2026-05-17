@@ -145,7 +145,11 @@ Nhiệm vụ của bạn là rà soát toàn bộ văn bản dưới đây, phá
 YÊU CẦU BẮT BUỘC:
 1. CHỈ RA LỖI SAI & ĐỀ XUẤT SỬA: Không viết lại toàn bộ văn bản gốc. Chỉ liệt kê chi tiết các lỗi phát hiện được vào bảng.
 2. PHÁT HIỆN LỖI SƠ ĐẲNG (CỰC KỲ QUAN TRỌNG): Hãy rà soát kỹ từng từ một để phát hiện các lỗi gõ phím bừa, từ vô nghĩa (Ví dụ: "fádf", "asdf", "ghjk"), từ viết sai chính tả tiếng Việt, ký tự lạ/ký tự rác hoặc từ bị dính chữ. Phải chỉ ra chính xác vị trí và yêu cầu xóa bỏ hoặc sửa lại.
-3. THỂ THỨC NĐ 30 & VĂN PHONG HÀNH CHÍNH: Phát hiện các lỗi viết hoa tùy tiện, đánh số mục sai quy chuẩn hoặc văn phong không trang trọng.
+3. THỂ THỨC NĐ 30 & VĂN PHONG HÀNH CHÍNH (VĂN PHÒNG): Phát hiện các lỗi viết hoa tùy tiện, dùng từ không chuẩn ngôn ngữ công vụ, cách đặt tiêu đề báo cáo không khớp với nội dung, hoặc thẩm quyền ký/nơi nhận không hợp lý.
+4. LỖI LOGIC QUẢN LÝ & SỰ NHẤT QUÁN (ĐẶC BIỆT SÂU SẮC): 
+   - Kiểm tra tính mâu thuẫn trong số liệu thống kê ở các phần khác nhau của tài liệu (Ví dụ: tổng số xã miền núi/đồng bằng cộng lại không bằng tổng số chung).
+   - Kiểm tra tính hợp lý của niên độ báo cáo và mốc thời gian (Ví dụ: báo cáo sơ kết "01 năm" nhưng khoảng thời gian thống kê từ 01/7/2025 đến 15/5/2026 là chưa tròn 12 tháng - đây là lỗi logic quản lý rất nghiêm trọng!).
+   - Phát hiện các điểm đứt gãy, thiếu mạch lạc logic giữa phần đánh giá thực trạng khó khăn và phần đề xuất giải pháp, phương hướng (Đề xuất không giải quyết được khó khăn nêu ra).
 
 TRỌNG TÂM KIỂM TRA ĐƯỢC YÊU CẦU: {', '.join(rev_focus)}
 
