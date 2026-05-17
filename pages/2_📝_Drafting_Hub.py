@@ -67,8 +67,7 @@ with tab1:
         with c2_btn:
             if st.button("🧹 LÀM MỚI", use_container_width=True, key="draft_clear"):
                 for k in ["draft_res", "draft_edit", "draft_dict", "draft_prompt", "draft_legal"]:
-                    if k in st.session_state:
-                        st.session_state[k] = ""
+                    st.session_state.pop(k, None)
                 st.rerun()
     with col2:
         if "draft_res" in st.session_state:
@@ -105,8 +104,7 @@ with tab2:
         with sp_c2:
             if st.button("🧹 LÀM MỚI", use_container_width=True, key="speech_clear"):
                 for k in ["speech_res", "speech_edit", "speech_role", "speech_event", "speech_key"]:
-                    if k in st.session_state:
-                        st.session_state[k] = ""
+                    st.session_state.pop(k, None)
                 st.rerun()
     with c2:
         if "speech_res" in st.session_state:
@@ -197,8 +195,7 @@ Nội dung văn bản cần soát lỗi:
         with rev_c2:
             if st.button("🧹 LÀM MỚI", use_container_width=True, key="rev_clear"):
                 for k in ["rev_res", "rev_text_content", "last_rev_file"]:
-                    if k in st.session_state:
-                        st.session_state[k] = ""
+                    st.session_state.pop(k, None)
                 st.rerun()
     with cr:
         if "rev_res" in st.session_state:
