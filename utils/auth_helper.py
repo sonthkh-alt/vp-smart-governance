@@ -119,8 +119,7 @@ def login_google():
 
 def logout():
     """Đăng xuất."""
-    st.session_state.is_logged_in = False
-    st.session_state.user_info = None
+    st.session_state.clear()
     st.rerun()
 
 def check_auth_status():

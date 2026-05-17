@@ -48,19 +48,28 @@ with tab1:
         prompt = st.text_area("Yêu cầu chi tiết:", height=150, placeholder="Ví dụ: Soạn công văn trả lời đề xuất kinh phí...", key="draft_prompt")
         legal_data = st.text_area("Căn cứ pháp lý (NotebookLM):", height=150, placeholder="Dán nội dung luật hoặc quy định tại đây...", key="draft_legal")
         ref_files = st.file_uploader("Tài liệu tham khảo:", type=["pdf", "docx"], accept_multiple_files=True, key="draft_ref")
-        if st.button("🚀 TẠO DỰ THẢO VĂN BẢN", type="primary", use_container_width=True, key="draft_run"):
-            if require_auth("Soạn thảo văn bản"):
-                with st.spinner(f"AI ({ai_provider}) đang soạn thảo..."):
-                    context = ""
-                    if ref_files:
-                        for f in ref_files: context += (extract_text_from_pdf(f) if f.name.endswith(".pdf") else extract_text_from_docx(f)) + "\n"
-                    res = generate_document_content(prompt, doc_type=doc_type, context=context, notebook_lm_data=legal_data, provider=provider_key)
-                    if isinstance(res, dict) and "error" not in res:
-                        st.session_state.draft_res = res.get("noi_dung_chinh", "")
-                        st.session_state.draft_edit = res.get("noi_dung_chinh", "")
-                        st.session_state.draft_dict = res
-                        database.save_draft(doc_type, prompt, res)
-                    else: st.error(f"Lỗi: {res.get('error') if isinstance(res, dict) else res}")
+        # Double column layout for buttons
+        c1_btn, c2_btn = st.columns([2, 1])
+        with c1_btn:
+            if st.button("🚀 TẠO DỰ THẢO VĂN BẢN", type="primary", use_container_width=True, key="draft_run"):
+                if require_auth("Soạn thảo văn bản"):
+                    with st.spinner(f"AI ({ai_provider}) đang soạn thảo..."):
+                        context = ""
+                        if ref_files:
+                            for f in ref_files: context += (extract_text_from_pdf(f) if f.name.endswith(".pdf") else extract_text_from_docx(f)) + "\n"
+                        res = generate_document_content(prompt, doc_type=doc_type, context=context, notebook_lm_data=legal_data, provider=provider_key)
+                        if isinstance(res, dict) and "error" not in res:
+                            st.session_state.draft_res = res.get("noi_dung_chinh", "")
+                            st.session_state.draft_edit = res.get("noi_dung_chinh", "")
+                            st.session_state.draft_dict = res
+                            database.save_draft(doc_type, prompt, res)
+                        else: st.error(f"Lỗi: {res.get('error') if isinstance(res, dict) else res}")
+        with c2_btn:
+            if st.button("🧹 LÀM MỚI", use_container_width=True, key="draft_clear"):
+                for k in ["draft_res", "draft_edit", "draft_dict", "draft_prompt", "draft_legal"]:
+                    if k in st.session_state:
+                        st.session_state[k] = ""
+                st.rerun()
     with col2:
         if "draft_res" in st.session_state:
             edited = st.text_area("Nội dung dự thảo:", value=st.session_state.draft_res, height=400, key="draft_edit")
@@ -80,16 +89,25 @@ with tab2:
         s_role = st.text_input("Chức danh người phát biểu:", placeholder="Ví dụ: Chủ tịch HĐND tỉnh", key="speech_role")
         s_event = st.text_input("Tên sự kiện:", placeholder="Ví dụ: Kỳ họp thứ 20 HĐND tỉnh", key="speech_event")
         s_key = st.text_area("Ý chính cần nhấn mạnh:", height=150, key="speech_key")
-        if st.button("🚀 SOẠN THẢO BÀI PHÁT BIỂU", type="primary", use_container_width=True, key="speech_run"):
-            if require_auth("Soạn thảo phát biểu"):
-                prompt = f"Soạn bài phát biểu cho {s_role} tại {s_event}. Ý chính: {s_key}"
-                with st.spinner(f"AI ({ai_provider}) đang soạn thảo..."):
-                    res = generate_document_content(prompt, doc_type="Bài phát biểu", provider=provider_key)
-                    if isinstance(res, dict) and "error" not in res:
-                        st.session_state.speech_res = res.get("noi_dung_chinh", "")
-                        st.session_state.speech_edit = res.get("noi_dung_chinh", "")
-                        database.save_draft("Bài phát biểu", prompt, res)
-                    else: st.error("Lỗi tạo nội dung.")
+        # Double column layout for speech buttons
+        sp_c1, sp_c2 = st.columns([2, 1])
+        with sp_c1:
+            if st.button("🚀 SOẠN THẢO BÀI PHÁT BIỂU", type="primary", use_container_width=True, key="speech_run"):
+                if require_auth("Soạn thảo phát biểu"):
+                    prompt = f"Soạn bài phát biểu cho {s_role} tại {s_event}. Ý chính: {s_key}"
+                    with st.spinner(f"AI ({ai_provider}) đang soạn thảo..."):
+                        res = generate_document_content(prompt, doc_type="Bài phát biểu", provider=provider_key)
+                        if isinstance(res, dict) and "error" not in res:
+                            st.session_state.speech_res = res.get("noi_dung_chinh", "")
+                            st.session_state.speech_edit = res.get("noi_dung_chinh", "")
+                            database.save_draft("Bài phát biểu", prompt, res)
+                        else: st.error("Lỗi tạo nội dung.")
+        with sp_c2:
+            if st.button("🧹 LÀM MỚI", use_container_width=True, key="speech_clear"):
+                for k in ["speech_res", "speech_edit", "speech_role", "speech_event", "speech_key"]:
+                    if k in st.session_state:
+                        st.session_state[k] = ""
+                st.rerun()
     with c2:
         if "speech_res" in st.session_state:
             s_edit = st.text_area("Nội dung bài phát biểu:", value=st.session_state.speech_res, height=400, key="speech_edit")
@@ -132,13 +150,16 @@ with tab3:
         st.text_area("Nội dung văn bản cần kiểm tra:", height=300, key="rev_text_content")
         
         rev_focus = st.multiselect("Trọng tâm kiểm tra:", ["Chính tả & Ngữ pháp", "Thể thức NĐ 30", "Văn phong hành chính", "Logic quản lý"], default=["Chính tả & Ngữ pháp", "Văn phong hành chính"], key="rev_focus")
-        if st.button("🚀 BẮT ĐẦU KIỂM TRA", type="primary", use_container_width=True, key="rev_run"):
-            if require_auth("Kiểm tra văn bản"):
-                if not st.session_state.rev_text_content.strip():
-                    st.error("⚠️ Vui lòng tải file hoặc nhập nội dung văn bản!")
-                else:
-                    with st.spinner(f"AI ({ai_provider}) đang soát lỗi..."):
-                        p = f"""
+        # Double column layout for audit buttons
+        rev_c1, rev_c2 = st.columns([2, 1])
+        with rev_c1:
+            if st.button("🚀 BẮT ĐẦU KIỂM TRA", type="primary", use_container_width=True, key="rev_run"):
+                if require_auth("Kiểm tra văn bản"):
+                    if not st.session_state.rev_text_content.strip():
+                        st.error("⚠️ Vui lòng tải file hoặc nhập nội dung văn bản!")
+                    else:
+                        with st.spinner(f"AI ({ai_provider}) đang soát lỗi..."):
+                            p = f"""
 Bạn là Chuyên gia Kiểm soát Chất lượng & Pháp chế Hành chính cao cấp của Văn phòng Đoàn ĐBQH và HĐND tỉnh Thanh Hóa.
 Nhiệm vụ của bạn là rà soát toàn bộ văn bản dưới đây, phát hiện ra TẤT CẢ các lỗi sai từ nhỏ nhất đến lớn nhất và đề xuất sửa đổi cụ thể.
 
@@ -171,8 +192,14 @@ HÃY TRÌNH BÀY BÁO CÁO SOÁT LỖI THEO CẤU TRÚC PHÂN TÍCH SAU:
 Nội dung văn bản cần soát lỗi:
 {st.session_state.rev_text_content}
 """
-                        res = generate_text(p, use_pro=True, provider=provider_key, use_search=False)
-                        st.session_state.rev_res = res
+                            res = generate_text(p, use_pro=True, provider=provider_key, use_search=False)
+                            st.session_state.rev_res = res
+        with rev_c2:
+            if st.button("🧹 LÀM MỚI", use_container_width=True, key="rev_clear"):
+                for k in ["rev_res", "rev_text_content", "last_rev_file"]:
+                    if k in st.session_state:
+                        st.session_state[k] = ""
+                st.rerun()
     with cr:
         if "rev_res" in st.session_state:
             st.markdown(st.session_state.rev_res)
