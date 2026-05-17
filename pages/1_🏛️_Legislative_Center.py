@@ -158,6 +158,32 @@ with tab3:
             con = st.text_area("Nội dung"); sub = st.form_submit_button("Lưu")
             if sub and con: database.save_petition(v, d, con, cat); st.success("Đã lưu!"); st.rerun()
 
+    with st.expander("📂 Tải lên File tài liệu Kiến nghị"):
+        st.info("Tải lên báo cáo tổng hợp kiến nghị thô (PDF/DOCX) để AI trích xuất và lập bảng phân tích.")
+        uploaded_pet_file = st.file_uploader("Chọn file kiến nghị:", type=["pdf", "docx"], key="pet_doc_upload")
+        if uploaded_pet_file:
+            if st.button("🧠 AI PHÂN TÍCH & TỔNG HỢP KIẾN NGHỊ TỪ FILE", type="primary", use_container_width=True, key="pet_file_ai_run"):
+                if require_auth("Phân tích file kiến nghị"):
+                    with st.spinner("AI đang trích xuất và phân tích nội dung file..."):
+                        text = extract_text_from_pdf(uploaded_pet_file) if uploaded_pet_file.name.endswith(".pdf") else extract_text_from_docx(uploaded_pet_file)
+                        prompt = f"""
+Bạn là trợ lý tổng hợp kiến nghị cử tri cấp cao của Đoàn ĐBQH và HĐND tỉnh Thanh Hóa.
+Dưới đây là văn bản chứa các ý kiến/kiến nghị của cử tri gửi tới kỳ họp:
+---
+{text[:8000]}
+---
+Hãy phân tích kỹ nội dung trên và trình bày báo cáo tổng hợp chuyên nghiệp gồm:
+1. **Bảng tổng hợp kiến nghị:** STT | Cử tri/Địa bàn | Lĩnh vực | Tóm tắt Nội dung kiến nghị | Đề xuất Phân loại (Giao thông, Đất đai, Y tế, Giáo dục, Môi trường, v.v.).
+2. **Đánh giá trọng tâm:** Chỉ ra nhóm vấn đề/lĩnh vực nào đang nóng nhất, được cử tri quan tâm nhiều nhất.
+3. **Đề xuất hướng xử lý:** Gợi ý hướng chuyển các cơ quan thẩm quyền giải quyết tương ứng.
+"""
+                        result = generate_text(prompt, use_pro=True)
+                        st.session_state.pet_file_analysis = result
+            
+            if "pet_file_analysis" in st.session_state:
+                st.markdown("#### 📋 Kết quả Phân tích từ File:")
+                st.info(st.session_state.pet_file_analysis)
+
 # --- TAB 4: CỔNG THÔNG TIN HĐND ---
 with tab4:
     st.markdown("### 🌐 Cổng thông tin Công cộng dành cho Cử tri")
