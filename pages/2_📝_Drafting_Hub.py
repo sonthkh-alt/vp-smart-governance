@@ -57,6 +57,7 @@ with tab1:
                     res = generate_document_content(prompt, doc_type=doc_type, context=context, notebook_lm_data=legal_data, provider=provider_key)
                     if isinstance(res, dict) and "error" not in res:
                         st.session_state.draft_res = res.get("noi_dung_chinh", "")
+                        st.session_state.draft_edit = res.get("noi_dung_chinh", "")
                         st.session_state.draft_dict = res
                         database.save_draft(doc_type, prompt, res)
                     else: st.error(f"Lỗi: {res.get('error') if isinstance(res, dict) else res}")
@@ -86,6 +87,7 @@ with tab2:
                     res = generate_document_content(prompt, doc_type="Bài phát biểu", provider=provider_key)
                     if isinstance(res, dict) and "error" not in res:
                         st.session_state.speech_res = res.get("noi_dung_chinh", "")
+                        st.session_state.speech_edit = res.get("noi_dung_chinh", "")
                         database.save_draft("Bài phát biểu", prompt, res)
                     else: st.error("Lỗi tạo nội dung.")
     with c2:
