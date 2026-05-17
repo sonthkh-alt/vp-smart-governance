@@ -23,8 +23,8 @@ except ImportError:
 load_dotenv(override=True)
 
 # Danh sách Model Ưu tiên
-FLASH_MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
-PRO_MODELS = ["gemini-2.5-pro", "gemini-pro-latest", "gemini-2.5-flash", "gemini-flash-latest"]
+FLASH_MODELS = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
+PRO_MODELS = ["gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-1.5-flash"]
 CLAUDE_MODELS = ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229"]
 GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
 

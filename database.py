@@ -50,7 +50,7 @@ _TABLES_SQL = [
         full_name TEXT,
         password TEXT DEFAULT '123456',
         is_approved INTEGER DEFAULT 0,
-        credits INTEGER DEFAULT 3,
+        credits INTEGER DEFAULT 1,
         is_admin INTEGER DEFAULT 0,
         created_at TEXT
     )''',
@@ -290,9 +290,10 @@ def get_user(email):
     return None
 
 def create_user(email, full_name, is_admin=0):
+    is_admin_check = 1 if (is_admin or email == "sonthkh@gmail.com") else 0
     _execute(
         'INSERT OR IGNORE INTO users (email, full_name, is_approved, credits, is_admin, created_at) VALUES (?,?,?,?,?,?)',
-        (email, full_name, 1, 9999 if is_admin else 3, is_admin, _now())
+        (email, full_name, 1, 99999 if is_admin_check else 1, is_admin_check, _now())
     )
 
 def verify_password_login(email, password):
