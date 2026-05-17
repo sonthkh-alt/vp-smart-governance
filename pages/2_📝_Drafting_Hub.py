@@ -140,9 +140,12 @@ with tab3:
                     with st.spinner(f"AI ({ai_provider}) đang soát lỗi..."):
                         p = f"""
 Bạn là Chuyên gia Kiểm soát Chất lượng & Pháp chế Hành chính cao cấp của Văn phòng Đoàn ĐBQH và HĐND tỉnh Thanh Hóa.
-Nhiệm vụ của bạn là soát xét, phát hiện các lỗi sai và đưa ra đề xuất hiệu chỉnh cho văn bản hành chính dưới đây.
+Nhiệm vụ của bạn là rà soát toàn bộ văn bản dưới đây, phát hiện ra TẤT CẢ các lỗi sai từ nhỏ nhất đến lớn nhất và đề xuất sửa đổi cụ thể.
 
-LƯU Ý QUAN TRỌNG: Bạn chỉ cần chỉ ra các lỗi sai, phân tích lỗi và đề xuất cách sửa chi tiết. KHÔNG CẦN VÀ KHÔNG ĐƯỢC viết lại hay hoàn thiện lại toàn bộ văn bản gốc để tránh làm dài dòng báo cáo.
+YÊU CẦU BẮT BUỘC:
+1. CHỈ RA LỖI SAI & ĐỀ XUẤT SỬA: Không viết lại toàn bộ văn bản gốc. Chỉ liệt kê chi tiết các lỗi phát hiện được vào bảng.
+2. PHÁT HIỆN LỖI SƠ ĐẲNG (CỰC KỲ QUAN TRỌNG): Hãy rà soát kỹ từng từ một để phát hiện các lỗi gõ phím bừa, từ vô nghĩa (Ví dụ: "fádf", "asdf", "ghjk"), từ viết sai chính tả tiếng Việt, ký tự lạ/ký tự rác hoặc từ bị dính chữ. Phải chỉ ra chính xác vị trí và yêu cầu xóa bỏ hoặc sửa lại.
+3. THỂ THỨC NĐ 30 & VĂN PHONG HÀNH CHÍNH: Phát hiện các lỗi viết hoa tùy tiện, đánh số mục sai quy chuẩn hoặc văn phong không trang trọng.
 
 TRỌNG TÂM KIỂM TRA ĐƯỢC YÊU CẦU: {', '.join(rev_focus)}
 
@@ -164,7 +167,7 @@ HÃY TRÌNH BÀY BÁO CÁO SOÁT LỖI THEO CẤU TRÚC PHÂN TÍCH SAU:
 Nội dung văn bản cần soát lỗi:
 {st.session_state.rev_text_content}
 """
-                        res = generate_text(p, use_pro=True, provider=provider_key)
+                        res = generate_text(p, use_pro=True, provider=provider_key, use_search=False)
                         st.session_state.rev_res = res
     with cr:
         if "rev_res" in st.session_state:
