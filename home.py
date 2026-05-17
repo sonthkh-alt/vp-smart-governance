@@ -82,16 +82,9 @@ with col5:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ─── CỔNG THÔNG TIN HĐND ──────────────────────────────────────────────────────
-st.markdown("### 🌍 Cửa sổ số HĐND")
-st.markdown('<div class="glass-card" style="border: 1px solid #457B9D; background: rgba(69, 123, 157, 0.1);">', unsafe_allow_html=True)
-c_left, c_right = st.columns([2, 1])
-with c_left:
-    st.markdown("#### 🌍 Cổng thông tin Hội đồng Nhân dân")
-    st.markdown("Kết nối thông tin trực tiếp từ website công cộng dành cho Cử tri.")
-with c_right:
-    # We still use the link but it's now integrated in Center 3 as well
-    st.page_link("pages/3_📊_Voter_Engagement.py", label="Truy cập Cổng tin", icon="🌐", use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown("### 🌍 Cổng thông tin Hội đồng Nhân dân (Web Portal)")
+st.caption("Nội dung được kết nối và đồng bộ trực tiếp từ website phục vụ Cử tri:")
+st.components.v1.iframe("https://hdnd.vercel.app/", height=900, scrolling=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.info("👈 Hãy chọn một phân hệ từ thanh điều hướng bên trái (Sidebar) để bắt đầu sử dụng.")
