@@ -25,3 +25,4 @@ supabase
 groq
 openai
 anthropic
+voyageai
