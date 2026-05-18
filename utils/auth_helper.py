@@ -58,15 +58,31 @@ def init_auth():
         except Exception as e:
             st.error(f"Lỗi hệ thống khi kết nối Google: {str(e)}")
 
+    # Lắng nghe tín hiệu từ Popup (nếu chưa đăng nhập và chưa có code)
+    if not st.session_state.is_logged_in and "code" not in params:
+        st.components.v1.html("""
+            <script>
+                const poll = setInterval(() => {
+                    const code = localStorage.getItem('google_oauth_code');
+                    if (code) {
+                        localStorage.removeItem('google_oauth_code');
+                        clearInterval(poll);
+                        window.top.location.href = window.top.location.origin + '/?code=' + encodeURIComponent(code);
+                    }
+                }, 500);
+            </script>
+        """, height=0)
+
 def render_login_button(sidebar=False):
-    """Vẽ nút đăng nhập Google (Chuyển hướng ngay trên tab hiện tại)."""
+    """Vẽ nút đăng nhập Google (Popup → tự đóng sau khi đăng nhập)."""
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
-        "prompt": "select_account"
+        "prompt": "select_account",
+        "state": "popup"
     }
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
@@ -81,7 +97,7 @@ def render_login_button(sidebar=False):
                 }}
                 .g-btn:hover {{ opacity: 0.9; }}
             </style>
-            <button class="g-btn" onclick="window.top.location.href='{auth_url}'">
+            <button class="g-btn" onclick="window.open('{auth_url}', 'GoogleLogin', 'width=500,height=600,left='+((screen.width-500)/2)+',top='+((screen.height-600)/2))">
                 🔑 Đăng nhập Google
             </button>
         """, height=50)
@@ -97,7 +113,7 @@ def render_login_button(sidebar=False):
                 }}
                 .g-btn-main:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(66,133,244,0.4); }}
             </style>
-            <button class="g-btn-main" onclick="window.top.location.href='{auth_url}'">
+            <button class="g-btn-main" onclick="window.open('{auth_url}', 'GoogleLogin', 'width=500,height=600,left='+((screen.width-500)/2)+',top='+((screen.height-600)/2))">
                 🔑 ĐĂNG NHẬP VỚI TÀI KHOẢN GOOGLE
             </button>
         """, height=60)
