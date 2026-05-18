@@ -159,12 +159,13 @@ if st.button("🔄 Kiểm tra kết nối trực tiếp đến các Provider"):
         for i, (model_name, info) in enumerate(health_results.items()):
             with cols[i]:
                 st.markdown(f"**{model_name}**")
-                if "latency" in info:
-                    st.success(info["status"])
-                    st.caption(f"Độ trễ: {info['latency']}")
+                status = info.get("status", "")
+                if "✅" in status:
+                    st.success(status)
+                elif "⚠️" in status:
+                    st.warning(status)
                 else:
-                    st.error(info["status"])
-                    st.caption(info.get("detail", "Lỗi không xác định"))
+                    st.error(status)
 
 st.markdown("---")
 st.caption("Giao diện Quản trị viên — Bảo mật 2 lớp. Mọi thay đổi đều được ghi lại nhật ký hệ thống.")
