@@ -48,7 +48,6 @@ def init_auth():
                 is_admin = 1 if user_info.get("email") == ADMIN_EMAIL else 0
                 database.create_user(user_info.get("email"), user_info.get("name"), is_admin)
                 
-                # Ghi log đăng nhập
                 ip = st.context.headers.get("x-forwarded-for", "-")
                 ua = st.context.headers.get("user-agent", "-")
                 database.log_login(user_info.get("email"), ip, ua)
@@ -58,65 +57,22 @@ def init_auth():
         except Exception as e:
             st.error(f"Lỗi hệ thống khi kết nối Google: {str(e)}")
 
-    # Lắng nghe tín hiệu từ Popup (nếu chưa đăng nhập và chưa có code)
-    if not st.session_state.is_logged_in and "code" not in params:
-        st.html("""
-            <script>
-                const poll = setInterval(() => {
-                    const code = localStorage.getItem('google_oauth_code');
-                    if (code) {
-                        localStorage.removeItem('google_oauth_code');
-                        clearInterval(poll);
-                        window.location.href = window.location.origin + '/?code=' + encodeURIComponent(code);
-                    }
-                }, 500);
-            </script>
-        """)
-
 def render_login_button(sidebar=False):
-    """Vẽ nút đăng nhập Google (Popup → tự đóng sau khi đăng nhập)."""
+    """Vẽ nút đăng nhập Google (Mở tab mới - cách duy nhất ổn định trên Streamlit Cloud)."""
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
-        "prompt": "select_account",
-        "state": "popup"
+        "prompt": "select_account"
     }
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
     if sidebar:
-        st.components.v1.html(f"""
-            <style>
-                .g-btn {{
-                    background: #ff4b4b; color: white; border: none;
-                    padding: 10px; border-radius: 8px; width: 100%;
-                    font-size: 14px; font-weight: 600; cursor: pointer;
-                    box-shadow: 0 2px 8px rgba(255,75,75,0.2);
-                }}
-                .g-btn:hover {{ opacity: 0.9; }}
-            </style>
-            <button class="g-btn" onclick="window.open('{auth_url}', 'GoogleLogin', 'width=500,height=600,left='+((screen.width-500)/2)+',top='+((screen.height-600)/2))">
-                🔑 Đăng nhập Google
-            </button>
-        """, height=50)
+        st.link_button("🔑 Đăng nhập Google", auth_url, use_container_width=True, type="primary")
     else:
-        st.components.v1.html(f"""
-            <style>
-                .g-btn-main {{
-                    background: linear-gradient(135deg, #4285F4 0%, #357AE8 100%);
-                    color: white; border: none; padding: 14px; border-radius: 10px;
-                    width: 100%; font-size: 16px; font-weight: 700; cursor: pointer;
-                    box-shadow: 0 4px 15px rgba(66,133,244,0.3);
-                    transition: all 0.3s ease;
-                }}
-                .g-btn-main:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(66,133,244,0.4); }}
-            </style>
-            <button class="g-btn-main" onclick="window.open('{auth_url}', 'GoogleLogin', 'width=500,height=600,left='+((screen.width-500)/2)+',top='+((screen.height-600)/2))">
-                🔑 ĐĂNG NHẬP VỚI TÀI KHOẢN GOOGLE
-            </button>
-        """, height=60)
+        st.link_button("🔑 ĐĂNG NHẬP VỚI TÀI KHOẢN GOOGLE", auth_url, use_container_width=True)
 
 def login_google():
     """Giao diện đăng nhập đa phương thức: User/Pass + Google."""
@@ -157,6 +113,7 @@ def login_google():
 
         st.markdown("<div style='text-align: center; margin: 20px 0; color: #94A3B8;'>─── HOẶC ───</div>", unsafe_allow_html=True)
         render_login_button(sidebar=False)
+        st.caption("💡 Đăng nhập Google sẽ mở tab mới. Sau khi đăng nhập, hãy sử dụng tab mới đó.")
     
     st.stop()
 
@@ -174,10 +131,7 @@ def get_user_info():
     return st.session_state.get("user_info", {})
 
 def require_auth(action_name="truy cập tính năng này"):
-    """
-    Kiểm tra quyền truy cập. Nếu chưa đăng nhập, hiển thị nút đăng nhập và dừng script.
-    Trả về True nếu đã đăng nhập.
-    """
+    """Kiểm tra quyền truy cập."""
     if not st.session_state.get("is_logged_in", False):
         st.warning(f"⚠️ Bạn cần đăng nhập để {action_name}.")
         login_google()

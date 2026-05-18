@@ -25,22 +25,6 @@ st.set_page_config(
 from utils.auth_helper import init_auth, ADMIN_EMAIL
 from utils.ui_helper import set_premium_css
 
-# === BẮT SỚM: Nếu đây là cửa sổ Popup quay về từ Google → xử lý ngay, không tải UI ===
-_params = st.query_params
-if _params.get("state") == "popup" and "code" in _params:
-    _code = _params["code"]
-    # Dùng st.html() (inline, KHÔNG phải iframe) để window.close() và localStorage hoạt động đúng
-    st.html(f"""
-        <script>
-            localStorage.setItem('google_oauth_code', '{_code}');
-            window.close();
-        </script>
-        <p style="font-family:sans-serif; text-align:center; padding:40px; color:#666;">
-            ✅ Đăng nhập thành công! Cửa sổ này sẽ tự đóng...<br/>
-            <small>Nếu không tự đóng, hãy đóng cửa sổ này và quay lại trang chính.</small>
-        </p>
-    """)
-    st.stop()
 
 # 1. Khởi tạo Auth ngay lập tức
 init_auth()
