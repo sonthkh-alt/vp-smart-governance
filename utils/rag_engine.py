@@ -85,16 +85,13 @@ def _get_embeddings_with_fallback() -> tuple[Embeddings, str]:
         return emb, "Gemini Embedding"
     except Exception as e:
         err = str(e)
-        if "429" in err or "RESOURCE_EXHAUSTED" in err or "quota" in err.lower():
-            st.warning(
-                "⚠️ **Gemini Embedding** đã hết quota. "
-                "Hệ thống tự động chuyển sang **Anthropic (ShopAIKey) Embedding**..."
-            )
-        else:
-            st.warning(
-                f"⚠️ Gemini Embedding lỗi: `{err[:100]}`. "
-                "Chuyển sang Anthropic (ShopAIKey) Embedding..."
-            )
+        is_quota = "429" in err or "RESOURCE_EXHAUSTED" in err or "quota" in err.lower()
+        reason = "đã hết quota" if is_quota else f"lỗi: `{err[:100]}`"
+        st.warning(
+            f"⚠️ **Gemini Embedding** {reason}. "
+            "Hệ thống tự động chuyển sang **Anthropic (ShopAIKey) Embedding**..."
+        )
+        # Luôn fallthrough sang tầng 2, bất kể loại lỗi
 
     # ── Tầng 2: OpenAI Embeddings qua ShopAIKey proxy ───────────────────────
     try:
@@ -174,9 +171,13 @@ def _embed_with_retry(chunks: list, embeddings: Embeddings, collection_name: str
 
             except Exception as e:
                 err = str(e)
-                is_quota = "429" in err or "RESOURCE_EXHAUSTED" in err or "quota" in err.lower()
+                is_gemini = isinstance(current_emb, type(_build_gemini_embeddings()))
+                is_quota  = "429" in err or "RESOURCE_EXHAUSTED" in err or "quota" in err.lower()
+                # Coi mọi lỗi từ Gemini (kể cả IndexError, empty list...) như lỗi quota
+                is_gemini_err = is_quota or isinstance(e, (IndexError, ValueError))
 
-                if is_quota and attempt < len(_RETRY_DELAYS):
+                if is_gemini_err and attempt < len(_RETRY_DELAYS) and is_quota:
+                    # Chỉ retry nếu là lỗi quota rõ ràng
                     wait = _RETRY_DELAYS[attempt]
                     st.warning(
                         f"⏳ Đang chờ **{wait}s** do vượt quota Gemini "
@@ -185,10 +186,11 @@ def _embed_with_retry(chunks: list, embeddings: Embeddings, collection_name: str
                     time.sleep(wait)
                     attempt += 1
 
-                elif is_quota:
-                    # Hết retry → chuyển sang ShopAIKey
+                elif is_gemini_err or is_quota:
+                    # Lỗi Gemini không phục hồi được → chuyển sang ShopAIKey
+                    reason = "hết quota" if is_quota else f"lỗi không xác định (`{err[:80]}`)"
                     st.warning(
-                        "🔄 Gemini Embedding đã hết hoàn toàn. "
+                        f"🔄 Gemini Embedding {reason}. "
                         "**Tự động chuyển sang Anthropic (ShopAIKey) Embedding...**"
                     )
                     _get_embeddings.clear()   # xoá cache để provider mới được chọn
@@ -202,6 +204,7 @@ def _embed_with_retry(chunks: list, embeddings: Embeddings, collection_name: str
                             f"Cả Gemini và ShopAIKey đều lỗi. ShopAIKey: {fe}"
                         ) from e
                 else:
+                    # Lỗi không liên quan đến embedding provider → bắn thẳng
                     raise
 
     return current_emb
