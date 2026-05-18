@@ -5,8 +5,8 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 rag_engine.py — RAG cho Legislative Intelligence
 LangChain + ChromaDB + Gemini Embeddings. Session-isolated collections.
 """
-import os
 import uuid
+import time
 import streamlit as st
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -20,6 +20,11 @@ load_dotenv(override=True)
 
 PERSIST_DIRECTORY = "chroma_db"
 
+# ── Cấu hình batch/retry để tránh 429 RESOURCE_EXHAUSTED ─────────────────────
+_BATCH_SIZE = 5               # số chunk mỗi lần gửi lên Gemini Embedding API
+_BATCH_DELAY = 2              # giây chờ giữa các batch bình thường
+_RETRY_DELAYS = [10, 30, 60]  # giây chờ khi bị rate-limit (backoff)
+
 
 def _get_session_collection() -> str:
     if "rag_session_id" not in st.session_state:
@@ -31,7 +36,6 @@ def _get_session_collection() -> str:
 def _get_embeddings():
     """Cache embeddings model across reruns to avoid re-initialization."""
     try:
-        from utils.gemini_client import _get_api_key
         api_key = _get_api_key()
     except (ImportError, ValueError):
         return None
@@ -56,6 +60,50 @@ _SPLITTER = RecursiveCharacterTextSplitter(
 )
 
 
+def _embed_with_retry(chunks: list, embeddings, collection_name: str) -> None:
+    """Gửi chunks theo từng batch nhỏ, tự động retry khi bị rate limit (429)."""
+    vectordb = None
+    total = len(chunks)
+    num_batches = -(-total // _BATCH_SIZE)  # ceiling division
+
+    for batch_idx, start in enumerate(range(0, total, _BATCH_SIZE)):
+        batch = chunks[start: start + _BATCH_SIZE]
+        attempt = 0
+        while True:
+            try:
+                if vectordb is None:
+                    vectordb = Chroma.from_documents(
+                        documents=batch,
+                        embedding=embeddings,
+                        persist_directory=PERSIST_DIRECTORY,
+                        collection_name=collection_name,
+                    )
+                else:
+                    vectordb.add_documents(batch)
+                # Delay nhỏ giữa các batch để không vượt rate limit
+                if start + _BATCH_SIZE < total:
+                    time.sleep(_BATCH_DELAY)
+                break  # batch thành công → thoát vòng retry
+            except Exception as e:
+                err = str(e)
+                if "429" in err or "RESOURCE_EXHAUSTED" in err:
+                    if attempt < len(_RETRY_DELAYS):
+                        wait = _RETRY_DELAYS[attempt]
+                        st.warning(
+                            f"⏳ Đang chờ **{wait}s** do vượt quota Gemini API "
+                            f"(batch {batch_idx + 1}/{num_batches}). Vui lòng đợi..."
+                        )
+                        time.sleep(wait)
+                        attempt += 1
+                    else:
+                        raise RuntimeError(
+                            f"Vượt quá số lần thử lại ({len(_RETRY_DELAYS)} lần). "
+                            f"Vui lòng thử lại sau vài phút. Lỗi gốc: {err}"
+                        ) from e
+                else:
+                    raise
+
+
 def process_documents(uploaded_files):
     """Vectorize uploaded documents into ChromaDB (per-session collection)."""
     embeddings = _get_embeddings()
@@ -77,11 +125,7 @@ def process_documents(uploaded_files):
     try:
         chunks = _SPLITTER.split_documents(documents)
         collection_name = _get_session_collection()
-        Chroma.from_documents(
-            documents=chunks, embedding=embeddings,
-            persist_directory=PERSIST_DIRECTORY,
-            collection_name=collection_name,
-        )
+        _embed_with_retry(chunks, embeddings, collection_name)
         st.session_state.rag_ready = True
         st.session_state.rag_doc_count = len(uploaded_files)
         return True, f"Thành công — Đã xử lý {len(chunks)} chunks từ {len(uploaded_files)} tài liệu."
