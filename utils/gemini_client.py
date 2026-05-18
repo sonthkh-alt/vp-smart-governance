@@ -468,10 +468,20 @@ def check_api_status():
 
     # Test Gemini
     try:
-        _get_gemini_client().models.list()
-        results["Gemini"] = {"status": "✅ Hoạt động"}
-    except: 
-        results["Gemini"] = {"status": "❌ Lỗi/Chưa cấu hình"}
+        client = _get_gemini_client()
+        resp = client.models.generate_content(model="gemini-2.5-flash", contents="Ping")
+        if resp and resp.text:
+            results["Gemini"] = {"status": "✅ Hoạt động"}
+        else:
+            results["Gemini"] = {"status": "⚠️ API phản hồi rỗng"}
+    except ValueError:
+        results["Gemini"] = {"status": "❌ Chưa cấu hình (Thiếu API Key)"}
+    except Exception as e:
+        err = str(e).lower()
+        if "429" in err or "quota" in err or "resource_exhausted" in err:
+            results["Gemini"] = {"status": "⚠️ Hết quota miễn phí (Đợi reset)"}
+        else:
+            results["Gemini"] = {"status": f"❌ Lỗi: {str(e)[:80]}"}
     
     # Test Groq
     try:
