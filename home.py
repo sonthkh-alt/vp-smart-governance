@@ -70,8 +70,6 @@ if is_admin:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ─── CỔNG THÔNG TIN HĐND ──────────────────────────────────────────────────────
-st.markdown("### Cổng thông tin Hội đồng Nhân dân (Web Portal)")
-st.caption("Nội dung được kết nối và đồng bộ trực tiếp từ website phục vụ Cử tri:")
 st.components.v1.iframe("https://hdnd.vercel.app/", height=900, scrolling=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
