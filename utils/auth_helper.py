@@ -60,18 +60,18 @@ def init_auth():
 
     # Lắng nghe tín hiệu từ Popup (nếu chưa đăng nhập và chưa có code)
     if not st.session_state.is_logged_in and "code" not in params:
-        st.components.v1.html("""
+        st.html("""
             <script>
                 const poll = setInterval(() => {
                     const code = localStorage.getItem('google_oauth_code');
                     if (code) {
                         localStorage.removeItem('google_oauth_code');
                         clearInterval(poll);
-                        window.top.location.href = window.top.location.origin + '/?code=' + encodeURIComponent(code);
+                        window.location.href = window.location.origin + '/?code=' + encodeURIComponent(code);
                     }
                 }, 500);
             </script>
-        """, height=0)
+        """)
 
 def render_login_button(sidebar=False):
     """Vẽ nút đăng nhập Google (Popup → tự đóng sau khi đăng nhập)."""
