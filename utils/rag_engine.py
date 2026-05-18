@@ -3,7 +3,9 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 """
 rag_engine.py — RAG cho Legislative Intelligence
-LangChain + ChromaDB + Embedding Fallback (Gemini → Voyage/Anthropic → Local).
+LangChain + ChromaDB + Embedding Fallback:
+  Tầng 1: Gemini Embedding (Google)
+  Tầng 2: OpenAI text-embedding-3-small qua ShopAIKey proxy (Anthropic key)
 Session-isolated collections.
 """
 import uuid
@@ -21,111 +23,100 @@ load_dotenv(override=True)
 
 PERSIST_DIRECTORY = "chroma_db"
 
-# ── Cấu hình batch/retry ──────────────────────────────────────────────────────
-_BATCH_SIZE = 5               # số chunk mỗi lần gửi lên Embedding API
-_BATCH_DELAY = 2              # giây chờ giữa các batch bình thường
-_RETRY_DELAYS = [10, 30, 60]  # giây chờ khi bị rate-limit (backoff)
+# ── Cấu hình ShopAIKey proxy ─────────────────────────────────────────────────
+_SHOPAIKEY_BASE_URL = "https://api.shopaikey.com/v1"
+_SHOPAIKEY_API_KEY  = "sk-s4sEA3IauTs0JA0bHwq4S3C7wDXtj7EHZHpB8IZbmvxSIALz"
+_SHOPAIKEY_EMB_MODEL = "text-embedding-3-small"
+
+# ── Cấu hình batch/retry ─────────────────────────────────────────────────────
+_BATCH_SIZE    = 5            # số chunk mỗi lần gửi lên Embedding API
+_BATCH_DELAY   = 2            # giây chờ giữa các batch bình thường
+_RETRY_DELAYS  = [10, 30, 60] # backoff khi bị rate-limit
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  EMBEDDING PROVIDERS — Fallback theo thứ tự: Gemini → Voyage → Local
+#  EMBEDDING PROVIDERS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class _VoyageEmbeddings(Embeddings):
-    """Wrapper cho Anthropic Voyage AI Embeddings (voyageai SDK)."""
-
-    def __init__(self, api_key: str, model: str = "voyage-3"):
-        import voyageai
-        self._client = voyageai.Client(api_key=api_key)
-        self._model = model
-
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        result = self._client.embed(texts, model=self._model, input_type="document")
-        return result.embeddings
-
-    def embed_query(self, text: str) -> list[float]:
-        result = self._client.embed([text], model=self._model, input_type="query")
-        return result.embeddings[0]
-
-
-class _LocalEmbeddings(Embeddings):
-    """Wrapper cho sentence-transformers (chạy local, không cần API)."""
-
-    def __init__(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"):
-        from sentence_transformers import SentenceTransformer
-        self._model = SentenceTransformer(model_name)
+class _ShopAIKeyEmbeddings(Embeddings):
+    """
+    OpenAI Embeddings qua proxy ShopAIKey (https://api.shopaikey.com/v1).
+    Dùng cùng API key đã cấu hình cho Claude/Anthropic.
+    """
+    def __init__(self):
+        import openai
+        self._client = openai.OpenAI(
+            api_key=_SHOPAIKEY_API_KEY,
+            base_url=_SHOPAIKEY_BASE_URL,
+        )
+        self._model = _SHOPAIKEY_EMB_MODEL
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        return self._model.encode(texts, convert_to_numpy=True).tolist()
+        resp = self._client.embeddings.create(input=texts, model=self._model)
+        return [item.embedding for item in resp.data]
 
     def embed_query(self, text: str) -> list[float]:
-        return self._model.encode([text], convert_to_numpy=True)[0].tolist()
+        resp = self._client.embeddings.create(input=[text], model=self._model)
+        return resp.data[0].embedding
+
+
+def _build_gemini_embeddings():
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+    key = _get_api_key("gemini")
+    if not key:
+        raise ValueError("Thiếu GEMINI_API_KEY")
+    return GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-2",
+        google_api_key=key,
+    )
 
 
 def _get_embeddings_with_fallback() -> tuple[Embeddings, str]:
     """
     Trả về (embedding_object, provider_name).
-    Thứ tự ưu tiên: Gemini Embedding → Voyage AI (Anthropic) → Local sentence-transformers.
+    Thứ tự ưu tiên:
+      1. Gemini Embedding
+      2. OpenAI text-embedding-3-small qua ShopAIKey (Anthropic proxy)
     """
     # ── Tầng 1: Gemini Embedding ─────────────────────────────────────────────
     try:
-        from langchain_google_genai import GoogleGenerativeAIEmbeddings
-        gemini_key = _get_api_key("gemini")
-        if gemini_key:
-            emb = GoogleGenerativeAIEmbeddings(
-                model="models/gemini-embedding-2",
-                google_api_key=gemini_key,
-            )
-            # Kiểm tra nhanh xem quota còn không
-            emb.embed_query("test")
-            return emb, "Gemini Embedding"
+        emb = _build_gemini_embeddings()
+        emb.embed_query("test")          # kiểm tra quota
+        return emb, "Gemini Embedding"
     except Exception as e:
         err = str(e)
         if "429" in err or "RESOURCE_EXHAUSTED" in err or "quota" in err.lower():
-            st.warning("⚠️ **Gemini Embedding** đã hết quota. Hệ thống tự động chuyển sang **Anthropic Voyage AI**...")
+            st.warning(
+                "⚠️ **Gemini Embedding** đã hết quota. "
+                "Hệ thống tự động chuyển sang **Anthropic (ShopAIKey) Embedding**..."
+            )
         else:
-            st.warning(f"⚠️ Gemini Embedding lỗi ({err[:80]}). Chuyển sang Anthropic Voyage AI...")
+            st.warning(
+                f"⚠️ Gemini Embedding lỗi: `{err[:100]}`. "
+                "Chuyển sang Anthropic (ShopAIKey) Embedding..."
+            )
 
-    # ── Tầng 2: Anthropic Voyage AI Embedding ────────────────────────────────
+    # ── Tầng 2: OpenAI Embeddings qua ShopAIKey proxy ───────────────────────
     try:
-        import voyageai
-        voyage_key = os.getenv("VOYAGE_API_KEY") or ""
-        try:
-            voyage_key = st.secrets.get("VOYAGE_API_KEY", voyage_key)
-        except Exception:
-            pass
-
-        if voyage_key:
-            emb = _VoyageEmbeddings(api_key=voyage_key)
-            emb.embed_query("test")  # kiểm tra kết nối
-            return emb, "Anthropic Voyage-3"
-        else:
-            st.warning("⚠️ Chưa có **VOYAGE_API_KEY**. Chuyển sang embedding local...")
-    except ImportError:
-        st.warning("⚠️ Thư viện `voyageai` chưa được cài đặt. Chuyển sang embedding local...")
+        emb = _ShopAIKeyEmbeddings()
+        emb.embed_query("test")          # kiểm tra kết nối
+        st.success("✅ Đang dùng **Anthropic (ShopAIKey) Embedding** thay thế.")
+        return emb, "Anthropic/ShopAIKey (text-embedding-3-small)"
     except Exception as e:
-        st.warning(f"⚠️ Voyage AI lỗi ({str(e)[:80]}). Chuyển sang embedding local...")
-
-    # ── Tầng 3: Local sentence-transformers (hoàn toàn offline/miễn phí) ─────
-    try:
-        import sentence_transformers  # noqa
-        emb = _LocalEmbeddings()
-        return emb, "Local (sentence-transformers)"
-    except ImportError:
         raise RuntimeError(
-            "Không thể khởi tạo bất kỳ embedding provider nào.\n"
-            "Vui lòng cài: pip install sentence-transformers"
+            f"Cả Gemini lẫn ShopAIKey Embedding đều không khả dụng.\n"
+            f"Lỗi ShopAIKey: {e}"
         )
 
 
 @st.cache_resource
 def _get_embeddings() -> tuple[Embeddings, str]:
-    """Cache kết quả lựa chọn embedding để tránh re-init mỗi lần rerun."""
+    """Cache kết quả chọn embedding để tránh re-init mỗi lần rerun."""
     return _get_embeddings_with_fallback()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  HELPER FUNCTIONS
+#  HELPERS
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _get_session_collection() -> str:
@@ -149,77 +140,71 @@ _SPLITTER = RecursiveCharacterTextSplitter(
 )
 
 
-def _embed_with_retry(chunks: list, embeddings: Embeddings, collection_name: str) -> None:
-    """Gửi chunks theo từng batch nhỏ với retry + fallback tự động khi bị 429."""
+def _embed_with_retry(chunks: list, embeddings: Embeddings, collection_name: str) -> Embeddings:
+    """
+    Gửi chunks theo từng batch nhỏ.
+    - Nếu bị 429: retry theo backoff.
+    - Nếu hết retry: tự động chuyển sang ShopAIKey embedding và tiếp tục.
+    Trả về embedding object thực sự đã được dùng (có thể đã đổi provider).
+    """
     vectordb = None
     total = len(chunks)
-    num_batches = -(-total // _BATCH_SIZE)  # ceiling division
+    num_batches = -(-total // _BATCH_SIZE)
+    current_emb = embeddings
 
     for batch_idx, start in enumerate(range(0, total, _BATCH_SIZE)):
         batch = chunks[start: start + _BATCH_SIZE]
         attempt = 0
-        current_embeddings = embeddings  # có thể bị thay thế khi fallback
 
         while True:
             try:
                 if vectordb is None:
                     vectordb = Chroma.from_documents(
                         documents=batch,
-                        embedding=current_embeddings,
+                        embedding=current_emb,
                         persist_directory=PERSIST_DIRECTORY,
                         collection_name=collection_name,
                     )
                 else:
                     vectordb.add_documents(batch)
 
-                # Delay nhỏ giữa các batch để không vượt rate limit
                 if start + _BATCH_SIZE < total:
                     time.sleep(_BATCH_DELAY)
-                break  # batch thành công → thoát vòng retry
+                break  # thành công
 
             except Exception as e:
                 err = str(e)
-                is_quota_err = "429" in err or "RESOURCE_EXHAUSTED" in err or "quota" in err.lower()
+                is_quota = "429" in err or "RESOURCE_EXHAUSTED" in err or "quota" in err.lower()
 
-                if is_quota_err and attempt < len(_RETRY_DELAYS):
+                if is_quota and attempt < len(_RETRY_DELAYS):
                     wait = _RETRY_DELAYS[attempt]
                     st.warning(
-                        f"⏳ Đang chờ **{wait}s** do vượt quota "
+                        f"⏳ Đang chờ **{wait}s** do vượt quota Gemini "
                         f"(batch {batch_idx + 1}/{num_batches})..."
                     )
                     time.sleep(wait)
                     attempt += 1
 
-                elif is_quota_err and attempt >= len(_RETRY_DELAYS):
-                    # Đã thử hết retry → fallback sang provider tiếp theo
+                elif is_quota:
+                    # Hết retry → chuyển sang ShopAIKey
                     st.warning(
-                        "🔄 Gemini Embedding đã hết quota hoàn toàn. "
-                        "**Tự động chuyển sang Anthropic Voyage AI...**"
+                        "🔄 Gemini Embedding đã hết hoàn toàn. "
+                        "**Tự động chuyển sang Anthropic (ShopAIKey) Embedding...**"
                     )
-                    # Xóa cache để buộc chọn lại provider
-                    _get_embeddings.clear()
-                    st.session_state["_embedding_fallback"] = True
-
+                    _get_embeddings.clear()   # xoá cache để provider mới được chọn
                     try:
-                        voyage_key = os.getenv("VOYAGE_API_KEY") or ""
-                        try:
-                            voyage_key = st.secrets.get("VOYAGE_API_KEY", voyage_key)
-                        except Exception:
-                            pass
-
-                        if not voyage_key:
-                            raise ValueError("Chưa có VOYAGE_API_KEY")
-
-                        current_embeddings = _VoyageEmbeddings(api_key=voyage_key)
-                        st.info("✅ Đã chuyển sang **Anthropic Voyage-3 Embedding**. Tiếp tục vector hóa...")
-                        attempt = 0  # reset retry counter cho provider mới
-                    except Exception as ve:
+                        current_emb = _ShopAIKeyEmbeddings()
+                        current_emb.embed_query("test")
+                        st.success("✅ Đã chuyển sang **Anthropic/ShopAIKey Embedding**. Tiếp tục...")
+                        attempt = 0  # reset retry cho provider mới
+                    except Exception as fe:
                         raise RuntimeError(
-                            f"Cả Gemini và Voyage AI đều không khả dụng. "
-                            f"Voyage lỗi: {ve}"
+                            f"Cả Gemini và ShopAIKey đều lỗi. ShopAIKey: {fe}"
                         ) from e
                 else:
                     raise
+
+    return current_emb
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -249,11 +234,17 @@ def process_documents(uploaded_files):
     try:
         chunks = _SPLITTER.split_documents(documents)
         collection_name = _get_session_collection()
-        _embed_with_retry(chunks, embeddings, collection_name)
+        final_emb = _embed_with_retry(chunks, embeddings, collection_name)
+        # Lưu provider thực sự đã dùng
+        final_provider = provider
+        if isinstance(final_emb, _ShopAIKeyEmbeddings):
+            final_provider = "Anthropic/ShopAIKey (text-embedding-3-small)"
         st.session_state.rag_ready = True
         st.session_state.rag_doc_count = len(uploaded_files)
-        provider_used = st.session_state.get("_embedding_fallback") and "Anthropic Voyage-3" or provider
-        return True, f"Thành công — Đã xử lý {len(chunks)} chunks từ {len(uploaded_files)} tài liệu. (Provider: {provider_used})"
+        return True, (
+            f"Thành công — Đã xử lý {len(chunks)} chunks "
+            f"từ {len(uploaded_files)} tài liệu. (Provider: {final_provider})"
+        )
     except Exception as e:
         return False, str(e)
 
@@ -266,7 +257,7 @@ def query_rag(query: str) -> str:
         return f"Lỗi: Không thể khởi tạo embedding engine: {e}"
 
     if not os.path.exists(PERSIST_DIRECTORY):
-        return "Cơ sở dữ liệu tri thức chưa được xây dựng. Vui lòng tải tài liệu lên trước (Cột bên trái)."
+        return "Cơ sở dữ liệu tri thức chưa được xây dựng. Vui lòng tải tài liệu lên trước."
 
     try:
         collection_name = _get_session_collection()
@@ -280,9 +271,9 @@ def query_rag(query: str) -> str:
             return "Cơ sở dữ liệu tri thức chưa có dữ liệu. Vui lòng tải tài liệu lên và nhấn 'Vector hóa'."
 
         docs = vectordb.as_retriever(search_kwargs={"k": 7}).invoke(query)
-
         context = "\n\n".join(
-            f"--- [{d.metadata.get('type', 'Tài liệu')}] Nguồn: {d.metadata.get('source', 'Unknown')} ---\n{d.page_content}"
+            f"--- [{d.metadata.get('type', 'Tài liệu')}] "
+            f"Nguồn: {d.metadata.get('source', 'Unknown')} ---\n{d.page_content}"
             for d in docs
         )
 
