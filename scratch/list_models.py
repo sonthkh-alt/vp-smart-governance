@@ -1,15 +1,24 @@
-import os
-from google import genai
-from dotenv import load_dotenv
+import requests
+import json
 
-load_dotenv()
-key = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=key)
+api_key = "sk-s4sEA3IauTs0JA0bHwq4S3C7wDXtj7EHZHpB8IZbmvxSIALz"
+url = "https://api.shopaikey.com/v1/models"
 
-print("--- Available Models ---")
+headers = {
+    "Authorization": f"Bearer {api_key}"
+}
+
+print("=== QUERYING AVAILABLE MODELS ===")
 try:
-    models = client.models.list()
-    for m in models:
-        print(f"- {m.name}")
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        models = [m["id"] for m in data.get("data", [])]
+        print(f"Success! Found {len(models)} models:")
+        for m in sorted(models):
+            print(f" - {m}")
+    else:
+        print(f"Failed with status code: {response.status_code}")
+        print(response.text)
 except Exception as e:
     print(f"Error: {e}")

@@ -59,7 +59,7 @@ def init_auth():
             st.error(f"Lỗi hệ thống khi kết nối Google: {str(e)}")
 
 def render_login_button(sidebar=False):
-    """Vẽ nút đăng nhập Google (Mở Tab mới)."""
+    """Vẽ nút đăng nhập Google (Chuyển hướng ngay trên tab hiện tại)."""
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": url_phan_hoi,
@@ -71,9 +71,36 @@ def render_login_button(sidebar=False):
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
     
     if sidebar:
-        st.link_button("🔑 Đăng nhập Google", auth_url, use_container_width=True, type="primary")
+        st.components.v1.html(f"""
+            <style>
+                .g-btn {{
+                    background: #ff4b4b; color: white; border: none;
+                    padding: 10px; border-radius: 8px; width: 100%;
+                    font-size: 14px; font-weight: 600; cursor: pointer;
+                    box-shadow: 0 2px 8px rgba(255,75,75,0.2);
+                }}
+                .g-btn:hover {{ opacity: 0.9; }}
+            </style>
+            <button class="g-btn" onclick="window.top.location.href='{auth_url}'">
+                🔑 Đăng nhập Google
+            </button>
+        """, height=50)
     else:
-        st.link_button("🔑 ĐĂNG NHẬP VỚI TÀI KHOẢN GOOGLE", auth_url, use_container_width=True)
+        st.components.v1.html(f"""
+            <style>
+                .g-btn-main {{
+                    background: linear-gradient(135deg, #4285F4 0%, #357AE8 100%);
+                    color: white; border: none; padding: 14px; border-radius: 10px;
+                    width: 100%; font-size: 16px; font-weight: 700; cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(66,133,244,0.3);
+                    transition: all 0.3s ease;
+                }}
+                .g-btn-main:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(66,133,244,0.4); }}
+            </style>
+            <button class="g-btn-main" onclick="window.top.location.href='{auth_url}'">
+                🔑 ĐĂNG NHẬP VỚI TÀI KHOẢN GOOGLE
+            </button>
+        """, height=60)
 
 def login_google():
     """Giao diện đăng nhập đa phương thức: User/Pass + Google."""
