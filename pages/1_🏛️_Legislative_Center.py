@@ -37,30 +37,73 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # --- TAB 1: TRỢ LÝ KỲ HỌP ---
 with tab1:
     st.markdown("### 🤖 Trợ lý Phân tích & Gợi ý Chất vấn")
+    col1, col2 = st.columns([1, 1.2], gap="large")
+    
+    with col1:
+        st.markdown("#### 📥 Cung cấp dữ liệu Phân tích")
+        uploaded_files = st.file_uploader("Tải tài liệu Kỳ họp (PDF, DOCX)", type=["pdf", "docx"], accept_multiple_files=True, key="rag_upload")
+        custom_text = st.text_area("Hoặc nhập trực tiếp nội dung văn bản:", height=180, placeholder="Dán văn bản báo cáo hoặc số liệu cần đối soát vào đây...", key="rag_custom_text")
 
-    st.markdown("#### 🧠 Phân tích Nghiệp vụ")
-    analysis_type = st.selectbox("Chọn tác vụ phân tích:", [
-        "1. So sánh số liệu (Tìm điểm mâu thuẫn)",
-        "2. Đề xuất danh sách Câu hỏi Chất vấn",
-        "3. Kiểm tra tính tuân thủ Nghị quyết HĐND",
-        "4. Phân tích điểm nghẽn Ngân sách",
-        "5. Tóm tắt rủi ro chính sách",
-        "6. Đặt câu hỏi tùy chọn (Tự nhập)"
-    ], key="rag_task")
+    with col2:
+        st.markdown("#### 🧠 Phân tích Nghiệp vụ")
+        analysis_type = st.selectbox("Chọn tác vụ phân tích:", [
+            "1. So sánh số liệu (Tìm điểm mâu thuẫn)",
+            "2. Đề xuất danh sách Câu hỏi Chất vấn",
+            "3. Kiểm tra tính tuân thủ Nghị quyết HĐND",
+            "4. Phân tích điểm nghẽn Ngân sách",
+            "5. Tóm tắt rủi ro chính sách",
+            "6. Đặt câu hỏi tùy chọn (Tự nhập)"
+        ], key="rag_task")
+        
+        custom_query = ""
+        if "6" in analysis_type:
+            custom_query = st.text_area("Nhập yêu cầu cụ thể:", placeholder="Ví dụ: Chỉ ra các rủi ro trong đầu tư công...", key="rag_custom")
+        
+        if st.button("🚀 THỰC HIỆN PHÂN TÍCH", type="primary", use_container_width=True, key="rag_run"):
+            if require_auth("Phân tích AI"):
+                query = custom_query if custom_query.strip() else analysis_type
+                with st.spinner("🧠 AI đang lập luận logic..."):
+                    context_list = []
+                    
+                    # 1. Trích xuất văn bản từ các file tải lên
+                    if uploaded_files:
+                        for f in uploaded_files:
+                            file_text = extract_text_from_pdf(f) if f.name.endswith(".pdf") else extract_text_from_docx(f)
+                            if file_text and not file_text.startswith("Lỗi"):
+                                context_list.append(f"--- Tài liệu: {f.name} ---\n{file_text}")
+                    
+                    # 2. Lấy văn bản nhập trực tiếp
+                    if custom_text.strip():
+                        context_list.append(f"--- Văn bản trực tiếp ---\n{custom_text}")
+                        
+                    context = "\n\n".join(context_list)
+                    
+                    if context:
+                        # Phân tích trực tiếp trên tài liệu/văn bản vừa tải lên
+                        prompt = f"""Bạn là một Chuyên gia Quản trị Công và Thẩm tra Chính sách cấp cao của Hội đồng Nhân dân tỉnh Thanh Hóa.
+                        
+                        [TÀI LIỆU ĐƯỢC CUNG CẤP ĐỂ PHÂN TÍCH]:
+                        {context[:15000]}
 
-    custom_query = ""
-    if "6" in analysis_type:
-        custom_query = st.text_area("Nhập yêu cầu cụ thể:", placeholder="Ví dụ: Chỉ ra các rủi ro trong đầu tư công...", key="rag_custom")
+                        [YÊU CẦU PHÂN TÍCH]:
+                        {query}
 
-    if st.button("🚀 THỰC HIỆN PHÂN TÍCH", type="primary", use_container_width=True, key="rag_run"):
-        if require_auth("Phân tích AI"):
-            query = custom_query if custom_query.strip() else analysis_type
-            with st.spinner("🧠 AI đang lập luận logic..."):
-                response = query_rag(query)
-                if response and not response.startswith("Lỗi"):
-                    st.markdown("#### 📊 Kết quả Phản biện:")
-                    st.info(response)
-                else: st.error(response)
+                        HƯỚNG DẪN TRẢ LỜI (BẮT BUỘC TUÂN THỦ):
+                        1. Trình bày dưới dạng **báo cáo tham mưu có cấu trúc** (dùng ##, ###, bullet points).
+                        2. Đối chiếu với các quy định pháp luật mới nhất để đánh giá tính hợp pháp và thẩm quyền.
+                        3. Chỉ trích dẫn thông tin CÓ TRONG tài liệu cung cấp. Nếu thiếu, ghi rõ.
+                        4. Nếu phát hiện mâu thuẫn số liệu hoặc mâu thuẫn pháp lý, phải in đậm và chỉ rõ.
+                        5. Cuối báo cáo: Đưa ra kiến nghị và gợi ý câu hỏi chất vấn cụ thể.
+                        6. Sử dụng ngôn ngữ hành chính nhà nước chuẩn mực."""
+                        response = generate_text(prompt, use_pro=True)
+                    else:
+                        # Nếu không tải tài liệu mới, truy cập cơ sở dữ liệu tri thức cũ (RAG)
+                        response = query_rag(query)
+                        
+                    if response and not response.startswith("Lỗi"):
+                        st.markdown("#### 📊 Kết quả Phản biện:")
+                        st.info(response)
+                    else: st.error(response)
 
 # --- TAB 2: THẨM TRA CHÍNH SÁCH ---
 with tab2:
