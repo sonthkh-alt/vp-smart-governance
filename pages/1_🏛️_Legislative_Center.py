@@ -5,7 +5,7 @@ import streamlit as st
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utils.rag_engine import process_documents, query_rag
+from utils.rag_engine import query_rag
 from utils.ui_helper import set_premium_css, draw_module_header
 from utils.auth_helper import require_auth
 from utils.gemini_client import generate_text
@@ -37,46 +37,30 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # --- TAB 1: TRỢ LÝ KỲ HỌP ---
 with tab1:
     st.markdown("### 🤖 Trợ lý Phân tích & Gợi ý Chất vấn")
-    col1, col2 = st.columns([1, 1.2], gap="large")
-    
-    with col1:
-        st.markdown("#### 📥 Cập nhật tài liệu Kỳ họp")
-        st.info("Tải lên báo cáo, nghị quyết phục vụ đối soát số liệu.")
-        uploaded_files = st.file_uploader("Chọn tài liệu (PDF, DOCX)", type=["pdf", "docx"], accept_multiple_files=True, key="rag_upload")
-        if st.button("🔄 Vector hóa tài liệu", use_container_width=True, key="rag_btn"):
-            if require_auth("Vector hóa tài liệu"):
-                if not uploaded_files:
-                    st.warning("⚠️ Vui lòng tải lên ít nhất 1 tài liệu!")
-                else:
-                    with st.spinner("Đang trích xuất và Vector hóa..."):
-                        status, msg = process_documents(uploaded_files)
-                        if status: st.success("✅ Đã xây dựng xong CSDL tri thức!")
-                        else: st.error(f"❌ Có lỗi: {msg}")
 
-    with col2:
-        st.markdown("#### 🧠 Phân tích Nghiệp vụ")
-        analysis_type = st.selectbox("Chọn tác vụ phân tích:", [
-            "1. So sánh số liệu (Tìm điểm mâu thuẫn)",
-            "2. Đề xuất danh sách Câu hỏi Chất vấn",
-            "3. Kiểm tra tính tuân thủ Nghị quyết HĐND",
-            "4. Phân tích điểm nghẽn Ngân sách",
-            "5. Tóm tắt rủi ro chính sách",
-            "6. Đặt câu hỏi tùy chọn (Tự nhập)"
-        ], key="rag_task")
-        
-        custom_query = ""
-        if "6" in analysis_type:
-            custom_query = st.text_area("Nhập yêu cầu cụ thể:", placeholder="Ví dụ: Chỉ ra các rủi ro trong đầu tư công...", key="rag_custom")
-        
-        if st.button("🚀 THỰC HIỆN PHÂN TÍCH", type="primary", use_container_width=True, key="rag_run"):
-            if require_auth("Phân tích AI"):
-                query = custom_query if custom_query.strip() else analysis_type
-                with st.spinner("🧠 AI đang lập luận logic..."):
-                    response = query_rag(query)
-                    if response and not response.startswith("Lỗi"):
-                        st.markdown("#### 📊 Kết quả Phản biện:")
-                        st.info(response)
-                    else: st.error(response)
+    st.markdown("#### 🧠 Phân tích Nghiệp vụ")
+    analysis_type = st.selectbox("Chọn tác vụ phân tích:", [
+        "1. So sánh số liệu (Tìm điểm mâu thuẫn)",
+        "2. Đề xuất danh sách Câu hỏi Chất vấn",
+        "3. Kiểm tra tính tuân thủ Nghị quyết HĐND",
+        "4. Phân tích điểm nghẽn Ngân sách",
+        "5. Tóm tắt rủi ro chính sách",
+        "6. Đặt câu hỏi tùy chọn (Tự nhập)"
+    ], key="rag_task")
+
+    custom_query = ""
+    if "6" in analysis_type:
+        custom_query = st.text_area("Nhập yêu cầu cụ thể:", placeholder="Ví dụ: Chỉ ra các rủi ro trong đầu tư công...", key="rag_custom")
+
+    if st.button("🚀 THỰC HIỆN PHÂN TÍCH", type="primary", use_container_width=True, key="rag_run"):
+        if require_auth("Phân tích AI"):
+            query = custom_query if custom_query.strip() else analysis_type
+            with st.spinner("🧠 AI đang lập luận logic..."):
+                response = query_rag(query)
+                if response and not response.startswith("Lỗi"):
+                    st.markdown("#### 📊 Kết quả Phản biện:")
+                    st.info(response)
+                else: st.error(response)
 
 # --- TAB 2: THẨM TRA CHÍNH SÁCH ---
 with tab2:
