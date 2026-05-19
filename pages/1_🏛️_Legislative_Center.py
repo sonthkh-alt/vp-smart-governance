@@ -27,9 +27,8 @@ draw_module_header(
     "Trung tâm trí tuệ hỗ trợ Thẩm tra, Kỳ họp và Quản trị Tri thức tập trung."
 )
 
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3 = st.tabs([
     "🏛️ Trợ lý Kỳ họp (RAG)", 
-    "⚖️ Thẩm tra Chính sách", 
     "📊 Kiến nghị Cử tri", 
     "📚 Thư viện & Kho tri thức"
 ])
@@ -105,48 +104,8 @@ with tab1:
                         st.info(response)
                     else: st.error(response)
 
-# --- TAB 2: THẨM TRA CHÍNH SÁCH ---
+# --- TAB 2: KIẾN NGHỊ CỬ TRI ---
 with tab2:
-    st.markdown("### ⚖️ Đánh giá Tác động & Thẩm quyền")
-    col_left, col_right = st.columns([1, 1.5], gap="large")
-    
-    with col_left:
-        p_name = st.text_input("Tên dự thảo chính sách", key="policy_name_in")
-        p_file = st.file_uploader("Tải file dự thảo (PDF/DOCX)", type=["pdf", "docx"], key="policy_upload")
-        p_focus = st.multiselect("Trọng tâm Thẩm tra:", [
-            "Tính hợp pháp & Thẩm quyền ban hành", "Tác động Ngân sách", "Tác động Kinh tế - Xã hội", "Kinh tế xanh", "An sinh xã hội"
-        ], default=["Tính hợp pháp & Thẩm quyền ban hành"], key="policy_focus")
-
-        if st.button("🚀 BẮT ĐẦU THẨM TRA AI", type="primary", use_container_width=True, key="policy_run"):
-            if require_auth("Thẩm tra chính sách"):
-                if not p_file or not p_name.strip(): st.error("⚠️ Vui lòng điền đủ thông tin!")
-                else:
-                    with st.spinner("🧠 AI đang soạn báo cáo thẩm tra..."):
-                        text = extract_text_from_pdf(p_file) if p_file.name.endswith(".pdf") else extract_text_from_docx(p_file)
-                        prompt = f"Thẩm tra dự thảo: {p_name}\nTrọng tâm: {', '.join(p_focus)}\nNội dung:\n{text[:8000]}"
-                        res = generate_text(prompt, use_pro=True)
-                        st.session_state.p_res = res
-                        st.session_state.p_n = p_name
-                        database.save_policy_review(p_name, res)
-                        st.success("✅ Hoàn tất!")
-
-    with col_right:
-        st.markdown("#### 📋 Báo cáo Thẩm tra AI")
-        if "p_res" in st.session_state:
-            st.markdown(st.session_state.p_res)
-            if st.button("📄 Xuất Word (NĐ 30)", key="policy_word"):
-                content_dict = {
-                    "co_quan_ban_hanh": "BAN KINH TẾ - NGÂN SÁCH", "so_ky_hieu": "BC/HĐND",
-                    "dia_danh_ngay_thang": "Thanh Hóa, ngày... tháng... năm...", "loai_van_ban": "BÁO CÁO THẨM TRA",
-                    "trich_yeu": f"Thẩm tra {st.session_state.p_n}", "noi_dung_chinh": st.session_state.p_res,
-                    "noi_nhan": ["- Thường trực HĐND;", "- Lưu VT."], "quyen_han_ky": "TRƯỞNG BAN", "nguoi_ky": "[...]"
-                }
-                out = create_nd30_document(content_dict)
-                st.download_button("⬇️ Tải file .docx", out.getvalue(), f"ThamTra_{st.session_state.p_n}.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-        else: st.info("Kết quả sẽ hiển thị ở đây.")
-
-# --- TAB 3: KIẾN NGHỊ CỬ TRI ---
-with tab3:
     st.markdown("### 📊 Theo dõi & Phân tích Kiến nghị Cử tri")
     # Tải dữ liệu
     data = database.get_petitions()
@@ -210,8 +169,8 @@ Hãy phân tích kỹ nội dung trên và trình bày báo cáo tổng hợp ch
                 st.markdown("#### 📋 Kết quả Phân tích từ File:")
                 st.info(st.session_state.pet_file_analysis)
 
-# --- TAB 4: THƯ VIỆN & KHO TRI THỨC ---
-with tab4:
+# --- TAB 3: THƯ VIỆN & KHO TRI THỨC ---
+with tab3:
     st.markdown("### 📚 Quản trị Tài liệu & Thư viện Số")
     with st.expander("➕ Tải tài liệu lên Kho tri thức", expanded=False):
         c1, c2 = st.columns([2, 1])
