@@ -134,7 +134,7 @@ def login_google():
                 <div style="color: #F8FAFC; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
                     <span>⚠️ Yêu cầu đăng nhập</span>
                 </div>
-                <div style="color: #94A3B8; font-size: 0.85rem; margin-top: 4px;">Vui lòng đăng nhập để {action_name}.</div>
+                <div style="color: #94A3B8; font-size: 0.85rem; margin-top: 4px;">Vui lòng đăng nhập để {action_name} hoặc liên hệ đồng chí <b>Hà Ngọc Sơn</b>, PCVP Đoàn ĐBQH và HĐND tỉnh.</div>
             </div>
         """, unsafe_allow_html=True)
 
