@@ -4,18 +4,26 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 try:
     __import__('pysqlite3')
     import sys
-    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+    sys.modules['sqlite3'] = sys.modules['pysqlite3']
 except ImportError:
     pass
 
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+path = os.path.abspath(os.path.dirname(__file__))
+if path not in sys.path:
+    sys.path.insert(0, path)
 
 import streamlit as st
 
-from utils.auth_helper import init_auth
-from utils.ui_helper import set_premium_css, draw_module_header
+try:
+    from utils.auth_helper import init_auth, ADMIN_EMAIL
+    from utils.ui_helper import set_premium_css, draw_module_header
+    from utils.gemini_client import _get_api_key
+except KeyError as e:
+    if e.args[0] == 'utils':
+        st.rerun()
+    raise
 
 # Xử lý đăng nhập Google ngay khi tải trang
 init_auth()
@@ -56,7 +64,6 @@ with col3:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Dashboard Grid Row 2: Administration Area (Only visible to admin)
-from utils.auth_helper import ADMIN_EMAIL
 is_admin = st.session_state.get("is_logged_in") and st.session_state.user_info.get("email") == ADMIN_EMAIL
 if is_admin:
     col_adm, _ = st.columns([1, 2])
@@ -87,7 +94,6 @@ load_dotenv(override=True)
 sc1, sc2, sc3, sc4, sc5 = st.columns(5)
 
 # Kiểm tra API Key
-from utils.gemini_client import _get_api_key
 gemini_key = _get_api_key("gemini")
 groq_key = _get_api_key("groq")
 

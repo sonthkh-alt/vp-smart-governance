@@ -6,26 +6,6 @@ def set_premium_css():
     Thiết lập giao diện Premium cho toàn bộ ứng dụng.
     Sử dụng font Inter, Glassmorphism và các hiệu ứng mượt mà.
     """
-    # ─── ĐIỀU HƯỚNG VÀ TRÁNH REDIRECT LOCK-IN ────────────────────────────────────
-    import inspect
-    import os
-    
-    # Tự động nhận diện trang đang chạy để reset màn hình đăng nhập khi chuyển trang
-    current_page = "home.py"
-    for frame_info in inspect.stack():
-        filename = frame_info.filename
-        if "pages" in filename or filename.endswith(".py"):
-            basename = os.path.basename(filename)
-            if basename in ["home.py", "1_🏛️_Legislative_Center.py", "2_📝_Drafting_Hub.py", "3_🔍_Draft_Review.py", "4_🎓_Academic_Promotion.py", "5_⚙️_Administration.py"]:
-                current_page = basename
-                break
-                
-    last_page = st.session_state.get("last_page")
-    if last_page != current_page:
-        # Nếu người dùng click chuyển trang khác, tắt màn hình đăng nhập để tránh kẹt
-        st.session_state.show_login = False
-        st.session_state.last_page = current_page
-
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');

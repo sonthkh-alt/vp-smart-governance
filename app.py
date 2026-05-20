@@ -4,13 +4,15 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 try:
     __import__('pysqlite3')
     import sys
-    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+    sys.modules['sqlite3'] = sys.modules['pysqlite3']
 except ImportError:
     pass
 
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+path = os.path.abspath(os.path.dirname(__file__))
+if path not in sys.path:
+    sys.path.insert(0, path)
 
 import streamlit as st
 
@@ -22,8 +24,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-from utils.auth_helper import init_auth, ADMIN_EMAIL
-from utils.ui_helper import set_premium_css
+try:
+    from utils.auth_helper import init_auth, ADMIN_EMAIL
+    from utils.ui_helper import set_premium_css, draw_sidebar
+except KeyError as e:
+    if e.args[0] == 'utils':
+        st.rerun()
+    raise
 
 
 # 1. Khởi tạo Auth ngay lập tức
@@ -46,6 +53,15 @@ if st.session_state.get("is_logged_in") and st.session_state.user_info.get("emai
 # 4. Cấu hình điều hướng chuyên nghiệp
 pg = st.navigation(pages)
 
+# ─── ĐIỀU HƯỚNG VÀ TRÁNH REDIRECT LOCK-IN ────────────────────────────────────
+# Tự động nhận diện trang đang chạy để reset màn hình đăng nhập khi chuyển trang
+current_page = pg.title
+last_page = st.session_state.get("last_page_tracker")
+if last_page != current_page:
+    # Nếu người dùng click chuyển trang khác, tắt màn hình đăng nhập để tránh kẹt
+    st.session_state.show_login = False
+    st.session_state.last_page_tracker = current_page
+
 # Thiết lập giao diện chung (CSS) trước khi chạy trang
 set_premium_css()
 
@@ -53,5 +69,4 @@ set_premium_css()
 pg.run()
 
 # Vẽ thêm các thành phần tùy chỉnh vào Sidebar (Dưới menu điều hướng)
-from utils.ui_helper import draw_sidebar
 draw_sidebar()

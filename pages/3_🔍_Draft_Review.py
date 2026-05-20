@@ -3,7 +3,9 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 import streamlit as st
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx, create_tham_tra_document
 from utils.ui_helper import set_premium_css, draw_module_header

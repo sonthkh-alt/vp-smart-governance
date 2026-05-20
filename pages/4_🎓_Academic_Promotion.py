@@ -7,7 +7,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
 from utils.ui_helper import set_premium_css, draw_module_header, draw_sidebar
 from utils.gemini_client import generate_text

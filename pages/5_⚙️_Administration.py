@@ -1,7 +1,9 @@
 import streamlit as st
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
 import database
 from utils.auth_helper import require_auth, ADMIN_EMAIL
