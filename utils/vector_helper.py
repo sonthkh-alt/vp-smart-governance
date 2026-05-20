@@ -5,7 +5,13 @@ from google import genai
 from google.genai import types
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-import database
+try:
+    import database
+except KeyError as e:
+    if e.args[0] == 'database':
+        import streamlit as st
+        st.rerun()
+    raise
 import io
 
 def _get_client():

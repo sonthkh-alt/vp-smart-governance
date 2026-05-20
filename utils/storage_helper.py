@@ -4,7 +4,13 @@ try:
 except ImportError:
     create_client = None
     Client = None
-import database
+try:
+    import database
+except KeyError as e:
+    if e.args[0] == 'database':
+        import streamlit as st
+        st.rerun()
+    raise
 import os
 from datetime import datetime
 

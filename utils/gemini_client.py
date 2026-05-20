@@ -7,7 +7,13 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 import streamlit as st
-import database
+try:
+    import database
+except KeyError as e:
+    if e.args[0] == 'database':
+        import streamlit as st
+        st.rerun()
+    raise
 
 # Thêm thư viện Anthropic, OpenAI & Groq
 try:
