@@ -16,7 +16,7 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from dotenv import load_dotenv
-from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
+
 
 load_dotenv(override=True)
 
@@ -123,6 +123,7 @@ def _get_session_collection() -> str:
 
 
 def _extract_text(file_obj) -> str:
+    from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
     name = file_obj.name.lower()
     if name.endswith(".pdf"):
         return extract_text_from_pdf(file_obj)

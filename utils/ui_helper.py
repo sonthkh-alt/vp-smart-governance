@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.auth_helper import init_auth, check_auth_status, get_user_info, login_google, logout
+
 
 def set_premium_css():
     """
@@ -209,6 +209,7 @@ def set_premium_css():
     """, unsafe_allow_html=True)
 
     if st.session_state.get("show_login", False):
+        from utils.auth_helper import login_google
         login_google()
 
 def draw_module_header(title, icon, description):
@@ -241,6 +242,7 @@ def draw_sidebar():
     Vẽ sidebar chung cho toàn bộ ứng dụng, bao gồm các link điều hướng ngoài.
     """
     # Khởi tạo trạng thái Auth
+    from utils.auth_helper import init_auth, check_auth_status, get_user_info
     init_auth()
     is_logged_in = check_auth_status()
     user = get_user_info()
@@ -272,6 +274,7 @@ def draw_sidebar():
                     st.markdown(f"**Lượt AI:** :{color}[{db_user['credits']} lượt]")
             
             if st.button("🚪 Đăng xuất", use_container_width=True):
+                from utils.auth_helper import logout
                 logout()
         
         st.markdown("---")

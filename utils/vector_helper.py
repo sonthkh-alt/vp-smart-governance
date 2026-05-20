@@ -4,8 +4,7 @@ import time
 from google import genai
 from google.genai import types
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
-from utils.storage_helper import supabase
+
 import database
 import io
 
@@ -19,6 +18,8 @@ def vectorize_document(doc_id, storage_path, file_name):
     """
     Quy trình Vectorize với bước THANH TRA mô hình công khai.
     """
+    from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
+    from utils.storage_helper import supabase
     try:
         client = _get_client()
         
