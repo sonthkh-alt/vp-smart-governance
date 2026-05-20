@@ -1,6 +1,6 @@
 """ai_helper.py — Tham mưu và soạn thảo văn bản hành chính (Gemini AI)."""
 
-from utils.gemini_client import generate_text, generate_json
+
 
 DOC_STRUCTURE_RULES = {
     "Quyết định": "Sinh cấu trúc: Căn cứ pháp lý → Điều 1, Điều 2, Điều 3.",
@@ -31,6 +31,7 @@ def generate_document_content(prompt: str, doc_type: str = "Tự động", conte
     """
     Sinh nội dung văn bản dưới dạng JSON chuẩn NĐ 30, hỗ trợ đa mô hình.
     """
+    from utils.gemini_client import generate_json
     rule = DOC_STRUCTURE_RULES.get(doc_type, "")
     
     parts = [
@@ -56,6 +57,7 @@ def check_legal_compliance(draft: str, reference_data: str = "", provider: str =
     """
     Đối chiếu pháp lý giữa dự thảo và căn cứ tham chiếu, hỗ trợ đa mô hình.
     """
+    from utils.gemini_client import generate_text
     prompt = f"""
     Bạn là chuyên gia pháp chế cao cấp. Hãy đối chiếu dự thảo văn bản với các căn cứ pháp lý sau:
 

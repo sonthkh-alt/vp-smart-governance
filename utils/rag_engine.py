@@ -17,7 +17,6 @@ from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from dotenv import load_dotenv
 from utils.doc_helper import extract_text_from_pdf, extract_text_from_docx
-from utils.gemini_client import generate_text, _get_api_key
 
 load_dotenv(override=True)
 
@@ -62,6 +61,7 @@ class _ShopAIKeyEmbeddings(Embeddings):
 
 def _build_gemini_embeddings():
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
+    from utils.gemini_client import _get_api_key
     key = _get_api_key("gemini")
     if not key:
         raise ValueError("Thiếu GEMINI_API_KEY")
@@ -300,6 +300,7 @@ def query_rag(query: str) -> str:
         5. Cuối báo cáo: Đưa ra **kiến nghị và gợi ý câu hỏi chất vấn** cụ thể cho Đại biểu.
         6. Sử dụng ngôn ngữ hành chính nhà nước chuẩn mực."""
 
+        from utils.gemini_client import generate_text
         return generate_text(prompt, use_pro=True)
     except Exception as e:
         return f"Lỗi trong quá trình truy vấn RAG: {e}"
