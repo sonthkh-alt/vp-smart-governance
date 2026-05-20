@@ -35,7 +35,7 @@ CLAUDE_MODELS = ["claude-sonnet-4-6", "claude-sonnet-4-5", "claude-opus-4-6", "c
 GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
 OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini"]
 
-@functools.lru_cache(maxsize=1)
+@functools.lru_cache(maxsize=8)
 def _get_api_key(provider="gemini") -> str:
     if provider == "gemini": prefix = "GEMINI"
     elif provider == "claude": prefix = "ANTHROPIC"
@@ -219,10 +219,12 @@ def _call_claude(prompt: str, use_pro: bool = True) -> str:
             system=sys_inst,
             messages=[{"role": "user", "content": prompt}]
         )
+        p_tokens = resp.usage.input_tokens if hasattr(resp, "usage") and resp.usage else 0
+        c_tokens = resp.usage.output_tokens if hasattr(resp, "usage") and resp.usage else 0
         if "user_info" in st.session_state:
             email = st.session_state.user_info.get("email")
             database.use_credit(email)
-            database.log_api_usage(email, model, "success")
+            database.log_api_usage(email, model, "success", p_tokens=p_tokens, c_tokens=c_tokens)
         return resp.content[0].text
     except Exception as e:
         err_msg = str(e)
@@ -247,10 +249,12 @@ def _call_openai(prompt: str, use_pro: bool = True) -> str:
             ],
             temperature=0.1,
         )
+        p_tokens = completion.usage.prompt_tokens if hasattr(completion, "usage") and completion.usage else 0
+        c_tokens = completion.usage.completion_tokens if hasattr(completion, "usage") and completion.usage else 0
         if "user_info" in st.session_state:
             email = st.session_state.user_info.get("email")
             database.use_credit(email)
-            database.log_api_usage(email, model, "success")
+            database.log_api_usage(email, model, "success", p_tokens=p_tokens, c_tokens=c_tokens)
         return completion.choices[0].message.content
     except Exception as e:
         err_msg = str(e)
@@ -278,10 +282,12 @@ def _call_groq(prompt: str, use_pro: bool = True) -> str:
             temperature=0.1,
             max_tokens=4096,
         )
+        p_tokens = completion.usage.prompt_tokens if hasattr(completion, "usage") and completion.usage else 0
+        c_tokens = completion.usage.completion_tokens if hasattr(completion, "usage") and completion.usage else 0
         if "user_info" in st.session_state:
             email = st.session_state.user_info.get("email")
             database.use_credit(email)
-            database.log_api_usage(email, model, "success")
+            database.log_api_usage(email, model, "success", p_tokens=p_tokens, c_tokens=c_tokens)
         return completion.choices[0].message.content
     except Exception as e:
         err_msg = str(e)
@@ -312,10 +318,12 @@ def _call_gemini_with_fallback(model_list, config, max_retries=1, parse_json=Fal
             )
             if not resp or not resp.text: raise RuntimeError("API trả về rỗng.")
             
+            p_tokens = resp.usage_metadata.prompt_token_count if hasattr(resp, "usage_metadata") and resp.usage_metadata else 0
+            c_tokens = resp.usage_metadata.candidates_token_count if hasattr(resp, "usage_metadata") and resp.usage_metadata else 0
             if "user_info" in st.session_state:
                 email = st.session_state.user_info.get("email")
                 database.use_credit(email)
-                database.log_api_usage(email, model_id, "success")
+                database.log_api_usage(email, model_id, "success", p_tokens=p_tokens, c_tokens=c_tokens)
             
             raw = resp.text
             if not parse_json: return raw
@@ -369,10 +377,12 @@ def generate_json(prompt: str, provider: str = "claude", use_pro: bool = True) -
                 temperature=0.1,
             )
             raw = completion.choices[0].message.content
+            p_tokens = completion.usage.prompt_tokens if hasattr(completion, "usage") and completion.usage else 0
+            c_tokens = completion.usage.completion_tokens if hasattr(completion, "usage") and completion.usage else 0
             if "user_info" in st.session_state:
                 email = st.session_state.user_info.get("email")
                 database.use_credit(email)
-                database.log_api_usage(email, model, "success")
+                database.log_api_usage(email, model, "success", p_tokens=p_tokens, c_tokens=c_tokens)
             return json.loads(raw)
         except Exception as e:
             print(f"WARNING: OpenAI JSON lỗi: {e}. Chuyển hướng dự phòng sang Gemini Pro...")

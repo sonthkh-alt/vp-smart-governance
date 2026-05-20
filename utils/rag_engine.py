@@ -29,8 +29,8 @@ _SHOPAIKEY_API_KEY  = "sk-s4sEA3IauTs0JA0bHwq4S3C7wDXtj7EHZHpB8IZbmvxSIALz"
 _SHOPAIKEY_EMB_MODEL = "text-embedding-3-small"
 
 # ── Cấu hình batch/retry ─────────────────────────────────────────────────────
-_BATCH_SIZE    = 5            # số chunk mỗi lần gửi lên Embedding API
-_BATCH_DELAY   = 2            # giây chờ giữa các batch bình thường
+_BATCH_SIZE    = 25            # Tăng số chunk mỗi lần gửi lên Embedding API để tăng tốc độ
+_BATCH_DELAY   = 0.5           # Giảm thời gian chờ giữa các batch
 _RETRY_DELAYS  = [10, 30, 60] # backoff khi bị rate-limit
 
 

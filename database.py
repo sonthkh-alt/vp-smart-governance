@@ -432,3 +432,24 @@ def delete_document(doc_id):
 
 def mark_as_vectorized(doc_id):
     _execute('UPDATE documents SET is_vectorized=1 WHERE id=?', (doc_id,))
+
+def save_document_chunks(chunks_data):
+    """
+    Lưu hàng loạt chunks trong một transaction duy nhất để tối ưu hóa kết nối mạng Supabase.
+    chunks_data: danh sách các tuple (document_id, content, embedding_vector_str, metadata_json_str)
+    """
+    if not chunks_data:
+        return
+    conn = _connect()
+    try:
+        is_pg = _is_postgres()
+        if is_pg:
+            sql = "INSERT INTO document_chunks (document_id, content, embedding, metadata) VALUES (%s, %s, %s::vector, %s)"
+            with conn.cursor() as cur:
+                cur.executemany(sql, chunks_data)
+        else:
+            sql = "INSERT INTO document_chunks (document_id, content, embedding, metadata) VALUES (?, ?, ?, ?)"
+            with conn:
+                conn.executemany(sql, chunks_data)
+    finally:
+        conn.close()

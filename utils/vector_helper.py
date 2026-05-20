@@ -80,23 +80,34 @@ def vectorize_document(doc_id, storage_path, file_name):
         if not working_model:
             return False, "Vẫn không tìm thấy mô hình nào hỗ trợ Embedding trong danh sách trên."
 
-        # 4. Lưu dữ liệu
-        for i, chunk_text in enumerate(chunks):
-            # Nghỉ 1 giây để tránh lỗi Rate Limit (RESOURCE_EXHAUSTED) của gói miễn phí
-            time.sleep(1)
+        # 4. Lưu dữ liệu theo batch (tối đa 50 chunks mỗi đợt) để tối ưu hóa API và kết nối database
+        batch_size = 50
+        chunks_data = []
+        
+        for idx in range(0, len(chunks), batch_size):
+            batch_chunks = chunks[idx : idx + batch_size]
             
+            # Gọi API nhúng hàng loạt
             resp = client.models.embed_content(
-                model=working_model, contents=chunk_text,
+                model=working_model, 
+                contents=batch_chunks,
                 config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
             )
-            vector = resp.embeddings[0].values
-            if len(vector) > 768: vector = vector[:768] # Cắt về 768 để khớp DB
             
-            vector_str = "[" + ",".join(map(str, vector)) + "]"
-            database._execute(
-                "INSERT INTO document_chunks (document_id, content, embedding, metadata) VALUES (?, ?, ?::vector, ?)",
-                (doc_id, chunk_text, vector_str, '{}')
-            )
+            # Duyệt và trích xuất vector cho từng chunk trong batch
+            for j, chunk_text in enumerate(batch_chunks):
+                vector = resp.embeddings[j].values
+                if len(vector) > 768: 
+                    vector = vector[:768]  # Cắt về 768 để khớp DB
+                vector_str = "[" + ",".join(map(str, vector)) + "]"
+                chunks_data.append((doc_id, chunk_text, vector_str, '{}'))
+            
+            # Nghỉ ngắn giữa các batch nếu còn đợt tiếp theo để tránh chạm giới hạn API
+            if idx + batch_size < len(chunks):
+                time.sleep(1)
+        
+        # Ghi toàn bộ dữ liệu vào Database chỉ trong một lần gọi mạng duy nhất
+        database.save_document_chunks(chunks_data)
 
         database.mark_as_vectorized(doc_id)
         return True, f"Thành công với mô hình: {working_model}"
