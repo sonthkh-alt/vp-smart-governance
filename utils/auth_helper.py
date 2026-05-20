@@ -87,31 +87,31 @@ def login_google():
         <style>
         /* Tùy biến khung Form Đăng nhập thành Glassmorphism cao cấp */
         div[data-testid="stForm"] {
-            background: rgba(15, 23, 42, 0.65) !important;
-            border: 1px solid rgba(255, 255, 255, 0.12) !important;
-            border-radius: 20px !important;
-            padding: 35px !important;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
-            backdrop-filter: blur(16px) !important;
-            -webkit-backdrop-filter: blur(16px) !important;
-            max-width: 460px !important;
+            background: rgba(17, 24, 39, 0.75) !important;
+            border: 1px solid rgba(99, 102, 241, 0.25) !important;
+            border-radius: 24px !important;
+            padding: 30px 24px !important;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            max-width: 440px !important;
             margin: 0 auto !important;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         div[data-testid="stForm"]:hover {
-            border-color: rgba(96, 165, 250, 0.3) !important;
-            box-shadow: 0 25px 60px rgba(37, 99, 235, 0.15) !important;
+            border-color: rgba(99, 102, 241, 0.5) !important;
+            box-shadow: 0 30px 70px rgba(99, 102, 241, 0.15) !important;
         }
         /* Tiêu đề Đăng nhập */
         .login-header {
             text-align: center;
-            font-size: 1.7rem;
+            font-size: 1.6rem;
             font-weight: 800;
-            letter-spacing: 0.5px;
-            background: linear-gradient(135deg, #F8FAFC 0%, #60A5FA 100%);
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #FFFFFF 30%, #C7D2FE 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             margin-top: 0px;
         }
         </style>
@@ -119,10 +119,10 @@ def login_google():
 
     # Hiển thị Logo & Tên Hệ thống lớn, cân đối ở giữa
     st.markdown("""
-        <div style='text-align: center; padding: 40px 0 20px 0;'>
-            <div style='font-size: 4rem; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(96,165,250,0.3));'>🏛️</div>
-            <h2 style='font-weight: 800; font-size: 2.2rem; letter-spacing: -0.5px; margin: 0; background: linear-gradient(135deg, #F8FAFC 0%, #94A3B8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>HỆ THỐNG QUẢN TRỊ THÔNG MINH HĐND</h2>
-            <p style='color: #94A3B8; font-size: 1rem; margin-top: 8px;'>Hệ sinh thái AI hỗ trợ nghiệp vụ & điều hành cao cấp</p>
+        <div style='text-align: center; padding: 30px 0 15px 0;'>
+            <div style='font-size: 3.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(99,102,241,0.4));'>🏛️</div>
+            <h2 style='font-weight: 800; font-size: 1.8rem; letter-spacing: -0.03em; margin: 0; background: linear-gradient(135deg, #FFFFFF 40%, #818CF8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>HỆ THỐNG QUẢN TRỊ THÔNG MINH</h2>
+            <p style='color: #9CA3AF; font-size: 0.9rem; margin-top: 6px; font-weight: 400;'>Hệ sinh thái AI hỗ trợ nghiệp vụ & điều hành cao cấp</p>
         </div>
     """, unsafe_allow_html=True)
 

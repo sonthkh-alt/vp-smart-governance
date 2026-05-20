@@ -68,7 +68,7 @@ is_admin = st.session_state.get("is_logged_in") and st.session_state.user_info.g
 if is_admin:
     col_adm, _ = st.columns([1, 2])
     with col_adm:
-        st.markdown('<div class="glass-card" style="border: 1px solid #E63946;">', unsafe_allow_html=True)
+        st.markdown('<div class="glass-card" style="border: 1px solid var(--accent-ios);">', unsafe_allow_html=True)
         st.markdown("### ⚙️ Quản trị Hệ thống")
         st.markdown("Quản lý người dùng, phân quyền, cấu hình AI và giám sát nhật ký.")
         st.page_link("pages/5_⚙️_Administration.py", label="Truy cập Hệ thống", icon="🛠️")
@@ -77,10 +77,14 @@ if is_admin:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ─── CỔNG THÔNG TIN HĐND ──────────────────────────────────────────────────────
-st.components.v1.iframe("https://hdnd.vercel.app/", height=900, scrolling=True)
+st.markdown('<div class="glass-card" style="border: 1px dashed var(--primary-ios); text-align: center;">', unsafe_allow_html=True)
+st.markdown("### 🌐 Cổng Thông tin Điện tử HĐND")
+st.markdown("Tra cứu tin tức hoạt động dân cử, lịch tiếp cử tri, các kỳ họp và cơ sở dữ liệu văn bản pháp quy chính thức của Hội đồng nhân dân tỉnh.")
+st.link_button("🏛️ TRUY CẬP CỔNG THÔNG TIN HĐND", "https://hdnd.vercel.app/", use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
-st.info("👈 Hãy chọn một phân hệ từ thanh điều hướng bên trái (Sidebar) để bắt đầu sử dụng.")
+st.info("👈 Hãy chọn một phân hệ từ thanh điều hướng để bắt đầu trải nghiệm.")
 
 st.markdown("---")
 
