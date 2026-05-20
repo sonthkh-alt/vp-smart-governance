@@ -46,7 +46,7 @@ def set_premium_css():
         }
 
         /* Typography - Native iOS Feel */
-        html, body, [class*="css"], .stMarkdown, p, span, label, li {
+        html, body, [class*="css"], .stMarkdown, p, li {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Plus Jakarta Sans", sans-serif !important;
             -webkit-font-smoothing: antialiased;
         }
@@ -67,11 +67,14 @@ def set_premium_css():
                 min-width: 100% !important;
                 padding-left: 0px !important;
                 padding-right: 0px !important;
-                margin-bottom: 12px !important;
+                margin-bottom: 16px !important;
             }
             div[data-testid="stHorizontalBlock"] {
                 flex-direction: column !important;
-                gap: 0px !important;
+                gap: 16px !important;
+            }
+            .stButton {
+                margin-bottom: 8px !important;
             }
             /* Reduce page padding on mobile */
             .block-container {
